@@ -4,742 +4,567 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>ADS GROWTH AGENCY PRO</title>
-
 <style>
 *{box-sizing:border-box}
-
 :root{
-  --g:#22e68a;
-  --p:#a855f7;
-  --bg:#080b18;
-  --box:#17152b;
-  --line:#393052;
+ --bg:#080b18;--panel:#17152b;--green:#22e68a;
+ --purple:#a855f7;--line:#393052;
 }
-
 body{
-  margin:0;
-  background:linear-gradient(135deg,#080b18,#241044);
-  color:white;
-  font-family:Arial,sans-serif;
+ margin:0;background:linear-gradient(135deg,#080b18,#241044);
+ color:white;font-family:Arial,sans-serif;
 }
-
 header{
-  padding:15px;
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  background:#111222;
-  border-bottom:1px solid var(--line);
-  position:sticky;
-  top:0;
-  z-index:5;
+ padding:15px;display:flex;justify-content:space-between;
+ align-items:center;background:#111222;
+ border-bottom:1px solid var(--line);
+ position:sticky;top:0;z-index:5;
 }
-
 .logo{font-size:19px;font-weight:bold}
-.logo span{color:var(--g)}
-
+.logo span{color:var(--green)}
 button{
-  border:0;
-  border-radius:9px;
-  padding:11px 15px;
-  background:var(--g);
-  font-weight:bold;
-  cursor:pointer;
-  color:#07130d;
-  margin:3px;
+ border:0;border-radius:9px;padding:11px 15px;
+ background:var(--green);font-weight:bold;
+ cursor:pointer;color:#07130d;margin:3px;
 }
-
-button:disabled{opacity:.5;cursor:not-allowed}
+button:disabled{opacity:.5}
 .dark{background:#292a40;color:white;border:1px solid var(--line)}
-
 .wrap{max-width:1050px;margin:auto;padding:18px}
 .page{display:none}
 .active{display:block}
-
 .hero{
-  padding:60px 15px;
-  background:linear-gradient(135deg,#241044,#10172d);
-  border:1px solid var(--line);
-  border-radius:18px;
-  margin:20px 0;
+ padding:55px 16px;
+ background:linear-gradient(135deg,#241044,#10172d);
+ border:1px solid var(--line);border-radius:18px;margin:20px 0;
 }
-
 .hero h1{font-size:clamp(38px,7vw,65px);margin:12px 0}
-.green{color:var(--g)}
-.purple{color:#c084fc}
-
+.green{color:var(--green)}
 .card{
-  background:linear-gradient(145deg,#17152b,#111426);
-  border:1px solid var(--line);
-  border-radius:15px;
-  padding:19px;
-  margin:12px 0;
+ background:linear-gradient(145deg,#17152b,#111426);
+ border:1px solid var(--line);border-radius:15px;
+ padding:19px;margin:12px 0;
 }
-
 .grid{
-  display:grid;
-  grid-template-columns:repeat(auto-fit,minmax(190px,1fr));
-  gap:12px;
+ display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));
+ gap:12px;
 }
-
-.price{font-size:31px;color:var(--g);font-weight:bold}
-.stat{font-size:28px;color:var(--g);font-weight:bold}
-
+.price,.stat{font-size:29px;color:var(--green);font-weight:bold}
 input,textarea,select{
-  width:100%;
-  padding:12px;
-  margin:7px 0 13px;
-  background:#090a14;
-  color:white;
-  border:1px solid #41435b;
-  border-radius:8px;
+ width:100%;padding:12px;margin:7px 0 13px;
+ background:#090a14;color:white;
+ border:1px solid #41435b;border-radius:8px;
 }
-
+input[type=color]{height:48px;padding:4px;cursor:pointer}
 textarea{min-height:85px}
-label{font-size:13px;color:#bbb}
+label{font-size:13px;color:#bbb;display:block}
 .nav{display:flex;flex-wrap:wrap;gap:5px;margin:15px 0}
-
 .preview{
-  background:white;
-  color:#161616;
-  padding:20px;
-  border-radius:12px;
-  min-height:170px;
+ background:white;color:#161616;padding:20px;
+ border-radius:12px;min-height:170px;text-align:center;
 }
-
 .preview p{color:#555}
-
-/* Landing page photo preview size */
-.preview-image{
-  width:100px;
-  height:100px;
-  object-fit:contain;
-  display:block;
-  margin:10px auto;
-  border-radius:10px;
-}
-
+.preview img{object-fit:contain;display:block;margin:10px auto}
+.badge{color:var(--green);font-size:12px}
 small,.muted{color:#aaa}
-.badge{color:var(--g);font-size:12px}
 table{width:100%;border-collapse:collapse}
 td,th{text-align:left;padding:10px;border-bottom:1px solid var(--line)}
 footer{text-align:center;padding:25px;color:#888}
 .notice{
-  padding:12px;
-  background:#211d35;
-  border:1px solid #59418a;
-  border-radius:9px;
-  margin:12px 0;
+ padding:12px;background:#211d35;border:1px solid #59418a;
+ border-radius:9px;margin:12px 0;
 }
 .success{color:#22e68a}
 .error{color:#ff7777}
 a{color:#22e68a;word-break:break-all}
 .hidden{display:none}
-
 @media(max-width:480px){
-  header{padding:10px}
-  .logo{font-size:16px}
-  header button{padding:9px}
-  .wrap{padding:12px}
-  .hero{padding:35px 15px}
+ header{padding:10px}.logo{font-size:16px}
+ header button{padding:9px}.wrap{padding:12px}
+ .hero{padding:35px 15px}
 }
 </style>
 </head>
-
 <body>
 
 <header>
-  <div class="logo">ADS <span>GROWTH</span> PRO</div>
-  <div>
-    <button class="dark" onclick="go('home')">Home</button>
-    <button onclick="go('login')">Login</button>
-  </div>
+ <div class="logo">ADS <span>GROWTH</span> PRO</div>
+ <div>
+  <button class="dark" onclick="go('home')">Home</button>
+  <button onclick="go('login')">Login</button>
+ </div>
 </header>
 
 <div class="wrap">
 
-<!-- HOME -->
 <section id="home" class="page active">
-  <div class="hero">
-    <div class="badge">DIGITAL MARKETING PLATFORM</div>
-    <h1>GROW YOUR<br><span class="green">BUSINESS</span></h1>
-    <p>Build landing pages, manage pages and grow your online business.</p>
-    <button onclick="go('register')">GET STARTED</button>
-    <button class="dark" onclick="go('plans')">VIEW PLANS</button>
+ <div class="hero">
+  <div class="badge">DIGITAL MARKETING PLATFORM</div>
+  <h1>GROW YOUR<br><span class="green">BUSINESS</span></h1>
+  <p>Build landing pages, manage pages and grow your online business.</p>
+  <button onclick="go('register')">GET STARTED</button>
+  <button class="dark" onclick="go('plans')">VIEW PLANS</button>
+ </div>
+
+ <h2>Our <span class="green">Plans</span></h2>
+ <div class="grid">
+  <div class="card">
+   <h3>Basic</h3><div class="price">5 USDT</div>
+   <p>Monthly subscription</p><p>1 Landing Page</p>
+   <button onclick="choose('Basic')">Choose Plan</button>
   </div>
-
-  <h2>Our <span class="green">Plans</span></h2>
-
-  <div class="grid">
-    <div class="card">
-      <h3>Basic</h3>
-      <div class="price">5 USDT</div>
-      <p>Monthly subscription</p>
-      <p>1 Landing Page</p>
-      <button onclick="choose('Basic')">Choose Plan</button>
-    </div>
-
-    <div class="card">
-      <h3>Prime & Pro</h3>
-      <div class="price">12 USDT</div>
-      <p>Monthly subscription</p>
-      <p>1 Landing Page</p>
-      <button onclick="choose('Prime & Pro')">Choose Plan</button>
-    </div>
-
-    <div class="card">
-      <h3>Basic & Prime</h3>
-      <div class="price">15 USDT</div>
-      <p>Monthly subscription</p>
-      <p>2 Landing Pages</p>
-      <button onclick="choose('Basic & Prime')">Choose Plan</button>
-    </div>
+  <div class="card">
+   <h3>Prime & Pro</h3><div class="price">12 USDT</div>
+   <p>Monthly subscription</p><p>1 Landing Page</p>
+   <button onclick="choose('Prime & Pro')">Choose Plan</button>
   </div>
-
-  <div class="grid">
-    <div class="card"><h3 class="green">Landing Builder</h3><p>Create landing pages.</p></div>
-    <div class="card"><h3 class="purple">Page Management</h3><p>Manage and publish pages.</p></div>
-    <div class="card"><h3 class="green">Analytics</h3><p>View page statistics.</p></div>
+  <div class="card">
+   <h3>Basic & Prime</h3><div class="price">15 USDT</div>
+   <p>Monthly subscription</p><p>2 Landing Pages</p>
+   <button onclick="choose('Basic & Prime')">Choose Plan</button>
   </div>
-
-  <div class="notice">
-    USDT payment is not connected yet. No payment is collected on this page.
-  </div>
+ </div>
+ <div class="notice">
+  USDT payment is not connected yet. No payment is collected on this page.
+ </div>
 </section>
 
-<!-- PLANS -->
 <section id="plans" class="page">
-  <h2>Membership Plans</h2>
-  <div class="grid">
-    <div class="card">
-      <h3>Basic</h3><div class="price">5 USDT/month</div>
-      <p>1 page</p><button onclick="choose('Basic')">Select</button>
-    </div>
-    <div class="card">
-      <h3>Prime & Pro</h3><div class="price">12 USDT/month</div>
-      <p>1 page</p><button onclick="choose('Prime & Pro')">Select</button>
-    </div>
-    <div class="card">
-      <h3>Basic & Prime</h3><div class="price">15 USDT/month</div>
-      <p>2 pages</p><button onclick="choose('Basic & Prime')">Select</button>
-    </div>
-  </div>
+ <h2>Membership Plans</h2>
+ <div class="grid">
+  <div class="card"><h3>Basic</h3><div class="price">5 USDT/month</div><p>1 page</p><button onclick="choose('Basic')">Select</button></div>
+  <div class="card"><h3>Prime & Pro</h3><div class="price">12 USDT/month</div><p>1 page</p><button onclick="choose('Prime & Pro')">Select</button></div>
+  <div class="card"><h3>Basic & Prime</h3><div class="price">15 USDT/month</div><p>2 pages</p><button onclick="choose('Basic & Prime')">Select</button></div>
+ </div>
 </section>
 
-<!-- REGISTER -->
 <section id="register" class="page">
-  <div class="card">
-    <h2>Create Account</h2>
-    <label>Name</label>
-    <input id="rname" placeholder="Your name">
-    <label>Email</label>
-    <input id="remail" type="email" placeholder="Your email">
-    <label>Password (minimum 8 characters)</label>
-    <input id="rpass" type="password" placeholder="Create password">
-    <button id="registerBtn" onclick="register()">CREATE ACCOUNT</button>
-    <button class="dark" onclick="go('login')">Already registered? Login</button>
-    <p id="registerMsg"></p>
-  </div>
+ <div class="card">
+  <h2>Create Account</h2>
+  <label>Name</label><input id="rname" placeholder="Your name">
+  <label>Email</label><input id="remail" type="email" placeholder="Your email">
+  <label>Password (minimum 8 characters)</label><input id="rpass" type="password" placeholder="Create password">
+  <button id="registerBtn" onclick="register()">CREATE ACCOUNT</button>
+  <button class="dark" onclick="go('login')">Already registered? Login</button>
+  <p id="registerMsg"></p>
+ </div>
 </section>
 
-<!-- LOGIN -->
 <section id="login" class="page">
-  <div class="card">
-    <h2>Welcome Back</h2>
-    <label>Email</label>
-    <input id="lemail" type="email" placeholder="Your email">
-    <label>Password</label>
-    <input id="lpass" type="password" placeholder="Your password">
-    <button id="loginBtn" onclick="login()">LOGIN</button>
-    <button class="dark" onclick="go('register')">Create Account</button>
-    <p id="loginMsg"></p>
-  </div>
+ <div class="card">
+  <h2>Welcome Back</h2>
+  <label>Email</label><input id="lemail" type="email" placeholder="Your email">
+  <label>Password</label><input id="lpass" type="password" placeholder="Your password">
+  <button id="loginBtn" onclick="login()">LOGIN</button>
+  <button class="dark" onclick="go('register')">Create Account</button>
+  <p id="loginMsg"></p>
+ </div>
 </section>
 
-<!-- DASHBOARD -->
 <section id="dashboard" class="page">
-  <h2>My <span class="green">Dashboard</span></h2>
-  <p id="welcome" class="muted"></p>
+ <h2>My <span class="green">Dashboard</span></h2>
+ <p id="welcome" class="muted"></p>
 
-  <div class="nav">
-    <button onclick="tab('overview')">Overview</button>
-    <button onclick="tab('builder')">Page Builder</button>
-    <button onclick="tab('mypages')">My Pages</button>
-    <button onclick="tab('analytics')">Analytics</button>
-    <button onclick="tab('settings')">Settings</button>
-    <button id="adminTabBtn" class="dark hidden" onclick="tab('admin')">Admin</button>
-    <button class="dark" onclick="logout()">Logout</button>
+ <div class="nav">
+  <button onclick="tab('overview')">Overview</button>
+  <button onclick="tab('builder')">Page Builder</button>
+  <button onclick="tab('mypages')">My Pages</button>
+  <button onclick="tab('analytics')">Analytics</button>
+  <button onclick="tab('settings')">Settings</button>
+  <button id="adminTabBtn" class="dark hidden" onclick="tab('admin')">Admin</button>
+  <button class="dark" onclick="logout()">Logout</button>
+ </div>
+
+ <div id="overview" class="tab">
+  <div class="grid">
+   <div class="card"><small>Total Pages</small><div class="stat" id="totalPages">0</div></div>
+   <div class="card"><small>Account</small><div class="stat">Active</div></div>
+   <div class="card"><small>Role</small><div class="stat" id="userRole">User</div></div>
   </div>
-
-  <div id="overview" class="tab">
-    <div class="grid">
-      <div class="card"><small>Total Pages</small><div class="stat" id="totalPages">0</div></div>
-      <div class="card"><small>Account</small><div class="stat">Active</div></div>
-      <div class="card"><small>Role</small><div class="stat" id="userRole">User</div></div>
-    </div>
-    <div class="card">
-      <h3>Welcome to ADS GROWTH PRO</h3>
-      <p>Create and manage your landing pages from here.</p>
-      <button onclick="tab('builder')">CREATE PAGE</button>
-    </div>
+  <div class="card">
+   <h3>Welcome to ADS GROWTH PRO</h3>
+   <p>Create and manage your landing pages here.</p>
+   <button onclick="tab('builder')">CREATE PAGE</button>
   </div>
+ </div>
 
-  <!-- PAGE BUILDER -->
-  <div id="builder" class="tab hidden">
-    <div class="card">
-      <h3>Landing Page Builder</h3>
-      <label>Page Title</label>
-      <input id="ptitle" placeholder="Enter page title">
-      <label>Headline</label>
-      <input id="pheadline" placeholder="Enter headline">
-      <label>Description</label>
-      <textarea id="pdesc" placeholder="Write your description"></textarea>
-      <label>Image URL (optional)</label>
-      <input id="pimage" placeholder="https://example.com/image.jpg">
-      <label>Button Text</label>
-      <input id="pbutton" value="Contact Us">
-      <label>Button Link</label>
-      <input id="plink" placeholder="https://example.com">
-      <label>WhatsApp Number</label>
-      <input id="pwa" placeholder="91XXXXXXXXXX">
-      <label>Meta Pixel ID (optional)</label>
-      <input id="ppixel" placeholder="Your numeric Pixel ID">
+ <div id="builder" class="tab hidden">
+  <div class="card">
+   <h3>Landing Page Builder</h3>
+   <label>Page Title</label>
+   <input id="ptitle" placeholder="Enter page title">
+   <label>Headline</label>
+   <input id="pheadline" placeholder="Enter headline">
+   <label>Description</label>
+   <textarea id="pdesc" placeholder="Write your description"></textarea>
+   <label>Image URL (optional)</label>
+   <input id="pimage" placeholder="https://example.com/image.jpg">
 
-      <button onclick="makePreview()">LIVE PREVIEW</button>
-      <button onclick="savePage()" id="savePageBtn">SAVE PAGE</button>
+   <h3 class="green">Design Settings</h3>
+   <label>Background Color</label>
+   <input type="color" id="bgColor" value="#ffffff" oninput="makePreview()">
 
-      <div class="preview" id="live">
-        <h2>Your Landing Page</h2>
-        <p>Your description appears here.</p>
-      </div>
-      <p id="builderMsg"></p>
-    </div>
+   <label>Heading Color</label>
+   <input type="color" id="headingColor" value="#171717" oninput="makePreview()">
+
+   <label>Button Color</label>
+   <input type="color" id="buttonColor" value="#22c55e" oninput="makePreview()">
+
+   <label>Photo Size</label>
+   <select id="imageSize" onchange="makePreview()">
+    <option value="70">Small</option>
+    <option value="100" selected>Medium</option>
+    <option value="150">Large</option>
+    <option value="220">Extra Large</option>
+   </select>
+
+   <label>Button Text</label>
+   <input id="pbutton" value="Contact Us">
+   <label>Button Link</label>
+   <input id="plink" placeholder="https://example.com">
+   <label>WhatsApp Number</label>
+   <input id="pwa" placeholder="91XXXXXXXXXX">
+   <label>Meta Pixel ID (optional)</label>
+   <input id="ppixel" placeholder="Your numeric Pixel ID">
+
+   <button onclick="makePreview()">LIVE PREVIEW</button>
+   <button onclick="savePage()" id="savePageBtn">SAVE PAGE</button>
+
+   <h3>Live Preview</h3>
+   <div class="preview" id="live">
+    <h2>Your Landing Page</h2>
+    <p>Your description appears here.</p>
+   </div>
+   <p id="builderMsg"></p>
   </div>
+ </div>
 
-  <!-- MY PAGES -->
-  <div id="mypages" class="tab hidden">
-    <div class="card">
-      <h3>My Saved Pages</h3>
-      <button class="dark" onclick="loadPages()">REFRESH</button>
-      <div id="pageList">Loading...</div>
-    </div>
+ <div id="mypages" class="tab hidden">
+  <div class="card">
+   <h3>My Saved Pages</h3>
+   <button class="dark" onclick="loadPages()">REFRESH</button>
+   <div id="pageList">Loading...</div>
   </div>
+ </div>
 
-  <!-- ANALYTICS -->
-  <div id="analytics" class="tab hidden">
-    <div class="card">
-      <h3>Page Analytics</h3>
-      <label>Select Page</label>
-      <select id="analyticsPage" onchange="loadAnalytics()">
-        <option value="">Select a page</option>
-      </select>
-      <div id="analyticsBox">Select a page to view statistics.</div>
-    </div>
+ <div id="analytics" class="tab hidden">
+  <div class="card">
+   <h3>Page Analytics</h3>
+   <label>Select Page</label>
+   <select id="analyticsPage" onchange="loadAnalytics()">
+    <option value="">Select a page</option>
+   </select>
+   <div id="analyticsBox">Select a page to view statistics.</div>
   </div>
+ </div>
 
-  <!-- SETTINGS -->
-  <div id="settings" class="tab hidden">
-    <div class="card">
-      <h3>Account Settings</h3>
-      <p id="accountEmail"></p>
-      <p id="accountRole"></p>
-      <p class="muted">Your account is managed securely by the server.</p>
-    </div>
+ <div id="settings" class="tab hidden">
+  <div class="card">
+   <h3>Account Settings</h3>
+   <p id="accountEmail"></p>
+   <p id="accountRole"></p>
   </div>
+ </div>
 
-  <!-- ADMIN -->
-  <div id="admin" class="tab hidden">
-    <div class="card">
-      <h3>Admin Overview</h3>
-      <button onclick="loadAdmin()">REFRESH ADMIN DATA</button>
-      <div id="adminBox">Admin data not loaded.</div>
-    </div>
+ <div id="admin" class="tab hidden">
+  <div class="card">
+   <h3>Admin Overview</h3>
+   <button onclick="loadAdmin()">REFRESH ADMIN DATA</button>
+   <div id="adminBox">Admin data not loaded.</div>
   </div>
+ </div>
 </section>
 </div>
 
 <footer>© 2026 ADS GROWTH AGENCY PRO</footer>
 
 <script>
-const $ = id => document.getElementById(id);
-const API = '';
+const $=id=>document.getElementById(id);
+const API='';
 
 function message(id,text,type=''){
-  const el=$(id);
-  if(!el)return;
-  el.textContent=text;
-  el.className=type;
+ const el=$(id);
+ if(el){el.textContent=text;el.className=type;}
 }
-
-function token(){
-  return localStorage.getItem('ag_token') || '';
-}
-
+function token(){return localStorage.getItem('ag_token')||'';}
 function current(){
-  try{
-    return JSON.parse(localStorage.getItem('ag_current') || 'null');
-  }catch(e){return null;}
+ try{return JSON.parse(localStorage.getItem('ag_current')||'null');}
+ catch(e){return null;}
 }
-
 async function request(path,options={}){
-  const headers={
-    'Content-Type':'application/json',
-    ...(options.headers||{})
-  };
-  if(token())headers.Authorization='Bearer '+token();
-
-  const response=await fetch(API+path,{...options,headers});
-  let data={};
-  try{data=await response.json();}catch(e){}
-  if(!response.ok){
-    throw new Error(data.error || data.message || 'Request failed ('+response.status+')');
-  }
-  return data;
+ const headers={'Content-Type':'application/json',...(options.headers||{})};
+ if(token())headers.Authorization='Bearer '+token();
+ const response=await fetch(API+path,{...options,headers});
+ let data={};
+ try{data=await response.json();}catch(e){}
+ if(!response.ok)throw new Error(data.error||data.message||'Request failed ('+response.status+')');
+ return data;
 }
-
 function go(id){
-  document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));
-  $(id).classList.add('active');
-  if(id==='dashboard')openDashboard();
+ document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));
+ $(id).classList.add('active');
 }
-
 function tab(id){
-  document.querySelectorAll('.tab').forEach(x=>x.classList.add('hidden'));
-  $(id).classList.remove('hidden');
-  if(id==='mypages')loadPages();
-  if(id==='analytics')fillAnalyticsPages();
-  if(id==='admin')loadAdmin();
+ document.querySelectorAll('.tab').forEach(x=>x.classList.add('hidden'));
+ $(id).classList.remove('hidden');
+ if(id==='mypages')loadPages();
+ if(id==='analytics')fillAnalyticsPages();
+ if(id==='admin')loadAdmin();
 }
-
+function safe(value){
+ return String(value??'').replace(/[&<>"']/g,c=>({
+ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+ }[c]));
+}
 function getArray(data,key){
-  if(Array.isArray(data))return data;
-  if(data && Array.isArray(data[key]))return data[key];
-  return [];
+ if(Array.isArray(data))return data;
+ return data&&Array.isArray(data[key])?data[key]:[];
+}
+function choose(name){
+ alert(name+' selected. Payment gateway is not connected yet.');
 }
 
 /* REGISTER */
 async function register(){
-  const name=$('rname').value.trim();
-  const email=$('remail').value.trim();
-  const password=$('rpass').value;
-
-  if(!name || !email || password.length<8){
-    message('registerMsg','Please fill all fields. Password must be at least 8 characters.','error');
-    return;
+ const name=$('rname').value.trim();
+ const email=$('remail').value.trim();
+ const password=$('rpass').value;
+ if(!name||!email||password.length<8){
+  message('registerMsg','Fill all fields. Password must be at least 8 characters.','error');
+  return;
+ }
+ const btn=$('registerBtn');btn.disabled=true;
+ message('registerMsg','Creating account...');
+ try{
+  const data=await request('/api/register',{
+   method:'POST',body:JSON.stringify({name,email,password})
+  });
+  if(data.token)localStorage.setItem('ag_token',data.token);
+  if(data.user){
+   localStorage.setItem('ag_current',JSON.stringify({
+    n:data.user.name||name,e:data.user.email||email,
+    role:data.user.role||'user'
+   }));
+   await openDashboard();return;
   }
-
-  const btn=$('registerBtn');
-  btn.disabled=true;
-  message('registerMsg','Creating your account...');
-
-  try{
-    const data=await request('/api/register',{
-      method:'POST',
-      body:JSON.stringify({name,email,password})
-    });
-
-    if(data.token)localStorage.setItem('ag_token',data.token);
-
-    if(data.user){
-      localStorage.setItem('ag_current',JSON.stringify({
-        n:data.user.name || name,
-        e:data.user.email || email,
-        role:data.user.role || 'user'
-      }));
-      go('dashboard');
-      return;
-    }
-
-    message('registerMsg','Account created. Please login now.','success');
-    go('login');
-  }catch(err){
-    message('registerMsg',err.message,'error');
-  }finally{
-    btn.disabled=false;
-  }
+  message('registerMsg','Account created. Please login.','success');
+  go('login');
+ }catch(err){message('registerMsg',err.message,'error');}
+ finally{btn.disabled=false;}
 }
 
 /* LOGIN */
 async function login(){
-  const email=$('lemail').value.trim();
-  const password=$('lpass').value;
-
-  if(!email || !password){
-    message('loginMsg','Enter your email and password.','error');
-    return;
+ const email=$('lemail').value.trim();
+ const password=$('lpass').value;
+ if(!email||!password){
+  message('loginMsg','Enter email and password.','error');return;
+ }
+ const btn=$('loginBtn');btn.disabled=true;
+ message('loginMsg','Logging in...');
+ try{
+  const data=await request('/api/login',{
+   method:'POST',body:JSON.stringify({email,password})
+  });
+  if(!data.token)throw new Error('Server did not return a login token.');
+  localStorage.setItem('ag_token',data.token);
+  if(data.user){
+   localStorage.setItem('ag_current',JSON.stringify({
+    n:data.user.name||'User',e:data.user.email||email,
+    role:data.user.role||'user'
+   }));
   }
-
-  const btn=$('loginBtn');
-  btn.disabled=true;
-  message('loginMsg','Logging in...');
-
-  try{
-    const data=await request('/api/login',{
-      method:'POST',
-      body:JSON.stringify({email,password})
-    });
-
-    if(!data.token)throw new Error('Server did not return a login token.');
-    localStorage.setItem('ag_token',data.token);
-
-    if(data.user){
-      localStorage.setItem('ag_current',JSON.stringify({
-        n:data.user.name || 'User',
-        e:data.user.email || email,
-        role:data.user.role || 'user'
-      }));
-    }
-    await openDashboard();
-  }catch(err){
-    message('loginMsg',err.message,'error');
-  }finally{
-    btn.disabled=false;
-  }
+  await openDashboard();
+ }catch(err){message('loginMsg',err.message,'error');}
+ finally{btn.disabled=false;}
 }
-
-/* LOGOUT */
 function logout(){
-  localStorage.removeItem('ag_token');
-  localStorage.removeItem('ag_current');
-  go('home');
+ localStorage.removeItem('ag_token');
+ localStorage.removeItem('ag_current');
+ go('home');
 }
 
-/* CHECK USER */
+/* DASHBOARD */
 async function openDashboard(){
-  if(!token()){
-    go('login');
-    return;
-  }
-
-  try{
-    const data=await request('/api/me');
-    const user=data.user || data;
-
-    localStorage.setItem('ag_current',JSON.stringify({
-      n:user.name || 'User',
-      e:user.email || '',
-      role:user.role || 'user'
-    }));
-
-    const u=current();
-    $('welcome').textContent='Welcome, '+u.n;
-    $('accountEmail').textContent='Email: '+u.e;
-    $('accountRole').textContent='Role: '+u.role;
-    $('userRole').textContent=u.role;
-    $('adminTabBtn').classList.toggle('hidden',u.role!=='admin');
-
-    goDashboardOnly();
-    await loadPages();
-  }catch(err){
-    localStorage.removeItem('ag_token');
-    localStorage.removeItem('ag_current');
-    message('loginMsg','Session expired or login failed. Please login again.','error');
-    go('login');
-  }
-}
-
-function goDashboardOnly(){
-  document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));
-  $('dashboard').classList.add('active');
+ if(!token()){go('login');return;}
+ try{
+  const data=await request('/api/me');
+  const user=data.user||data;
+  localStorage.setItem('ag_current',JSON.stringify({
+   n:user.name||'User',e:user.email||'',
+   role:user.role||'user'
+  }));
+  const u=current();
+  $('welcome').textContent='Welcome, '+u.n;
+  $('accountEmail').textContent='Email: '+u.e;
+  $('accountRole').textContent='Role: '+u.role;
+  $('userRole').textContent=u.role;
+  $('adminTabBtn').classList.toggle('hidden',u.role!=='admin');
+  go('dashboard');
   document.querySelectorAll('.tab').forEach(x=>x.classList.add('hidden'));
   $('overview').classList.remove('hidden');
+  await loadPages();
+ }catch(err){
+  localStorage.removeItem('ag_token');
+  localStorage.removeItem('ag_current');
+  message('loginMsg','Session expired. Please login again.','error');
+  go('login');
+ }
 }
 
-/* PAGE HELPERS */
-function safe(value){
-  return String(value ?? '').replace(/[&<>"']/g,c=>({
-    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
-  }[c]));
-}
-
-function pageTitle(p){return p.title || 'Untitled';}
-function pageId(p){return p.id;}
-
+/* LIVE DESIGN PREVIEW */
 function makePreview(){
-  const title=$('ptitle').value || 'Your Page Title';
-  const headline=$('pheadline').value || title;
-  const desc=$('pdesc').value || 'Your description';
-  const button=$('pbutton').value || 'Contact Us';
-  const image=$('pimage').value.trim();
+ const title=$('ptitle').value||'Your Page Title';
+ const headline=$('pheadline').value||title;
+ const desc=$('pdesc').value||'Your description';
+ const button=$('pbutton').value||'Contact Us';
+ const image=$('pimage').value.trim();
+ const bg=$('bgColor').value;
+ const hc=$('headingColor').value;
+ const bc=$('buttonColor').value;
+ const size=Number($('imageSize').value)||100;
 
-  $('live').innerHTML=
-    (image && /^https?:\/\//i.test(image)
-      ? '<img class="preview-image" src="'+safe(image)+'" alt="Landing page image">'
-      : '')+
-    '<h2>'+safe(headline)+'</h2>'+
-    '<p>'+safe(desc)+'</p>'+
-    '<button>'+safe(button)+'</button>';
+ let html='';
+ if(image&&/^https?:\/\//i.test(image)){
+  html+='<img src="'+safe(image)+'" alt="Page image" style="width:'+size+'px;height:'+size+'px;object-fit:contain;display:block;margin:10px auto">';
+ }
+ html+='<h2 style="color:'+hc+'">'+safe(headline)+'</h2>';
+ html+='<p>'+safe(desc)+'</p>';
+ html+='<button type="button" style="background:'+bc+';color:#07130d">'+safe(button)+'</button>';
+
+ $('live').style.background=bg;
+ $('live').innerHTML=html;
 }
 
 /* SAVE PAGE */
 async function savePage(){
-  if(!token())return go('login');
+ if(!token()){go('login');return;}
+ const title=$('ptitle').value.trim();
+ if(!title){message('builderMsg','Please enter a page title.','error');return;}
 
-  const title=$('ptitle').value.trim();
-  if(!title){
-    message('builderMsg','Please enter a page title.','error');
-    return;
-  }
+ const payload={
+  title,
+  headline:$('pheadline').value.trim(),
+  description:$('pdesc').value.trim(),
+  image_url:$('pimage').value.trim(),
+  button_text:$('pbutton').value.trim()||'Contact Us',
+  button_url:$('plink').value.trim(),
+  whatsapp:$('pwa').value.trim(),
+  pixel_id:$('ppixel').value.trim(),
+  background_color:$('bgColor').value,
+  heading_color:$('headingColor').value,
+  button_color:$('buttonColor').value,
+  image_size:Number($('imageSize').value)
+ };
 
-  const payload={
-    title:title,
-    headline:$('pheadline').value.trim(),
-    description:$('pdesc').value.trim(),
-    image_url:$('pimage').value.trim(),
-    button_text:$('pbutton').value.trim() || 'Contact Us',
-    button_url:$('plink').value.trim(),
-    whatsapp:$('pwa').value.trim(),
-    pixel_id:$('ppixel').value.trim()
-  };
-
-  const btn=$('savePageBtn');
-  btn.disabled=true;
-  message('builderMsg','Saving page...');
-
-  try{
-    await request('/api/pages',{
-      method:'POST',
-      body:JSON.stringify(payload)
-    });
-    message('builderMsg','Page saved successfully in database.','success');
-    await loadPages();
-  }catch(err){
-    message('builderMsg',err.message,'error');
-  }finally{
-    btn.disabled=false;
-  }
+ const btn=$('savePageBtn');btn.disabled=true;
+ message('builderMsg','Saving page...');
+ try{
+  await request('/api/pages',{
+   method:'POST',body:JSON.stringify(payload)
+  });
+  message('builderMsg','Page saved. Refresh My Pages to see it.','success');
+  await loadPages();
+ }catch(err){message('builderMsg',err.message,'error');}
+ finally{btn.disabled=false;}
 }
 
-/* LOAD PAGES */
+/* MY PAGES */
 async function loadPages(){
-  if(!token())return;
-
-  $('pageList').textContent='Loading pages...';
-
-  try{
-    const data=await request('/api/pages');
-    const list=getArray(data,'pages');
-    $('totalPages').textContent=list.length;
-
-    if(!list.length){
-      $('pageList').textContent='No pages created yet.';
-      fillAnalyticsPages(list);
-      return;
-    }
-
-    $('pageList').innerHTML=list.map(p=>{
-      const id=pageId(p);
-      const published=p.published ? 'Published' : 'Not published';
-      const url=p.slug ? '/p/'+encodeURIComponent(p.slug) : '';
-
-      return '<div class="card">'+
-        '<h3>'+safe(pageTitle(p))+'</h3>'+
-        '<p class="muted">Status: '+published+'</p>'+
-        (url ? '<p><a target="_blank" href="'+safe(url)+'">Open Published Page</a></p>' : '')+
-        '<button onclick="publishPage('+Number(id)+')">PUBLISH</button>'+
-        '<button class="dark" onclick="deletePage('+Number(id)+')">DELETE</button>'+
-        '</div>';
-    }).join('');
-
-    fillAnalyticsPages(list);
-  }catch(err){
-    $('pageList').textContent=err.message;
+ if(!token())return;
+ $('pageList').textContent='Loading pages...';
+ try{
+  const data=await request('/api/pages');
+  const list=getArray(data,'pages');
+  $('totalPages').textContent=list.length;
+  if(!list.length){
+   $('pageList').textContent='No pages created yet.';
+   fillAnalyticsPages(list);return;
   }
+  $('pageList').innerHTML=list.map(p=>{
+   const id=Number(p.id);
+   const url=p.slug?location.origin+'/p/'+encodeURIComponent(p.slug):'';
+   return '<div class="card">'+
+    '<h3>'+safe(p.title||'Untitled')+'</h3>'+
+    '<p class="muted">Status: '+(p.published?'Published':'Not published')+'</p>'+
+    (url?'<p><a target="_blank" rel="noopener" href="'+safe(url)+'">'+safe(url)+'</a></p>'+
+     '<button class="dark" onclick="copyLink('+JSON.stringify(url)+')">COPY LINK</button>':'')+
+    '<button onclick="publishPage('+id+')">PUBLISH</button>'+
+    '<button class="dark" onclick="deletePage('+id+')">DELETE</button>'+
+    '</div>';
+  }).join('');
+  fillAnalyticsPages(list);
+ }catch(err){$('pageList').textContent=err.message;}
 }
-
-/* PUBLISH PAGE */
+async function copyLink(url){
+ try{
+  await navigator.clipboard.writeText(url);
+  alert('Landing Page link copied!');
+ }catch(e){
+  prompt('Copy your Landing Page link:',url);
+ }
+}
 async function publishPage(id){
-  if(!confirm('Publish this page?'))return;
-  try{
-    const data=await request('/api/pages/'+id+'/publish',{method:'POST'});
-    alert(data.message || 'Publish request completed.');
-    await loadPages();
-  }catch(err){
-    alert(err.message);
-  }
+ if(!confirm('Publish this page?'))return;
+ try{
+  const data=await request('/api/pages/'+id+'/publish',{method:'POST'});
+  alert(data.message||'Publish request completed.');
+  await loadPages();
+ }catch(err){alert(err.message);}
 }
-
-/* DELETE PAGE */
 async function deletePage(id){
-  if(!confirm('Are you sure you want to delete this page?'))return;
-  try{
-    await request('/api/pages/'+id,{method:'DELETE'});
-    alert('Page deleted.');
-    await loadPages();
-  }catch(err){
-    alert(err.message);
-  }
+ if(!confirm('Delete this page?'))return;
+ try{
+  await request('/api/pages/'+id,{method:'DELETE'});
+  alert('Page deleted.');
+  await loadPages();
+ }catch(err){alert(err.message);}
 }
 
 /* ANALYTICS */
 async function fillAnalyticsPages(existing){
-  try{
-    const list=existing || getArray(await request('/api/pages'),'pages');
-    $('analyticsPage').innerHTML=
-      '<option value="">Select a page</option>'+
-      list.map(p=>'<option value="'+Number(p.id)+'">'+safe(pageTitle(p))+'</option>').join('');
-  }catch(err){
-    $('analyticsBox').textContent=err.message;
-  }
+ try{
+  const list=existing||getArray(await request('/api/pages'),'pages');
+  $('analyticsPage').innerHTML='<option value="">Select a page</option>'+
+   list.map(p=>'<option value="'+Number(p.id)+'">'+safe(p.title||'Untitled')+'</option>').join('');
+ }catch(err){$('analyticsBox').textContent=err.message;}
 }
-
 async function loadAnalytics(){
-  const id=$('analyticsPage').value;
-  if(!id){
-    $('analyticsBox').textContent='Select a page.';
-    return;
-  }
-
-  $('analyticsBox').textContent='Loading analytics...';
-
-  try{
-    const data=await request('/api/pages/'+id+'/analytics');
-    $('analyticsBox').innerHTML=
-      '<div class="grid">'+
-      '<div class="card"><small>Visits</small><div class="stat">'+safe(data.visits ?? 0)+'</div></div>'+
-      '<div class="card"><small>Clicks</small><div class="stat">'+safe(data.clicks ?? 0)+'</div></div>'+
-      '</div>';
-  }catch(err){
-    $('analyticsBox').textContent=err.message;
-  }
+ const id=$('analyticsPage').value;
+ if(!id){$('analyticsBox').textContent='Select a page.';return;}
+ $('analyticsBox').textContent='Loading...';
+ try{
+  const data=await request('/api/pages/'+id+'/analytics');
+  $('analyticsBox').innerHTML=
+   '<div class="grid">'+
+   '<div class="card"><small>Visits</small><div class="stat">'+safe(data.visits??0)+'</div></div>'+
+   '<div class="card"><small>Clicks</small><div class="stat">'+safe(data.clicks??0)+'</div></div>'+
+   '</div>';
+ }catch(err){$('analyticsBox').textContent=err.message;}
 }
 
 /* ADMIN */
 async function loadAdmin(){
-  const u=current();
-
-  if(!u || u.role!=='admin'){
-    $('adminBox').textContent='Admin access required.';
-    return;
-  }
-
-  $('adminBox').textContent='Loading admin overview...';
-
-  try{
-    const data=await request('/api/admin/overview');
-    $('adminBox').innerHTML=
-      '<div class="grid">'+
-      '<div class="card"><small>Users</small><div class="stat">'+safe(data.users ?? 0)+'</div></div>'+
-      '<div class="card"><small>Pages</small><div class="stat">'+safe(data.pages ?? 0)+'</div></div>'+
-      '<div class="card"><small>Leads</small><div class="stat">'+safe(data.leads ?? 0)+'</div></div>'+
-      '</div>';
-  }catch(err){
-    $('adminBox').textContent=err.message;
-  }
+ const u=current();
+ if(!u||u.role!=='admin'){
+  $('adminBox').textContent='Admin access required.';return;
+ }
+ $('adminBox').textContent='Loading...';
+ try{
+  const data=await request('/api/admin/overview');
+  $('adminBox').innerHTML=
+   '<div class="grid">'+
+   '<div class="card"><small>Users</small><div class="stat">'+safe(data.users??0)+'</div></div>'+
+   '<div class="card"><small>Pages</small><div class="stat">'+safe(data.pages??0)+'</div></div>'+
+   '<div class="card"><small>Leads</small><div class="stat">'+safe(data.leads??0)+'</div></div>'+
+   '</div>';
+ }catch(err){$('adminBox').textContent=err.message;}
 }
 
-/* PLAN */
-function choose(name){
-  alert(name+' selected. USDT payment is not connected yet. No payment has been taken.');
-}
-
-/* INITIAL CHECK */
+/* RESTORE SESSION */
 (async function start(){
-  if(token()){
-    await openDashboard();
-  }
+ if(token())await openDashboard();
 })();
 </script>
 </body>
-        </html>
-      
+  </html>
+  
