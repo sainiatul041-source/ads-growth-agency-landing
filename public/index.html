@@ -2,659 +2,363 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ADS GROWTH AGENCY PRO</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ADS GROWTH AGENCY</title>
 <style>
 *{box-sizing:border-box}
-body{margin:0;background:#08111f;color:#fff;font-family:Arial,sans-serif}
-header{padding:18px;background:#101d32;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px}
-.logo{font-size:22px;font-weight:bold;color:#22c55e}
-nav{display:flex;gap:8px;flex-wrap:wrap}
-button,.btn{border:0;border-radius:8px;padding:11px 16px;background:#1686d9;color:white;font-weight:bold;cursor:pointer}
-button:hover,.btn:hover{opacity:.85}
-.secondary{background:#26364d}
-.danger{background:#b83232}
-.green{background:#16a34a}
-main{max-width:1050px;margin:auto;padding:20px}
-section{display:none}
-section.active{display:block}
-.hero{text-align:center;padding:65px 15px}
-.hero h1{font-size:clamp(32px,6vw,55px);color:#22c55e}
-.hero p{font-size:18px;color:#cbd5e1;line-height:1.6}
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:15px}
-.card{background:#142238;padding:20px;border-radius:14px;border:1px solid #263b59;margin-bottom:15px}
-.card h3{color:#22c55e;margin-top:0}
-.price{font-size:30px;font-weight:bold;margin:15px 0}
-input,textarea,select{width:100%;padding:13px;margin:7px 0 14px;border-radius:8px;border:1px solid #40516b;background:#0b1729;color:#fff;font-size:15px}
-textarea{min-height:90px;resize:vertical}
-label{font-size:14px;color:#cbd5e1}
-.small{font-size:13px;color:#a9bad0;line-height:1.5}
-.status{padding:6px 10px;border-radius:20px;background:#394b60;font-size:12px}
-.pending{background:#8a6415}
-.approved{background:#176b3c}
-.rejected{background:#8b3030}
-.address{overflow-wrap:anywhere;background:#091526;padding:12px;border-radius:8px;font-size:13px}
-.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
-.row>*{flex:1}
-hr{border:0;border-top:1px solid #30425a;margin:18px 0}
-.notice{padding:12px;border-radius:8px;background:#26364d;margin:12px 0;line-height:1.5}
-#message{position:sticky;top:0;z-index:5;padding:10px;text-align:center}
+body{margin:0;background:#f1f5f9;color:#172033;font-family:Arial,sans-serif}
+header{background:#0f172a;color:white;padding:18px}
+nav{max-width:950px;margin:auto;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.logo{font-size:22px;font-weight:bold;color:#4ade80}
+main{max-width:950px;margin:22px auto;padding:0 12px}
+.box{background:white;border-radius:14px;padding:20px;margin-bottom:15px;box-shadow:0 5px 20px #0000000c}
+.hero{text-align:center;background:#0f172a;color:white;padding:45px 20px;border-radius:16px}
+.hero p{color:#cbd5e1;line-height:1.6}
+h1{font-size:clamp(28px,6vw,44px)}
+button{border:0;border-radius:9px;padding:12px 17px;background:#16a34a;color:white;font-weight:bold;cursor:pointer}
+button:disabled{opacity:.5}
+.secondary{background:#e2e8f0;color:#172033}
+.danger{background:#dc2626}
+input,textarea{width:100%;padding:12px;margin:7px 0 14px;border:1px solid #cbd5e1;border-radius:8px;font-size:15px}
+label{font-weight:bold;font-size:13px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
+.price{font-size:30px;font-weight:bold}
+.muted{color:#64748b;line-height:1.5}
 .hidden{display:none!important}
-footer{text-align:center;color:#8193aa;padding:30px}
-a{color:#7dc7ff}
-@media(max-width:500px){header{align-items:flex-start}.hero{padding:35px 5px}main{padding:13px}}
+.row,.actions{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.item{border:1px solid #e2e8f0;padding:14px;border-radius:10px;margin:10px 0}
+.notice{padding:12px;border-radius:9px;background:#eff6ff;color:#1e40af;margin-bottom:14px}
+.error{background:#fee2e2;color:#991b1b}
+.success{background:#dcfce7;color:#166534}
+.tabs{display:flex;gap:7px;flex-wrap:wrap;margin:15px 0}
+footer{text-align:center;color:#64748b;padding:25px}
 </style>
 </head>
 <body>
-
 <header>
-  <div class="logo">ADS GROWTH 📈</div>
-  <nav>
-    <button class="secondary" onclick="showSection('home')">Home</button>
-    <button class="secondary" onclick="showSection('plans')">Plans</button>
-    <button class="secondary" onclick="showSection('login')">Login</button>
-    <button class="secondary" onclick="showSection('register')">Register</button>
-    <button class="secondary hidden" id="dashboardNav" onclick="showSection('dashboard')">Dashboard</button>
-    <button class="danger hidden" id="logoutNav" onclick="logout()">Logout</button>
-  </nav>
+<nav>
+<div class="logo">ADS GROWTH 📈</div>
+<div class="actions">
+<button class="secondary" id="homeBtn">Home</button>
+<button id="loginBtn">Login</button>
+<button id="registerBtn">Register</button>
+<button class="secondary hidden" id="logoutBtn">Logout</button>
+</div>
+</nav>
 </header>
 
-<div id="message"></div>
-
 <main>
+<div id="message" class="notice hidden"></div>
 
-<!-- HOME -->
-<section id="home" class="active">
-  <div class="hero">
-    <h1>ADS GROWTH AGENCY PRO</h1>
-    <p>Create and manage your landing pages with a simple dashboard.</p>
-    <button onclick="showSection('plans')">View Plans</button>
-    <button class="secondary" onclick="showSection('register')">Create Account</button>
-  </div>
-  <div class="grid">
-    <div class="card"><h3>Landing Page Builder</h3><p>Create your own promotional landing pages.</p></div>
-    <div class="card"><h3>Page Management</h3><p>Manage and publish your pages.</p></div>
-    <div class="card"><h3>Analytics</h3><p>View recorded page activity.</p></div>
-  </div>
+<section id="home">
+<div class="hero">
+<h1>Grow Your Business Online</h1>
+<p>Create professional landing pages, collect customer enquiries and grow your business with ADS GROWTH.</p>
+<button id="startBtn">Get Started</button>
+</div>
+
+<div class="box">
+<h2>Choose Your Plan</h2>
+<div class="grid">
+<div class="item">
+<h3>Basic</h3><div class="price">$5</div>
+<p class="muted">30 Days · 1 Page</p>
+<button class="planBtn" data-plan="basic">Choose Plan</button>
+</div>
+<div class="item">
+<h3>Prime & Pro</h3><div class="price">$12</div>
+<p class="muted">30 Days · 1 Page</p>
+<button class="planBtn" data-plan="prime_pro">Choose Plan</button>
+</div>
+<div class="item">
+<h3>Basic & Prime</h3><div class="price">$15</div>
+<p class="muted">30 Days · 2 Pages</p>
+<button class="planBtn" data-plan="basic_prime">Choose Plan</button>
+</div>
+</div>
+<p class="muted">Payment requests are manually verified by the administrator.</p>
+</div>
 </section>
 
-<!-- PLANS -->
-<section id="plans">
-  <h2>Choose Your Plan</h2>
-  <p class="small">Payments are manually verified before a subscription is activated.</p>
-  <div class="grid">
-    <div class="card">
-      <h3>Basic</h3>
-      <div class="price">5 USDT</div>
-      <p>30 days subscription</p>
-      <button onclick="choosePlan('basic')">Select Plan</button>
-    </div>
-    <div class="card">
-      <h3>Prime & Pro</h3>
-      <div class="price">12 USDT</div>
-      <p>30 days subscription</p>
-      <button onclick="choosePlan('prime_pro')">Select Plan</button>
-    </div>
-    <div class="card">
-      <h3>Basic & Prime</h3>
-      <div class="price">15 USDT</div>
-      <p>30 days subscription</p>
-      <button onclick="choosePlan('basic_prime')">Select Plan</button>
-    </div>
-  </div>
+<section id="auth" class="box hidden">
+<h2 id="authTitle">Login</h2>
+<form id="authForm">
+<div id="nameBox" class="hidden">
+<label>Name</label>
+<input name="name" placeholder="Your name">
+</div>
+<label>Email</label>
+<input name="email" type="email" required placeholder="Email address">
+<label>Password</label>
+<input name="password" type="password" minlength="8" required placeholder="Password">
+<button id="authSubmit">Login</button>
+</form>
+<p id="switchText" class="muted"></p>
 </section>
 
-<!-- REGISTER -->
-<section id="register">
-  <div class="card">
-    <h2>Create Account</h2>
-    <form onsubmit="registerUser(event)">
-      <label>Your Name</label>
-      <input id="regName" required maxlength="80" placeholder="Enter your name">
-      <label>Email</label>
-      <input id="regEmail" type="email" required placeholder="Enter email">
-      <label>Password (minimum 8 characters)</label>
-      <input id="regPassword" type="password" minlength="8" required placeholder="Create password">
-      <button type="submit">Register</button>
-    </form>
-    <p>Already registered? <a href="#" onclick="showSection('login')">Login here</a></p>
-  </div>
+<section id="dashboard" class="hidden">
+<div class="box">
+<h2 id="welcome">Dashboard</h2>
+<p id="accountInfo" class="muted"></p>
+<div class="tabs">
+<button data-tab="builder">Page Builder</button>
+<button class="secondary" data-tab="plans">Plans & Payment</button>
+<button class="secondary" data-tab="pages">My Pages</button>
+<button class="secondary" data-tab="payments">Payment History</button>
+<button class="secondary hidden" id="adminTab">Admin</button>
+</div>
+</div>
+
+<div id="builder" class="box">
+<h2>Landing Page Builder</h2>
+<p id="limitInfo" class="muted"></p>
+<form id="pageForm">
+<label>Page Title</label>
+<input name="title" required placeholder="My Business">
+<label>Headline</label>
+<input name="headline" required placeholder="Welcome to our business">
+<label>Description</label>
+<textarea name="description" rows="3"></textarea>
+<label>Image URL</label>
+<input name="image_url" type="url" placeholder="https://example.com/image.jpg">
+<label>Button Text</label>
+<input name="button_text" value="Contact Us">
+<label>Button URL</label>
+<input name="button_url" type="url" placeholder="https://example.com">
+<label>WhatsApp Number with country code</label>
+<input name="whatsapp" placeholder="919876543210">
+<label>Meta Pixel ID</label>
+<input name="pixel_id" placeholder="Pixel ID">
+<label>Theme Colour</label>
+<input name="primary_color" type="color" value="#16a34a">
+<button type="submit" id="createBtn">Create Landing Page</button>
+</form>
+</div>
+
+<div id="plans" class="box hidden">
+<h2>Plans & Payment</h2>
+<div id="planChoices" class="grid">
+<div class="item"><h3>Basic $5</h3><button class="planBtn" data-plan="basic">Select</button></div>
+<div class="item"><h3>Prime & Pro $12</h3><button class="planBtn" data-plan="prime_pro">Select</button></div>
+<div class="item"><h3>Basic & Prime $15</h3><button class="planBtn" data-plan="basic_prime">Select</button></div>
+</div>
+<div id="paymentBox" class="item hidden">
+<h3 id="selectedPlan"></h3>
+<p class="muted">Only send USDT TRC20 after verifying the receiving address with the administrator.</p>
+<label>USDT TRC20 Address</label>
+<input id="wallet" readonly>
+<button type="button" class="secondary" id="copyWallet">Copy Address</button>
+<form id="paymentForm">
+<label>Transaction ID (TXID)</label>
+<input name="txid" required minlength="20" placeholder="Paste TXID">
+<button type="submit">Submit Payment Request</button>
+</form>
+</div>
+</div>
+
+<div id="pages" class="box hidden">
+<h2>My Pages</h2><div id="pagesList"></div>
+</div>
+
+<div id="payments" class="box hidden">
+<h2>Payment History</h2><div id="paymentsList"></div>
+</div>
+
+<div id="admin" class="box hidden">
+<h2>Admin Panel</h2>
+<div id="adminStats" class="grid"></div>
+<h3>Payment Requests</h3>
+<div id="adminPayments"></div>
+<h3>Customer Leads</h3>
+<div id="adminLeads"></div>
+</div>
 </section>
-
-<!-- LOGIN -->
-<section id="login">
-  <div class="card">
-    <h2>Login</h2>
-    <form onsubmit="loginUser(event)">
-      <label>Email</label>
-      <input id="loginEmail" type="email" required placeholder="Enter email">
-      <label>Password</label>
-      <input id="loginPassword" type="password" required placeholder="Enter password">
-      <button type="submit">Login</button>
-    </form>
-  </div>
-</section>
-
-<!-- DASHBOARD -->
-<section id="dashboard">
-  <h2>My Dashboard</h2>
-  <div class="card">
-    <h3>Account Details</h3>
-    <div id="accountInfo">Loading...</div>
-  </div>
-
-  <div class="grid">
-    <div class="card">
-      <h3>My Pages</h3>
-      <p id="pageCount">0 pages</p>
-      <button onclick="loadPages()">Refresh Pages</button>
-    </div>
-    <div class="card">
-      <h3>My Payments</h3>
-      <p>Check your payment requests and status.</p>
-      <button onclick="loadMyPayments()">Payment History</button>
-    </div>
-  </div>
-
-  <div class="card">
-    <h3>Buy Subscription</h3>
-    <p>Select a plan and submit your TRC20 transaction ID.</p>
-    <button onclick="showSection('plans')">View Plans</button>
-  </div>
-
-  <!-- PAYMENT -->
-  <div class="card" id="paymentBox">
-    <h2>USDT Payment – TRC20</h2>
-    <p class="small">Selected plan: <strong id="selectedPlan">None</strong></p>
-    <p class="small">Amount: <strong id="selectedAmount">0 USDT</strong></p>
-    <p><strong>Network: TRON (TRC20)</strong></p>
-    <p><strong>Token: USDT</strong></p>
-    <div class="notice">
-      Only send USDT using the TRC20 network. Sending through another network may result in permanent loss.
-    </div>
-    <label>Official receiving address</label>
-    <div class="address" id="walletAddress">Loading address...</div>
-    <button class="secondary" onclick="copyWallet()">Copy Address</button>
-    <hr>
-    <form onsubmit="submitPayment(event)">
-      <label>Transaction ID (TXID)</label>
-      <input id="txHash" required minlength="64" maxlength="64" placeholder="Paste your 64-character transaction hash">
-      <button type="submit">Submit Payment for Verification</button>
-    </form>
-    <p class="small">Submitting a TXID does not activate your plan. The admin must verify the transaction first.</p>
-  </div>
-
-  <!-- PAYMENT HISTORY -->
-  <div class="card">
-    <h3>Payment History</h3>
-    <div id="myPayments">Click Payment History to load.</div>
-  </div>
-
-  <!-- PAGE BUILDER -->
-  <div class="card">
-    <h2>Landing Page Builder</h2>
-    <p class="small">Your subscription must be active to create a page.</p>
-    <form onsubmit="createPage(event)">
-      <label>Page Title</label>
-      <input id="pageTitle" required placeholder="My Landing Page">
-      <label>Headline</label>
-      <input id="pageHeadline" placeholder="Enter headline">
-      <label>Description</label>
-      <textarea id="pageDescription" placeholder="Write page description"></textarea>
-      <label>Image URL</label>
-      <input id="pageImage" placeholder="https://example.com/image.jpg">
-      <label>Button Text</label>
-      <input id="pageButtonText" value="Join Now">
-      <label>Button Link</label>
-      <input id="pageButtonUrl" placeholder="https://example.com">
-      <label>WhatsApp Number (optional)</label>
-      <input id="pageWhatsapp" placeholder="91XXXXXXXXXX">
-      <label>Meta Pixel ID (optional)</label>
-      <input id="pagePixel" placeholder="Pixel ID">
-      <div class="row">
-        <div><label>Background Colour</label><input id="bgColor" type="color" value="#0f172a"></div>
-        <div><label>Heading Colour</label><input id="headColor" type="color" value="#22c55e"></div>
-        <div><label>Button Colour</label><input id="btnColor" type="color" value="#0088cc"></div>
-      </div>
-      <label>Image Size</label>
-      <select id="imageSize">
-        <option value="small">Small</option>
-        <option value="medium" selected>Medium</option>
-        <option value="large">Large</option>
-      </select>
-      <button type="submit">Create Landing Page</button>
-    </form>
-  </div>
-
-  <!-- MY PAGES -->
-  <div class="card">
-    <h2>My Landing Pages</h2>
-    <button onclick="loadPages()">Refresh</button>
-    <div id="myPages"></div>
-  </div>
-
-  <!-- ADMIN -->
-  <div id="adminPanel" class="hidden">
-    <hr>
-    <h2>Admin Panel</h2>
-    <div class="card">
-      <h3>Website Overview</h3>
-      <div id="adminOverview">Loading...</div>
-      <button onclick="loadAdmin()">Refresh Admin Data</button>
-    </div>
-    <div class="card">
-      <h3>Payment Requests</h3>
-      <p class="small">Check every TXID on a trusted TRON explorer before approving.</p>
-      <div id="adminPayments">Loading...</div>
-    </div>
-  </div>
-</section>
-
 </main>
-
-<footer>ADS GROWTH AGENCY PRO</footer>
+<footer>ADS GROWTH AGENCY © 2026</footer>
 
 <script>
-const API = "";
-let token = localStorage.getItem("ads_token") || "";
-let currentUser = null;
-let plans = {};
-let selectedPlanKey = "";
+const $=s=>document.querySelector(s);
+let token=localStorage.getItem("ads_token")||"";
+let user=null,mode="login",selectedPlan="";
+const planNames={
+ basic:"Basic $5 USDT",
+ prime_pro:"Prime & Pro $12 USDT",
+ basic_prime:"Basic & Prime $15 USDT"
+};
 
-function showMessage(text, error=false) {
-  const box = document.getElementById("message");
-  box.textContent = text;
-  box.style.background = error ? "#8b3030" : "#176b3c";
-  box.style.color = "white";
-  box.style.display = "block";
-  setTimeout(() => { box.style.display = "none"; }, 5000);
+function msg(t,type="notice"){
+ const el=$("#message");
+ el.textContent=t;
+ el.className="notice "+(type==="error"?"error":type==="success"?"success":"");
+ window.scrollTo({top:0,behavior:"smooth"});
+}
+function esc(v){
+ return String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+}
+function view(id){
+ ["home","auth","dashboard"].forEach(x=>$("#"+x).classList.toggle("hidden",x!==id));
+ $("#message").classList.add("hidden");
+}
+async function api(url,options={}){
+ const headers={...(options.headers||{})};
+ if(options.body)headers["Content-Type"]="application/json";
+ if(token)headers.Authorization="Bearer "+token;
+ const r=await fetch(url,{...options,headers});
+ let d={};try{d=await r.json()}catch{}
+ if(!r.ok)throw Error(d.error||"Request failed");
+ return d;
+}
+function openAuth(m){
+ mode=m;
+ $("#authTitle").textContent=m==="login"?"Login":"Create Account";
+ $("#authSubmit").textContent=m==="login"?"Login":"Register";
+ $("#nameBox").classList.toggle("hidden",m!=="register");
+ $("#authForm").elements.name.required=m==="register";
+ $("#switchText").innerHTML=m==="login"
+ ?'New user? <a href="#" id="switchRegister">Create account</a>'
+ :'Already registered? <a href="#" id="switchLogin">Login</a>';
+ view("auth");
+}
+async function dashboard(){
+ try{
+  const d=await api("/api/me");
+  user=d.user;
+  view("dashboard");
+  $("#welcome").textContent="Welcome, "+user.name;
+  $("#accountInfo").textContent=user.email+" | "+(user.role==="admin"?"Administrator":user.subscription_status);
+  $("#limitInfo").textContent="Pages available: "+d.pageCount+" / "+d.pageLimit;
+  $("#adminTab").classList.toggle("hidden",user.role!=="admin");
+  $("#logoutBtn").classList.remove("hidden");
+  await loadPages();
+ }catch(e){
+  token="";localStorage.removeItem("ads_token");
+  openAuth("login");msg(e.message,"error");
+ }
+}
+function tab(name){
+ ["builder","plans","pages","payments","admin"].forEach(x=>$("#"+x).classList.toggle("hidden",x!==name));
+ if(name==="pages")loadPages().catch(e=>msg(e.message,"error"));
+ if(name==="payments")loadPayments().catch(e=>msg(e.message,"error"));
+ if(name==="admin")loadAdmin().catch(e=>msg(e.message,"error"));
+}
+async function loadPages(){
+ const d=await api("/api/pages");
+ if(!d.pages.length){$("#pagesList").innerHTML='<p class="muted">No pages created.</p>';return;}
+ $("#pagesList").innerHTML=d.pages.map(p=>`
+ <div class="item">
+ <b>${esc(p.title)}</b><p class="muted">${p.published?"Published":"Draft"}</p>
+ <div class="actions">
+ <button class="publish" data-id="${p.id}">Publish</button>
+ <button class="copy secondary" data-url="${location.origin}/p/${encodeURIComponent(p.slug)}">Copy Link</button>
+ <button class="delete danger" data-id="${p.id}">Delete</button>
+ </div>
+ ${p.published?`<a target="_blank" href="/p/${encodeURIComponent(p.slug)}">Open Page</a>`:""}
+ </div>`).join("");
+}
+async function loadPayments(){
+ const d=await api("/api/payments");
+ $("#paymentsList").innerHTML=d.payments.length?d.payments.map(p=>`
+ <div class="item"><b>${esc(planNames[p.plan_id]||p.plan_id)}</b> · ${esc(p.amount)} USDT
+ <p>Status: ${esc(p.status)}</p><small>TXID: ${esc(p.txid)}</small></div>`).join(""):'<p>No payments submitted.</p>';
+}
+async function loadAdmin(){
+ const [s,p,l]=await Promise.all([
+ api("/api/admin/stats"),api("/api/admin/payments"),api("/api/admin/leads")
+ ]);
+ $("#adminStats").innerHTML=Object.entries({
+ Users:s.users,Pages:s.pages,Pending:s.pendingPayments,Leads:s.leads
+ }).map(([k,v])=>`<div class="item"><b>${k}</b><div class="price">${v}</div></div>`).join("");
+ $("#adminPayments").innerHTML=p.payments.map(x=>`
+ <div class="item"><b>${esc(x.user_name)} (${esc(x.user_email)})</b>
+ <p>${esc(x.plan_id)} · ${esc(x.amount)} USDT</p>
+ <small>${esc(x.txid)} · ${esc(x.status)}</small>
+ ${x.status==="pending"?`<div class="actions"><button class="review" data-id="${x.id}" data-status="approved">Approve</button><button class="review danger" data-id="${x.id}" data-status="rejected">Reject</button></div>`:""}
+ </div>`).join("")||"No payment requests";
+ $("#adminLeads").innerHTML=l.leads.map(x=>`
+ <div class="item"><b>${esc(x.name)}</b><p>${esc(x.email)} · ${esc(x.phone)}</p><small>${esc(x.message)}</small></div>
+ `).join("")||"No leads yet";
 }
 
-function showSection(id) {
-  if (id === "dashboard" && !token) {
-    showMessage("Please login first.", true);
-    id = "login";
-  }
-  document.querySelectorAll("main section").forEach(s => s.classList.remove("active"));
-  document.getElementById(id).classList.add("active");
-  window.scrollTo(0,0);
-}
-
-async function api(path, options={}) {
-  const headers = { "Content-Type":"application/json", ...(options.headers || {}) };
-  if (token) headers.Authorization = "Bearer " + token;
-
-  const response = await fetch(API + path, {
-    ...options,
-    headers
-  });
-
-  let data = {};
-  try { data = await response.json(); } catch(e) {}
-
-  if (!response.ok) {
-    throw new Error(data.error || "Something went wrong.");
-  }
-  return data;
-}
-
-function updateNavigation() {
-  document.getElementById("dashboardNav").classList.toggle("hidden", !token);
-  document.getElementById("logoutNav").classList.toggle("hidden", !token);
-}
-
-async function loadPlans() {
-  try {
-    const data = await api("/api/plans");
-    plans = {};
-    data.forEach(p => plans[p.key] = p);
-  } catch(e) {
-    showMessage(e.message, true);
-  }
-}
-
-async function loadPaymentInfo() {
-  try {
-    const data = await api("/api/payment-info");
-    document.getElementById("walletAddress").textContent = data.address;
-  } catch(e) {
-    document.getElementById("walletAddress").textContent = "Could not load address.";
-  }
-}
-
-function choosePlan(key) {
-  if (!token) {
-    showMessage("Please login or register first.", true);
-    showSection("login");
-    return;
-  }
-
-  const plan = plans[key];
-  if (!plan) {
-    showMessage("Plan information is loading. Try again.", true);
-    loadPlans();
-    return;
-  }
-
-  selectedPlanKey = key;
-  document.getElementById("selectedPlan").textContent = plan.name;
-  document.getElementById("selectedAmount").textContent = plan.price + " USDT";
-  showSection("dashboard");
-  document.getElementById("paymentBox").scrollIntoView({behavior:"smooth"});
-}
-
-async function copyWallet() {
-  const address = document.getElementById("walletAddress").textContent;
-  try {
-    await navigator.clipboard.writeText(address);
-    showMessage("Wallet address copied.");
-  } catch(e) {
-    showMessage("Please select and copy the address manually.", true);
-  }
-}
-
-async function registerUser(event) {
-  event.preventDefault();
-  try {
-    const data = await api("/api/register", {
-      method:"POST",
-      body:JSON.stringify({
-        name:document.getElementById("regName").value,
-        email:document.getElementById("regEmail").value,
-        password:document.getElementById("regPassword").value
-      })
-    });
-    token = data.token;
-    localStorage.setItem("ads_token", token);
-    showMessage("Account created successfully.");
-    await loadDashboard();
-    showSection("dashboard");
-  } catch(e) {
-    showMessage(e.message, true);
-  }
-}
-
-async function loginUser(event) {
-  event.preventDefault();
-  try {
-    const data = await api("/api/login", {
-      method:"POST",
-      body:JSON.stringify({
-        email:document.getElementById("loginEmail").value,
-        password:document.getElementById("loginPassword").value
-      })
-    });
-    token = data.token;
-    localStorage.setItem("ads_token", token);
-    showMessage("Login successful.");
-    await loadDashboard();
-    showSection("dashboard");
-  } catch(e) {
-    showMessage(e.message, true);
-  }
-}
-
-function logout() {
-  token = "";
-  currentUser = null;
-  localStorage.removeItem("ads_token");
-  updateNavigation();
-  document.getElementById("adminPanel").classList.add("hidden");
-  showMessage("Logged out.");
-  showSection("home");
-}
-
-async function loadDashboard() {
-  if (!token) return;
-  try {
-    const data = await api("/api/me");
-    currentUser = data.user;
-    const expiry = currentUser.subscription_expires
-      ? new Date(currentUser.subscription_expires).toLocaleString()
-      : "No active subscription";
-
-    document.getElementById("accountInfo").innerHTML =
-      "<p><b>Name:</b> " + safe(currentUser.name) + "</p>" +
-      "<p><b>Email:</b> " + safe(currentUser.email) + "</p>" +
-      "<p><b>Role:</b> " + safe(currentUser.role) + "</p>" +
-      "<p><b>Plan:</b> " + safe(currentUser.plan || "None") + "</p>" +
-      "<p><b>Subscription expiry:</b> " + safe(expiry) + "</p>";
-
-    if (currentUser.role === "admin") {
-      document.getElementById("adminPanel").classList.remove("hidden");
-      loadAdmin();
-    } else {
-      document.getElementById("adminPanel").classList.add("hidden");
-    }
-
-    updateNavigation();
-    await loadPages();
-    await loadPaymentInfo();
-  } catch(e) {
-    showMessage(e.message, true);
-    if (e.message.toLowerCase().includes("session")) logout();
-  }
-}
-
-function safe(value) {
-  return String(value == null ? "" : value).replace(/[&<>"']/g, c => ({
-    "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
-  }[c]));
-}
-
-async function submitPayment(event) {
-  event.preventDefault();
-
-  if (!selectedPlanKey) {
-    showMessage("Please select a plan first.", true);
-    showSection("plans");
-    return;
-  }
-
-  const tx = document.getElementById("txHash").value.trim().toLowerCase();
-
-  if (!/^[a-f0-9]{64}$/.test(tx)) {
-    showMessage("Please enter a valid 64-character TXID.", true);
-    return;
-  }
-
-  try {
-    const data = await api("/api/payments", {
-      method:"POST",
-      body:JSON.stringify({
-        plan:selectedPlanKey,
-        tx_hash:tx
-      })
-    });
-    showMessage(data.message);
-    document.getElementById("txHash").value = "";
-    await loadMyPayments();
-  } catch(e) {
-    showMessage(e.message, true);
-  }
-}
-
-async function loadMyPayments() {
-  try {
-    const data = await api("/api/payments");
-    const box = document.getElementById("myPayments");
-
-    if (!data.payments.length) {
-      box.textContent = "No payment requests yet.";
-      return;
-    }
-
-    box.innerHTML = data.payments.map(p => `
-      <div class="notice">
-        <b>${safe(p.plan_key)}</b> — ${safe(p.amount)} USDT<br>
-        Status: <span class="status ${safe(p.status)}">${safe(p.status)}</span><br>
-        TXID: <span class="small">${safe(p.tx_hash)}</span><br>
-        Date: ${safe(new Date(p.created_at).toLocaleString())}
-        ${p.admin_note ? "<br>Note: " + safe(p.admin_note) : ""}
-      </div>
-    `).join("");
-  } catch(e) {
-    document.getElementById("myPayments").textContent = e.message;
-  }
-}
-
-async function createPage(event) {
-  event.preventDefault();
-
-  const body = {
-    title:document.getElementById("pageTitle").value,
-    headline:document.getElementById("pageHeadline").value,
-    description:document.getElementById("pageDescription").value,
-    image_url:document.getElementById("pageImage").value,
-    button_text:document.getElementById("pageButtonText").value,
-    button_url:document.getElementById("pageButtonUrl").value,
-    whatsapp:document.getElementById("pageWhatsapp").value,
-    pixel_id:document.getElementById("pagePixel").value,
-    background_color:document.getElementById("bgColor").value,
-    heading_color:document.getElementById("headColor").value,
-    button_color:document.getElementById("btnColor").value,
-    image_size:document.getElementById("imageSize").value
-  };
-
-  try {
-    const data = await api("/api/pages", {
-      method:"POST",
-      body:JSON.stringify(body)
-    });
-    showMessage(data.message);
-    event.target.reset();
-    await loadPages();
-  } catch(e) {
-    showMessage(e.message, true);
-  }
-}
-
-async function loadPages() {
-  if (!token) return;
-
-  try {
-    const data = await api("/api/pages");
-    document.getElementById("pageCount").textContent = data.pages.length + " pages";
-
-    const box = document.getElementById("myPages");
-
-    if (!data.pages.length) {
-      box.textContent = "No pages created yet.";
-      return;
-    }
-
-    box.innerHTML = data.pages.map(p => `
-      <div class="notice">
-        <b>${safe(p.title)}</b><br>
-        Status: ${p.published ? "Published" : "Draft"}<br>
-        ${p.published ? `<a target="_blank" href="/p/${encodeURIComponent(p.slug)}">Open Page</a>` : ""}
-        <div class="row" style="margin-top:10px">
-          <button class="green" onclick="publishPage(${Number(p.id)})">Publish</button>
-          <button class="danger" onclick="deletePage(${Number(p.id)})">Delete</button>
-        </div>
-      </div>
-    `).join("");
-  } catch(e) {
-    showMessage(e.message, true);
-  }
-}
-
-async function publishPage(id) {
-  try {
-    const data = await api("/api/pages/" + id + "/publish", {
-      method:"POST",
-      body:JSON.stringify({})
-    });
-    showMessage("Published: " + data.url);
-    await loadPages();
-  } catch(e) {
-    showMessage(e.message, true);
-  }
-}
-
-async function deletePage(id) {
-  if (!confirm("Are you sure you want to delete this page?")) return;
-  try {
-    await api("/api/pages/" + id, {method:"DELETE"});
-    showMessage("Page deleted.");
-    await loadPages();
-  } catch(e) {
-    showMessage(e.message, true);
-  }
-}
-
-async function loadAdmin() {
-  if (!currentUser || currentUser.role !== "admin") return;
-
-  try {
-    const data = await api("/api/admin/overview");
-    document.getElementById("adminOverview").innerHTML =
-      "<p>Users: " + safe(data.users) + "</p>" +
-      "<p>Pages: " + safe(data.pages) + "</p>" +
-      "<p>Total payment requests: " + safe(data.payments.total) + "</p>" +
-      "<p>Pending: " + safe(data.payments.pending) +
-      " | Approved: " + safe(data.payments.approved) +
-      " | Rejected: " + safe(data.payments.rejected) + "</p>";
-
-    const paymentData = await api("/api/admin/payments");
-    const box = document.getElementById("adminPayments");
-
-    if (!paymentData.payments.length) {
-      box.textContent = "No payment requests.";
-      return;
-    }
-
-    box.innerHTML = paymentData.payments.map(p => `
-  box.innerHTML = paymentData.payments.map(p => `
-  <div class="notice">
-    <b>Payment #${Number(p.id)}</b><br>
-    User: ${safe(p.name)} (${safe(p.email)})<br>
-    Plan: ${safe(p.plan_key)}<br>
-    Amount: ${safe(p.amount)} USDT<br>
-    TXID: ${safe(p.tx_hash)}<br>
-    Status: ${safe(p.status)}<br>
-    <a target="_blank" href="https://tronscan.org/#/transaction/${encodeURIComponent(p.tx_hash)}">Check on Tronscan</a>
-    ${p.status === "pending" ? `
-      <input id="note-${Number(p.id)}" placeholder="Admin note">
-      <button class="green" onclick="reviewPayment(${Number(p.id)},'approve')">Approve</button>
-      <button class="danger" onclick="reviewPayment(${Number(p.id)},'reject')">Reject</button>
-    ` : ""}
-  </div>
-`).join("");
-`).join("");
-  } catch(e) {
-    document.getElementById("adminOverview").textContent = e.message;
-    document.getElementById("adminPayments").textContent = e.message;
-  }
-}
-
-async function reviewPayment(id, action) {
-  const note = document.getElementById("note-" + id)?.value || "";
-
-  if (!confirm(action === "approve"
-    ? "Have you verified this USDT TRC20 payment?"
-    : "Reject this payment?")) return;
-
-  try {
-    const data = await api("/api/admin/payments/" + id + "/review", {
-      method: "POST",
-      body: JSON.stringify({ action, note })
-    });
-    showMessage(data.message);
-    await loadAdmin();
-  } catch(e) {
-    showMessage(e.message, true);
-  }
-}
-
-async function start() {
-  updateNavigation();
-  await loadPlans();
-  await loadPaymentInfo();
-  if (token) await loadDashboard();
-}
-
-start();
+$("#homeBtn").onclick=()=>view("home");
+$("#loginBtn").onclick=()=>openAuth("login");
+$("#registerBtn").onclick=()=>openAuth("register");
+$("#startBtn").onclick=()=>openAuth("register");
+$("#logoutBtn").onclick=()=>{
+ token="";user=null;localStorage.removeItem("ads_token");
+ $("#logoutBtn").classList.add("hidden");view("home");msg("Logged out.","success");
+};
+$("#authForm").onsubmit=async e=>{
+ e.preventDefault();const b=$("#authSubmit");b.disabled=true;
+ try{
+  const data=Object.fromEntries(new FormData(e.target).entries());
+  const d=await api("/api/auth/"+mode,{method:"POST",body:JSON.stringify(data)});
+  token=d.token;localStorage.setItem("ads_token",token);
+  await dashboard();
+ }catch(err){msg(err.message,"error");}
+ finally{b.disabled=false;}
+};
+document.addEventListener("click",e=>{
+ if(e.target.id==="switchRegister"){e.preventDefault();openAuth("register");}
+ if(e.target.id==="switchLogin"){e.preventDefault();openAuth("login");}
+ if(e.target.dataset.tab)tab(e.target.dataset.tab);
+});
+$("#pageForm").onsubmit=async e=>{
+ e.preventDefault();const b=$("#createBtn");b.disabled=true;
+ try{
+  const data=Object.fromEntries(new FormData(e.target).entries());
+  await api("/api/pages",{method:"POST",body:JSON.stringify(data)});
+  e.target.reset();msg("Landing page created. Now open My Pages and publish it.","success");
+  tab("pages");
+ }catch(err){msg(err.message,"error");}
+ finally{b.disabled=false;}
+};
+document.addEventListener("click",async e=>{
+ const t=e.target;
+ if(t.classList.contains("planBtn")){
+  if(!token){openAuth("register");msg("Register or login first.");return;}
+  selectedPlan=t.dataset.plan;$("#selectedPlan").textContent=planNames[selectedPlan];
+  $("#paymentBox").classList.remove("hidden");tab("plans");
+  try{
+   const d=await api("/api/config");$("#wallet").value=d.paymentAddress||"Address not configured";
+   if(!d.paymentAddress)msg("Admin has not configured the receiving address. Do not send funds.","error");
+  }catch(err){msg(err.message,"error");}
+ }
+ if(t.classList.contains("publish")){
+  try{const d=await api("/api/pages/"+t.dataset.id+"/publish",{method:"POST",body:"{}"});await loadPages();msg("Published: "+d.url,"success");}
+  catch(err){msg(err.message,"error");}
+ }
+ if(t.classList.contains("copy")){
+  try{await navigator.clipboard.writeText(t.dataset.url);msg("Link copied.","success");}
+  catch{msg("Copy not available. Copy the link from your browser.","error");}
+ }
+ if(t.classList.contains("delete")){
+  if(!confirm("Delete this page?"))return;
+  try{await api("/api/pages/"+t.dataset.id,{method:"DELETE"});await loadPages();msg("Page deleted.","success");}
+  catch(err){msg(err.message,"error");}
+ }
+ if(t.classList.contains("review")){
+  const note=prompt("Admin note (optional)")||"";
+  try{await api("/api/admin/payments/"+t.dataset.id+"/review",{method:"POST",body:JSON.stringify({status:t.dataset.status,admin_note:note})});await loadAdmin();msg("Payment reviewed.","success");}
+  catch(err){msg(err.message,"error");}
+ }
+});
+$("#paymentForm").onsubmit=async e=>{
+ e.preventDefault();const b=e.target.querySelector("button");b.disabled=true;
+ try{
+  const txid=new FormData(e.target).get("txid");
+  const d=await api("/api/payments",{method:"POST",body:JSON.stringify({plan_id:selectedPlan,txid})});
+  e.target.reset();msg(d.message,"success");tab("payments");
+ }catch(err){msg(err.message,"error");}
+ finally{b.disabled=false;}
+};
+$("#copyWallet").onclick=async()=>{
+ const v=$("#wallet").value;
+ if(!v||v==="Address not configured")return;
+ try{await navigator.clipboard.writeText(v);msg("Address copied.","success");}
+ catch{msg("Select and copy the address manually.","error");}
+};
+if(token)dashboard();else view("home");
 </script>
 </body>
-</html>
+  </html>
+  
