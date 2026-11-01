@@ -1,0 +1,249 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ADS GROWTH AGENCY PRO</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#080912;color:white;font-family:Arial}
+:root{--g:#a3ff12;--p:#9147ff;--box:#151628;--line:#303149}
+header{padding:17px;display:flex;justify-content:space-between;align-items:center;background:#111222;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:5}
+.logo{font-size:19px;font-weight:bold}.logo span{color:var(--g)}
+button{border:0;border-radius:9px;padding:11px 15px;background:var(--g);font-weight:bold;cursor:pointer;color:#111;margin:3px}
+.dark{background:#292a40;color:white;border:1px solid var(--line)}
+.wrap{max-width:1050px;margin:auto;padding:18px}
+.page{display:none}.active{display:block}
+.hero{padding:65px 10px;background:linear-gradient(120deg,#17132d,#0a0b15);border-radius:18px;margin:20px 0}
+.hero h1{font-size:clamp(38px,7vw,65px);margin:12px 0}
+.green{color:var(--g)}.purple{color:#b58aff}
+.card{background:var(--box);border:1px solid var(--line);border-radius:15px;padding:19px;margin:12px 0}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px}
+.price{font-size:31px;color:var(--g);font-weight:bold}
+.stat{font-size:28px;color:var(--g);font-weight:bold}
+input,textarea,select{width:100%;padding:12px;margin:7px 0 13px;background:#090a14;color:white;border:1px solid #41435b;border-radius:8px}
+textarea{min-height:85px}
+label{font-size:13px;color:#bbb}
+.nav{display:flex;flex-wrap:wrap;gap:5px;margin:15px 0}
+.preview{background:white;color:#161616;padding:20px;border-radius:12px;min-height:170px}
+.preview p{color:#555}
+small,.muted{color:#aaa}
+.badge{color:var(--g);font-size:12px}
+table{width:100%;border-collapse:collapse}
+td,th{text-align:left;padding:10px;border-bottom:1px solid var(--line)}
+footer{text-align:center;padding:25px;color:#888}
+</style>
+</head>
+<body>
+<header>
+<div class="logo">ADS <span>GROWTH</span> PRO</div>
+<div>
+<button class="dark" onclick="go('home')">Home</button>
+<button onclick="go('login')">Login</button>
+</div>
+</header>
+
+<div class="wrap">
+
+<!-- HOME -->
+<section id="home" class="page active">
+<div class="hero">
+<div class="badge">DIGITAL MARKETING PLATFORM</div>
+<h1>GROW YOUR<br><span class="green">BUSINESS</span></h1>
+<p>Build landing pages, collect leads and grow your online business.</p>
+<button onclick="go('register')">GET STARTED</button>
+<button class="dark" onclick="go('plans')">VIEW PLANS</button>
+</div>
+<h2>Our <span class="green">Plans</span></h2>
+<div class="grid">
+<div class="card"><h3>Basic</h3><div class="price">$5</div><p>Monthly subscription</p><p>1 Landing Page</p><button onclick="choose('Basic','$5')">Choose Plan</button></div>
+<div class="card"><h3>Prime & Pro</h3><div class="price">$12</div><p>Monthly subscription</p><p>1 Landing Page</p><button onclick="choose('Prime & Pro','$12')">Choose Plan</button></div>
+<div class="card"><h3>Basic & Prime</h3><div class="price">$15</div><p>Monthly subscription</p><p>2 Landing Pages</p><button onclick="choose('Basic & Prime','$15')">Choose Plan</button></div>
+</div>
+<div class="grid">
+<div class="card"><h3 class="green">Landing Builder</h3><p>Create your own landing pages.</p></div>
+<div class="card"><h3 class="purple">Lead Management</h3><p>Save and view customer leads.</p></div>
+<div class="card"><h3 class="green">Analytics</h3><p>View your page and lead statistics.</p></div>
+</div>
+<p class="muted">Payments are not connected. Plans shown are for display only.</p>
+</section>
+
+<!-- PLANS -->
+<section id="plans" class="page">
+<h2>Membership Plans</h2>
+<div class="grid">
+<div class="card"><h3>Basic</h3><div class="price">$5/month</div><p>1 page</p><button onclick="choose('Basic','$5')">Select</button></div>
+<div class="card"><h3>Prime & Pro</h3><div class="price">$12/month</div><p>1 page</p><button onclick="choose('Prime & Pro','$12')">Select</button></div>
+<div class="card"><h3>Basic & Prime</h3><div class="price">$15/month</div><p>2 pages</p><button onclick="choose('Basic & Prime','$15')">Select</button></div>
+</div>
+</section>
+
+<!-- REGISTER -->
+<section id="register" class="page">
+<div class="card">
+<h2>Create Account</h2>
+<label>Name</label><input id="rname" placeholder="Your name">
+<label>Email</label><input id="remail" type="email" placeholder="Email">
+<label>Password</label><input id="rpass" type="password" placeholder="Password">
+<button onclick="register()">CREATE ACCOUNT</button>
+<button class="dark" onclick="go('login')">Already registered? Login</button>
+</div>
+</section>
+
+<!-- LOGIN -->
+<section id="login" class="page">
+<div class="card">
+<h2>Welcome Back</h2>
+<label>Email</label><input id="lemail" type="email">
+<label>Password</label><input id="lpass" type="password">
+<button onclick="login()">LOGIN</button>
+<button class="dark" onclick="go('register')">Create Account</button>
+</div>
+</section>
+
+<!-- DASHBOARD -->
+<section id="dashboard" class="page">
+<h2>Customer <span class="green">Dashboard</span></h2>
+<p id="welcome" class="muted"></p>
+<div class="nav">
+<button onclick="tab('overview')">Overview</button>
+<button onclick="tab('builder')">Page Builder</button>
+<button onclick="tab('mypages')">My Pages</button>
+<button onclick="tab('leads')">Leads</button>
+<button onclick="tab('settings')">Settings</button>
+<button class="dark" onclick="logout()">Logout</button>
+</div>
+
+<div id="overview" class="tab">
+<div class="grid">
+<div class="card"><small>Total Pages</small><div class="stat" id="totalPages">0</div></div>
+<div class="card"><small>Total Leads</small><div class="stat" id="totalLeads">0</div></div>
+<div class="card"><small>Account</small><div class="stat">Active</div></div>
+</div>
+<div class="card"><h3>Welcome to ADS GROWTH PRO</h3><p>Use the Page Builder to create and save your landing pages.</p><button onclick="tab('builder')">CREATE PAGE</button></div>
+</div>
+
+<div id="builder" class="tab" style="display:none">
+<div class="card">
+<h3>Landing Page Builder</h3>
+<label>Page Title</label><input id="ptitle" placeholder="Enter page title">
+<label>Description</label><textarea id="pdesc" placeholder="Write your description"></textarea>
+<label>Button Text</label><input id="pbutton" value="Contact Us">
+<label>Button Link</label><input id="plink" placeholder="https://example.com">
+<label>WhatsApp Number</label><input id="pwa" placeholder="91XXXXXXXXXX">
+<label>Meta Pixel ID</label><input id="ppixel" placeholder="Your Pixel ID">
+<button onclick="makePreview()">LIVE PREVIEW</button>
+<button onclick="savePage()">SAVE PAGE</button>
+<div class="preview" id="live">
+<h2>Your Landing Page</h2><p>Your description appears here.</p>
+</div>
+</div>
+</div>
+
+<div id="mypages" class="tab" style="display:none">
+<div class="card"><h3>My Saved Pages</h3><div id="pageList"></div></div>
+</div>
+
+<div id="leads" class="tab" style="display:none">
+<div class="card"><h3>Lead Management</h3><p class="muted">Leads submitted through the sample form on this browser.</p><div id="leadList"></div></div>
+</div>
+
+<div id="settings" class="tab" style="display:none">
+<div class="card">
+<h3>Account Settings</h3>
+<p id="accountEmail"></p>
+<label>WhatsApp Number</label><input id="settingWA" placeholder="91XXXXXXXXXX">
+<button onclick="saveSettings()">SAVE SETTINGS</button>
+</div>
+</div>
+
+<div class="card">
+<h3>Admin Panel Preview</h3>
+<p class="muted">Demo overview on this browser only. Secure server-side admin access is not connected in this HTML.</p>
+<button class="dark" onclick="adminView()">OPEN ADMIN OVERVIEW</button>
+<div id="adminBox"></div>
+</div>
+</section>
+
+</div>
+<footer>© 2026 ADS GROWTH AGENCY PRO</footer>
+
+<script>
+const $=id=>document.getElementById(id);
+function go(id){
+document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));
+$(id).classList.add('active');
+if(id==='dashboard')refresh();
+}
+function tab(id){
+document.querySelectorAll('.tab').forEach(x=>x.style.display='none');
+$(id).style.display='block';
+if(id==='mypages')showPages();
+if(id==='leads')showLeads();
+}
+function getUsers(){return JSON.parse(localStorage.getItem('ag_users')||'[]')}
+function register(){
+let n=$('rname').value,e=$('remail').value,p=$('rpass').value;
+if(!n||!e||p.length<8)return alert('Fill all fields. Password must be 8 characters.');
+let users=getUsers();
+if(users.some(u=>u.e===e))return alert('Email already registered');
+users.push({n,e,p});localStorage.setItem('ag_users',JSON.stringify(users));
+alert('Account created. Please login.');go('login');
+}
+function login(){
+let e=$('lemail').value,p=$('lpass').value;
+let u=getUsers().find(x=>x.e===e&&x.p===p);
+if(!u)return alert('Incorrect email or password');
+localStorage.setItem('ag_current',JSON.stringify(u));go('dashboard');
+}
+function logout(){localStorage.removeItem('ag_current');go('home')}
+function current(){return JSON.parse(localStorage.getItem('ag_current')||'null')}
+function key(s){return 'ag_'+s+'_'+(current()?.e||'guest')}
+function pages(){return JSON.parse(localStorage.getItem(key('pages'))||'[]')}
+function leads(){return JSON.parse(localStorage.getItem(key('leads'))||'[]')}
+function refresh(){
+let u=current();if(!u)return go('login');
+$('welcome').textContent='Welcome, '+u.n;
+$('accountEmail').textContent=u.e;
+$('totalPages').textContent=pages().length;
+$('totalLeads').textContent=leads().length;
+}
+function makePreview(){
+let t=$('ptitle').value||'Your Page Title';
+let d=$('pdesc').value||'Your description';
+let b=$('pbutton').value||'Contact Us';
+$('live').innerHTML='<h2>'+safe(t)+'</h2><p>'+safe(d)+'</p><button>'+safe(b)+'</button>';
+}
+function safe(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function savePage(){
+if(!current())return go('login');
+let list=pages();
+list.push({id:Date.now(),title:$('ptitle').value||'Untitled',desc:$('pdesc').value,button:$('pbutton').value,link:$('plink').value,wa:$('pwa').value,pixel:$('ppixel').value});
+localStorage.setItem(key('pages'),JSON.stringify(list));
+alert('Page saved in this browser');refresh();showPages();
+}
+function showPages(){
+let list=pages();
+$('pageList').innerHTML=list.length?list.map(p=>'<div class="card"><b>'+safe(p.title)+'</b><br><button onclick="deletePage('+p.id+')">DELETE</button></div>').join(''):'No pages saved yet.';
+}
+function deletePage(id){
+localStorage.setItem(key('pages'),JSON.stringify(pages().filter(p=>p.id!==id)));
+showPages();refresh();
+}
+function showLeads(){
+let list=leads();
+$('leadList').innerHTML=list.length?list.map(x=>'<div class="card">'+safe(x.name)+' — '+safe(x.phone)+'</div>').join(''):'No leads yet.';
+}
+function saveSettings(){
+localStorage.setItem(key('wa'),$('settingWA').value);
+alert('Settings saved in this browser');
+}
+function adminView(){
+$('adminBox').innerHTML='<p>Registered demo accounts: '+getUsers().length+'</p><p>Your pages: '+pages().length+'</p><p>Your leads: '+leads().length+'</p>';
+}
+function choose(n,p){alert(n+' selected ('+p+'/month). Payment gateway is not connected yet.')}
+if(current())go('dashboard');
+</script>
+</body>
+</html>
