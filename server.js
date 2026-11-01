@@ -1,920 +1,697 @@
+// server.js
+// ADS GROWTH AGENCY PRO
+// Manual TRC20 USDT payment verification
+// IMPORTANT: Never activate a plan from a submitted TXID alone.
+
 require("dotenv").config();
 
 const express = require("express");
 const helmet = require("helmet");
-const rateLimit = require("express-rate-limit");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const { Pool } = require("pg");
-const path = require("path");
 const crypto = require("crypto");
 
-const app = express();
-const PORT = process.env.PORT || 3000;
+const rateLimitModule = require("express-rate-limit");
+const rateLimit =
+  rateLimitModule.rateLimit || rateLimitModule;
 
+const app = express();
 app.set("trust proxy", 1);
 
+app.use(helmet({
+  contentSecurityPolicy: false
+}));
+app.use(express.json({ limit: "1mb" }));
+app.use(express.urlencoded({ extended: true, limit: "1mb" }));
+
+const PORT = process.env.PORT || 3000;
+const JWT_SECRET = process.env.JWT_SECRET;
+const ADMIN_EMAIL = (process.env.ADMIN_EMAIL || "").trim().toLowerCase();
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "";
+
+const RECEIVE_ADDRESS =
+  process.env.USDT_TRC20_ADDRESS ||
+  "TVFeDBy2GFPNB5JJgNpRF8otsFcRVPb4ak";
+
+// Change these prices here if needed.
+const PLANS = {
+  basic: {
+    name: "Basic",
+    price: 5,
+    days: 30
+  },
+  prime_pro: {
+    name: "Prime & Pro",
+    price: 12,
+    days: 30
+  },
+  basic_prime: {
+    name: "Basic & Prime",
+    price: 15,
+    days: 30
+  }
+};
+
 if (!process.env.DATABASE_URL) {
-  throw new Error("DATABASE_URL is required");
+  console.error("DATABASE_URL is missing in Render environment variables.");
+  process.exit(1);
 }
 
-if (!process.env.JWT_SECRET || process.env.JWT_SECRET.length < 32) {
-  throw new Error("JWT_SECRET must contain at least 32 characters");
-}
-
-if (!process.env.ADMIN_EMAIL || !process.env.ADMIN_PASSWORD) {
-  throw new Error("ADMIN_EMAIL and ADMIN_PASSWORD are required");
+if (!JWT_SECRET || JWT_SECRET.length < 32) {
+  console.error("JWT_SECRET must be set and at least 32 characters long.");
+  process.exit(1);
 }
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: process.env.DB_SSL === "true"
     ? { rejectUnauthorized: false }
-    : undefined
+    : undefined,
+  max: 10,
+  idleTimeoutMillis: 30000,
+  connectionTimeoutMillis: 10000
 });
 
-app.use(helmet({ contentSecurityPolicy: false }));
-app.use(express.json({ limit: "1mb" }));
-app.use(express.urlencoded({ extended: true }));
-
-app.use("/api", rateLimit({
+const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  limit: 250,
+  max: 30,
   standardHeaders: true,
-  legacyHeaders: false
-}));
+  legacyHeaders: false,
+  message: { error: "Too many attempts. Please try again later." }
+});
 
-const plans = {
-  basic: { name: "Basic", price: 5, pages: 1 },
-  prime: { name: "Prime & Pro", price: 12, pages: 1 },
-  premium: { name: "Basic & Prime", price: 15, pages: 2 }
-};
-
-/* DATABASE SETUP AND MIGRATIONS */
-
-async function initDatabase() {
-  await pool.query(`
-    CREATE TABLE IF NOT EXISTS users (
-      id SERIAL PRIMARY KEY,
-      name TEXT NOT NULL,
-      email TEXT UNIQUE NOT NULL,
-      password TEXT NOT NULL,
-      role TEXT NOT NULL DEFAULT 'customer',
-      plan TEXT,
-      subscription_expires TIMESTAMPTZ,
-      created_at TIMESTAMPTZ DEFAULT NOW()
-    );
-
-    CREATE TABLE IF NOT EXISTS pages (
-      id SERIAL PRIMARY KEY,
-      user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
-      title TEXT NOT NULL,
-      slug TEXT UNIQUE NOT NULL,
-      headline TEXT DEFAULT '',
-      description TEXT DEFAULT '',
-      image_url TEXT DEFAULT '',
-      button_text TEXT DEFAULT 'Learn More',
-      button_url TEXT DEFAULT '',
-      whatsapp TEXT DEFAULT '',
-      pixel_id TEXT DEFAULT '',
-      published BOOLEAN DEFAULT FALSE,
-      created_at TIMESTAMPTZ DEFAULT NOW()
-    );
-
-    CREATE TABLE IF NOT EXISTS events (
-      id SERIAL PRIMARY KEY,
-      page_id INTEGER REFERENCES pages(id) ON DELETE CASCADE,
-      event_type TEXT NOT NULL,
-      created_at TIMESTAMPTZ DEFAULT NOW()
-    );
-
-    CREATE INDEX IF NOT EXISTS pages_user_idx
-    ON pages(user_id);
-
-    CREATE INDEX IF NOT EXISTS events_page_idx
-    ON events(page_id);
-  `);
-
-  // Add design columns to existing databases safely.
-  await pool.query(`
-    ALTER TABLE pages
-    ADD COLUMN IF NOT EXISTS background_color TEXT DEFAULT '#ffffff';
-
-    ALTER TABLE pages
-    ADD COLUMN IF NOT EXISTS heading_color TEXT DEFAULT '#171717';
-
-    ALTER TABLE pages
-    ADD COLUMN IF NOT EXISTS button_color TEXT DEFAULT '#22c55e';
-
-    ALTER TABLE pages
-    ADD COLUMN IF NOT EXISTS image_size INTEGER DEFAULT 100;
-  `);
-
-  const email = process.env.ADMIN_EMAIL.toLowerCase().trim();
-  const password = await bcrypt.hash(process.env.ADMIN_PASSWORD, 12);
-
-  await pool.query(`
-    INSERT INTO users (name, email, password, role)
-    VALUES ('Administrator', $1, $2, 'admin')
-    ON CONFLICT (email) DO UPDATE
-    SET role = 'admin'
-  `, [email, password]);
-
-  console.log("Database ready. Admin account checked.");
-}
-
-/* HELPERS */
-
-function createToken(user) {
+function makeToken(user) {
   return jwt.sign(
-    { id: user.id, role: user.role },
-    process.env.JWT_SECRET,
+    {
+      id: user.id,
+      email: user.email,
+      role: user.role
+    },
+    JWT_SECRET,
     { expiresIn: "7d" }
   );
 }
 
+function auth(req, res, next) {
+  const header = req.headers.authorization || "";
+  const token = header.startsWith("Bearer ")
+    ? header.slice(7)
+    : "";
+
+  if (!token) {
+    return res.status(401).json({ error: "Please log in first." });
+  }
+
+  try {
+    req.user = jwt.verify(token, JWT_SECRET);
+    next();
+  } catch (error) {
+    return res.status(401).json({ error: "Session expired. Please log in again." });
+  }
+}
+
+function adminOnly(req, res, next) {
+  if (!req.user || req.user.role !== "admin") {
+    return res.status(403).json({ error: "Admin access required." });
+  }
+  next();
+}
+
+function cleanText(value, max = 500) {
+  return String(value || "").trim().slice(0, max);
+}
+
+function makeSlug(value) {
+  const base = cleanText(value, 70)
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "");
+
+  return (base || "my-page") + "-" +
+    crypto.randomBytes(3).toString("hex");
+}
+
 function escapeHtml(value) {
-  return String(value ?? "").replace(/[&<>"']/g, char => ({
+  return String(value || "").replace(/[&<>"']/g, char => ({
     "&": "&amp;",
     "<": "&lt;",
     ">": "&gt;",
     '"': "&quot;",
     "'": "&#39;"
-  })[char]);
+  }[char]));
 }
 
-function safeColor(value, fallback) {
-  const color = String(value || "").trim();
+async function initDatabase() {
+  // Create tables without deleting existing data.
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS users (
+      id SERIAL PRIMARY KEY,
+      name TEXT NOT NULL DEFAULT '',
+      email TEXT UNIQUE NOT NULL,
+      password_hash TEXT NOT NULL DEFAULT '',
+      role TEXT NOT NULL DEFAULT 'user',
+      plan TEXT,
+      subscription_expires TIMESTAMPTZ,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )
+  `);
 
-  return /^#[0-9a-fA-F]{6}$/.test(color)
-    ? color
-    : fallback;
-}
+  await pool.query(`
+    ALTER TABLE users
+      ADD COLUMN IF NOT EXISTS name TEXT NOT NULL DEFAULT '',
+      ADD COLUMN IF NOT EXISTS password_hash TEXT NOT NULL DEFAULT '',
+      ADD COLUMN IF NOT EXISTS role TEXT NOT NULL DEFAULT 'user',
+      ADD COLUMN IF NOT EXISTS plan TEXT,
+      ADD COLUMN IF NOT EXISTS subscription_expires TIMESTAMPTZ,
+      ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  `);
 
-function safeImageUrl(value) {
-  try {
-    const url = new URL(String(value || ""));
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS pages (
+      id SERIAL PRIMARY KEY,
+      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      title TEXT NOT NULL DEFAULT '',
+      headline TEXT NOT NULL DEFAULT '',
+      description TEXT NOT NULL DEFAULT '',
+      image_url TEXT NOT NULL DEFAULT '',
+      button_text TEXT NOT NULL DEFAULT 'Join Now',
+      button_url TEXT NOT NULL DEFAULT '',
+      whatsapp TEXT NOT NULL DEFAULT '',
+      pixel_id TEXT NOT NULL DEFAULT '',
+      background_color TEXT NOT NULL DEFAULT '#0f172a',
+      heading_color TEXT NOT NULL DEFAULT '#22c55e',
+      button_color TEXT NOT NULL DEFAULT '#0088cc',
+      image_size TEXT NOT NULL DEFAULT 'medium',
+      slug TEXT UNIQUE NOT NULL,
+      published BOOLEAN NOT NULL DEFAULT FALSE,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )
+  `);
 
-    if (url.protocol === "http:" || url.protocol === "https:") {
-      return url.toString();
-    }
-  } catch (error) {}
+  await pool.query(`
+    ALTER TABLE pages
+      ADD COLUMN IF NOT EXISTS title TEXT NOT NULL DEFAULT '',
+      ADD COLUMN IF NOT EXISTS headline TEXT NOT NULL DEFAULT '',
+      ADD COLUMN IF NOT EXISTS description TEXT NOT NULL DEFAULT '',
+      ADD COLUMN IF NOT EXISTS image_url TEXT NOT NULL DEFAULT '',
+      ADD COLUMN IF NOT EXISTS button_text TEXT NOT NULL DEFAULT 'Join Now',
+      ADD COLUMN IF NOT EXISTS button_url TEXT NOT NULL DEFAULT '',
+      ADD COLUMN IF NOT EXISTS whatsapp TEXT NOT NULL DEFAULT '',
+      ADD COLUMN IF NOT EXISTS pixel_id TEXT NOT NULL DEFAULT '',
+      ADD COLUMN IF NOT EXISTS background_color TEXT NOT NULL DEFAULT '#0f172a',
+      ADD COLUMN IF NOT EXISTS heading_color TEXT NOT NULL DEFAULT '#22c55e',
+      ADD COLUMN IF NOT EXISTS button_color TEXT NOT NULL DEFAULT '#0088cc',
+      ADD COLUMN IF NOT EXISTS image_size TEXT NOT NULL DEFAULT 'medium',
+      ADD COLUMN IF NOT EXISTS slug TEXT,
+      ADD COLUMN IF NOT EXISTS published BOOLEAN NOT NULL DEFAULT FALSE,
+      ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  `);
 
-  return "";
-}
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS events (
+      id SERIAL PRIMARY KEY,
+      page_id INTEGER REFERENCES pages(id) ON DELETE CASCADE,
+      event_type TEXT NOT NULL,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )
+  `);
 
-function safeButtonUrl(value) {
-  try {
-    const url = new URL(String(value || ""));
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS payments (
+      id SERIAL PRIMARY KEY,
+      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      plan_key TEXT NOT NULL,
+      amount NUMERIC(12,2) NOT NULL,
+      network TEXT NOT NULL DEFAULT 'TRC20',
+      token TEXT NOT NULL DEFAULT 'USDT',
+      tx_hash TEXT UNIQUE NOT NULL,
+      status TEXT NOT NULL DEFAULT 'pending',
+      admin_note TEXT NOT NULL DEFAULT '',
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      reviewed_at TIMESTAMPTZ
+    )
+  `);
 
-    if (url.protocol === "http:" || url.protocol === "https:") {
-      return url.toString();
-    }
-  } catch (error) {}
+  await pool.query(`
+    CREATE INDEX IF NOT EXISTS payments_user_id_idx
+    ON payments(user_id)
+  `);
 
-  return "#";
-}
+  await pool.query(`
+    CREATE INDEX IF NOT EXISTS payments_status_idx
+    ON payments(status)
+  `);
 
-function safeImageSize(value) {
-  const size = Number(value);
+  await pool.query(`
+    CREATE INDEX IF NOT EXISTS pages_user_id_idx
+    ON pages(user_id)
+  `);
 
-  if (!Number.isFinite(size)) return 100;
+  // Create or promote the admin account when configured.
+  if (ADMIN_EMAIL && ADMIN_PASSWORD) {
+    const hashed = await bcrypt.hash(ADMIN_PASSWORD, 12);
 
-  return Math.min(400, Math.max(50, Math.round(size)));
-}
-
-function makeSlug() {
-  return crypto.randomBytes(8).toString("hex");
-}
-
-function isAdmin(user) {
-  return user.role === "admin";
-}
-
-function hasActiveSubscription(user) {
-  return user.subscription_expires &&
-    new Date(user.subscription_expires).getTime() > Date.now();
-}
-
-/* AUTHENTICATION */
-
-async function auth(req, res, next) {
-  try {
-    const header = req.headers.authorization || "";
-
-    const token = header.startsWith("Bearer ")
-      ? header.slice(7)
-      : "";
-
-    if (!token) {
-      return res.status(401).json({
-        error: "Please login first"
-      });
-    }
-
-    const decoded = jwt.verify(
-      token,
-      process.env.JWT_SECRET
-    );
-
-    const result = await pool.query(
-      `SELECT id, name, email, role, plan, subscription_expires
-       FROM users WHERE id=$1`,
-      [decoded.id]
-    );
-
-    if (!result.rows.length) {
-      return res.status(401).json({
-        error: "Account not found"
-      });
-    }
-
-    req.user = result.rows[0];
-    next();
-
-  } catch (error) {
-    return res.status(401).json({
-      error: "Invalid or expired login"
-    });
+    await pool.query(`
+      INSERT INTO users (name, email, password_hash, role)
+      VALUES ('Admin', $1, $2, 'admin')
+      ON CONFLICT (email)
+      DO UPDATE SET role = 'admin'
+    `, [ADMIN_EMAIL, hashed]);
   }
+
+  console.log("Database tables are ready.");
 }
 
-/* PAGE LIMIT */
-
-async function canCreatePage(user) {
-  if (isAdmin(user)) return true;
-
-  if (!hasActiveSubscription(user)) return false;
-
-  const plan = plans[user.plan];
-
-  if (!plan) return false;
-
-  const count = await pool.query(
-    "SELECT COUNT(*)::int AS total FROM pages WHERE user_id=$1",
-    [user.id]
-  );
-
-  return count.rows[0].total < plan.pages;
-}
-
-/* HEALTH */
-
+// Health check
 app.get("/health", async (req, res) => {
   try {
     await pool.query("SELECT 1");
-
     res.json({
-      status: "ok",
+      ok: true,
+      service: "ADS GROWTH AGENCY PRO",
       database: "connected"
     });
-
   } catch (error) {
-    res.status(503).json({
-      status: "error",
-      database: "disconnected"
+    res.status(500).json({
+      ok: false,
+      database: "error"
     });
   }
 });
 
-/* PLANS */
-
+// Public plan and payment information
 app.get("/api/plans", (req, res) => {
-  res.json(plans);
+  res.json(
+    Object.entries(PLANS).map(([key, plan]) => ({
+      key,
+      ...plan,
+      currency: "USDT",
+      network: "TRC20"
+    }))
+  );
 });
 
-/* REGISTER */
+app.get("/api/payment-info", (req, res) => {
+  res.json({
+    address: RECEIVE_ADDRESS,
+    network: "TRON (TRC20)",
+    token: "USDT",
+    plans: Object.entries(PLANS).map(([key, plan]) => ({
+      key,
+      ...plan
+    }))
+  });
+});
 
-app.post("/api/register", async (req, res) => {
+// Register
+app.post("/api/register", authLimiter, async (req, res) => {
   try {
-    const { name, email, password } = req.body || {};
+    const name = cleanText(req.body.name, 80);
+    const email = cleanText(req.body.email, 150).toLowerCase();
+    const password = String(req.body.password || "");
 
-    if (
-      !name ||
-      !email ||
-      !password ||
-      String(password).length < 8
-    ) {
+    if (!name || !email || password.length < 8) {
       return res.status(400).json({
-        error: "Name, valid email and password of at least 8 characters required"
+        error: "Name, valid email and password of at least 8 characters are required."
       });
     }
 
-    const normalizedEmail = String(email).toLowerCase().trim();
-
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) {
-      return res.status(400).json({
-        error: "Please enter a valid email"
-      });
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return res.status(400).json({ error: "Enter a valid email address." });
     }
 
-    if (
-      normalizedEmail ===
-      process.env.ADMIN_EMAIL.toLowerCase().trim()
-    ) {
-      return res.status(403).json({
-        error: "This email is reserved for admin"
-      });
-    }
+    const hashed = await bcrypt.hash(password, 12);
 
-    const hash = await bcrypt.hash(String(password), 12);
-
-    const result = await pool.query(
-      `INSERT INTO users (name, email, password)
-       VALUES ($1, $2, $3)
-       RETURNING id, name, email, role, plan, subscription_expires`,
-      [
-        String(name).trim(),
-        normalizedEmail,
-        hash
-      ]
-    );
+    const result = await pool.query(`
+      INSERT INTO users (name, email, password_hash)
+      VALUES ($1, $2, $3)
+      RETURNING id, name, email, role, plan, subscription_expires
+    `, [name, email, hashed]);
 
     const user = result.rows[0];
 
     res.status(201).json({
-      user,
-      token: createToken(user)
+      message: "Account created successfully.",
+      token: makeToken(user),
+      user
     });
-
   } catch (error) {
-    console.error("Registration error:", error);
-
-    res.status(400).json({
-      error: error.code === "23505"
-        ? "Email already registered"
-        : "Registration failed"
-    });
+    if (error.code === "23505") {
+      return res.status(409).json({ error: "This email is already registered." });
+    }
+    console.error("Register error:", error);
+    res.status(500).json({ error: "Could not create account." });
   }
 });
 
-/* LOGIN */
-
-app.post("/api/login", async (req, res) => {
+// Login
+app.post("/api/login", authLimiter, async (req, res) => {
   try {
-    const email = String(req.body.email || "")
-      .toLowerCase()
-      .trim();
-
+    const email = cleanText(req.body.email, 150).toLowerCase();
     const password = String(req.body.password || "");
 
     const result = await pool.query(
-      "SELECT * FROM users WHERE email=$1",
+      `SELECT id, name, email, password_hash, role, plan, subscription_expires
+       FROM users WHERE email = $1`,
       [email]
     );
 
-    if (
-      !result.rows.length ||
-      !(await bcrypt.compare(password, result.rows[0].password))
-    ) {
-      return res.status(401).json({
-        error: "Incorrect email or password"
-      });
-    }
-
     const user = result.rows[0];
 
-    delete user.password;
+    if (!user || !user.password_hash ||
+        !(await bcrypt.compare(password, user.password_hash))) {
+      return res.status(401).json({ error: "Incorrect email or password." });
+    }
 
     res.json({
-      user,
-      token: createToken(user)
+      message: "Login successful.",
+      token: makeToken(user),
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        plan: user.plan,
+        subscription_expires: user.subscription_expires
+      }
     });
-
   } catch (error) {
     console.error("Login error:", error);
-
-    res.status(500).json({
-      error: "Login failed"
-    });
+    res.status(500).json({ error: "Could not log in." });
   }
 });
 
-/* CURRENT USER */
+// Current user
+app.get("/api/me", auth, async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT id, name, email, role, plan, subscription_expires, created_at
+      FROM users WHERE id = $1
+    `, [req.user.id]);
 
-app.get("/api/me", auth, (req, res) => {
-  res.json({
-    user: req.user,
-    isAdmin: isAdmin(req.user),
-    subscriptionActive:
-      isAdmin(req.user) || hasActiveSubscription(req.user)
-  });
+    if (!result.rows[0]) {
+      return res.status(404).json({ error: "User not found." });
+    }
+
+    res.json({ user: result.rows[0] });
+  } catch (error) {
+    res.status(500).json({ error: "Could not load account." });
+  }
 });
 
-/* GET USER PAGES */
+// User submits a payment request.
+// This does NOT activate the subscription.
+app.post("/api/payments", auth, async (req, res) => {
+  try {
+    const planKey = cleanText(req.body.plan, 40);
+    const txHash = cleanText(req.body.tx_hash, 100).toLowerCase();
 
+    const plan = PLANS[planKey];
+
+    if (!plan) {
+      return res.status(400).json({ error: "Select a valid plan." });
+    }
+
+    if (!/^[a-f0-9]{64}$/.test(txHash)) {
+      return res.status(400).json({
+        error: "Enter a valid 64-character transaction hash (TXID)."
+      });
+    }
+
+    const result = await pool.query(`
+      INSERT INTO payments (user_id, plan_key, amount, tx_hash)
+      VALUES ($1, $2, $3, $4)
+      RETURNING id, plan_key, amount, tx_hash, status, created_at
+    `, [req.user.id, planKey, plan.price, txHash]);
+
+    res.status(201).json({
+      message: "Payment submitted for manual verification. Your plan is not active yet.",
+      payment: result.rows[0]
+    });
+  } catch (error) {
+    if (error.code === "23505") {
+      return res.status(409).json({
+        error: "This transaction hash has already been submitted."
+      });
+    }
+    console.error("Payment submit error:", error);
+    res.status(500).json({ error: "Could not submit payment." });
+  }
+});
+
+// User sees their own payment requests only.
+app.get("/api/payments", auth, async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT id, plan_key, amount, network, token, tx_hash,
+             status, admin_note, created_at, reviewed_at
+      FROM payments
+      WHERE user_id = $1
+      ORDER BY created_at DESC
+    `, [req.user.id]);
+
+    res.json({ payments: result.rows });
+  } catch (error) {
+    res.status(500).json({ error: "Could not load payment history." });
+  }
+});
+
+// Admin overview
+app.get("/api/admin/overview", auth, adminOnly, async (req, res) => {
+  try {
+    const [users, pages, payments] = await Promise.all([
+      pool.query("SELECT COUNT(*)::int AS count FROM users"),
+      pool.query("SELECT COUNT(*)::int AS count FROM pages"),
+      pool.query(`
+        SELECT
+          COUNT(*)::int AS total,
+          COUNT(*) FILTER (WHERE status = 'pending')::int AS pending,
+          COUNT(*) FILTER (WHERE status = 'approved')::int AS approved,
+          COUNT(*) FILTER (WHERE status = 'rejected')::int AS rejected
+        FROM payments
+      `)
+    ]);
+
+    res.json({
+      users: users.rows[0].count,
+      pages: pages.rows[0].count,
+      payments: payments.rows[0]
+    });
+  } catch (error) {
+    res.status(500).json({ error: "Could not load admin overview." });
+  }
+});
+
+// Admin sees all payment requests.
+app.get("/api/admin/payments", auth, adminOnly, async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT p.id, p.user_id, u.name, u.email, p.plan_key,
+             p.amount, p.network, p.token, p.tx_hash,
+             p.status, p.admin_note, p.created_at, p.reviewed_at
+      FROM payments p
+      JOIN users u ON u.id = p.user_id
+      ORDER BY
+        CASE WHEN p.status = 'pending' THEN 0 ELSE 1 END,
+        p.created_at DESC
+    `);
+
+    res.json({ payments: result.rows });
+  } catch (error) {
+    console.error("Admin payments error:", error);
+    res.status(500).json({ error: "Could not load payment requests." });
+  }
+});
+
+// Admin approves or rejects after checking the transaction on a trusted explorer.
+// Approval and subscription activation happen in one database transaction.
+app.post("/api/admin/payments/:id/review", auth, adminOnly, async (req, res) => {
+  const paymentId = Number(req.params.id);
+  const action = cleanText(req.body.action, 20).toLowerCase();
+  const note = cleanText(req.body.note, 500);
+
+  if (!Number.isInteger(paymentId) || paymentId < 1) {
+    return res.status(400).json({ error: "Invalid payment ID." });
+  }
+
+  if (!["approve", "reject"].includes(action)) {
+    return res.status(400).json({ error: "Action must be approve or reject." });
+  }
+
+  const client = await pool.connect();
+
+  try {
+    await client.query("BEGIN");
+
+    const found = await client.query(
+      "SELECT * FROM payments WHERE id = $1 FOR UPDATE",
+      [paymentId]
+    );
+
+    const payment = found.rows[0];
+
+    if (!payment) {
+      await client.query("ROLLBACK");
+      return res.status(404).json({ error: "Payment not found." });
+    }
+
+    if (payment.status !== "pending") {
+      await client.query("ROLLBACK");
+      return res.status(409).json({ error: "This payment has already been reviewed." });
+    }
+
+    if (action === "approve") {
+      const plan = PLANS[payment.plan_key];
+
+      if (!plan || Number(payment.amount) !== plan.price) {
+        await client.query("ROLLBACK");
+        return res.status(400).json({ error: "Payment plan or amount does not match." });
+      }
+
+      await client.query(`
+        UPDATE payments
+        SET status = 'approved', admin_note = $2, reviewed_at = NOW()
+        WHERE id = $1
+      `, [paymentId, note]);
+
+      await client.query(`
+        UPDATE users
+        SET plan = $2,
+            subscription_expires =
+              GREATEST(COALESCE(subscription_expires, NOW()), NOW())
+              + ($3 * INTERVAL '1 day')
+        WHERE id = $1
+      `, [payment.user_id, payment.plan_key, plan.days]);
+    } else {
+      await client.query(`
+        UPDATE payments
+        SET status = 'rejected', admin_note = $2, reviewed_at = NOW()
+        WHERE id = $1
+      `, [paymentId, note]);
+    }
+
+    await client.query("COMMIT");
+
+    res.json({
+      message: action === "approve"
+        ? "Payment approved and subscription activated."
+        : "Payment rejected.",
+      status: action === "approve" ? "approved" : "rejected"
+    });
+  } catch (error) {
+    await client.query("ROLLBACK");
+    console.error("Payment review error:", error);
+    res.status(500).json({ error: "Could not review payment." });
+  } finally {
+    client.release();
+  }
+});
+
+// Get user's pages
 app.get("/api/pages", auth, async (req, res) => {
   try {
-    const result = await pool.query(
-      `SELECT * FROM pages
-       WHERE user_id=$1
-       ORDER BY created_at DESC`,
-      [req.user.id]
-    );
+    const result = await pool.query(`
+      SELECT * FROM pages
+      WHERE user_id = $1
+      ORDER BY created_at DESC
+    `, [req.user.id]);
 
-    res.json(result.rows);
-
+    res.json({ pages: result.rows });
   } catch (error) {
-    console.error(error);
-
-    res.status(500).json({
-      error: "Could not load pages"
-    });
+    res.status(500).json({ error: "Could not load pages." });
   }
 });
 
-/* CREATE PAGE WITH DESIGN SETTINGS */
-
+// Create page
 app.post("/api/pages", auth, async (req, res) => {
   try {
-    if (!(await canCreatePage(req.user))) {
+    const userResult = await pool.query(`
+      SELECT plan, subscription_expires
+      FROM users WHERE id = $1
+    `, [req.user.id]);
+
+    const user = userResult.rows[0];
+    const active =
+      user &&
+      user.plan &&
+      user.subscription_expires &&
+      new Date(user.subscription_expires) > new Date();
+
+    if (!active) {
       return res.status(403).json({
-        error: "Active subscription required or page limit reached"
+        error: "An active subscription is required. Please purchase a plan first."
       });
     }
 
-    const {
-      title,
-      headline,
-      description,
-      image_url,
-      button_text,
-      button_url,
-      whatsapp,
-      pixel_id
-    } = req.body || {};
+    const body = req.body || {};
+    const title = cleanText(body.title, 120);
 
-    if (!title || !String(title).trim()) {
-      return res.status(400).json({
-        error: "Page title is required"
-      });
+    if (!title) {
+      return res.status(400).json({ error: "Page title is required." });
     }
 
-    const backgroundColor = safeColor(
-      req.body.background_color,
-      "#ffffff"
-    );
+    const slug = makeSlug(title);
 
-    const headingColor = safeColor(
-      req.body.heading_color,
-      "#171717"
-    );
-
-    const buttonColor = safeColor(
-      req.body.button_color,
-      "#22c55e"
-    );
-
-    const imageSize = safeImageSize(
-      req.body.image_size
-    );
-
-    const imageUrl = safeImageUrl(image_url);
-
-    const result = await pool.query(
-      `INSERT INTO pages (
-        user_id,
-        title,
-        slug,
-        headline,
-        description,
-        image_url,
-        button_text,
-        button_url,
-        whatsapp,
-        pixel_id,
-        background_color,
-        heading_color,
-        button_color,
-        image_size
+    const result = await pool.query(`
+      INSERT INTO pages (
+        user_id, title, headline, description, image_url,
+        button_text, button_url, whatsapp, pixel_id,
+        background_color, heading_color, button_color,
+        image_size, slug
       )
       VALUES (
         $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14
       )
-      RETURNING *`,
-      [
-        req.user.id,
-        String(title).trim(),
-        makeSlug(),
-        String(headline || ""),
-        String(description || ""),
-        imageUrl,
-        String(button_text || "Learn More"),
-        safeButtonUrl(button_url),
-        String(whatsapp || "").replace(/\D/g, "").slice(0, 20),
-        /^\d+$/.test(String(pixel_id || "")) ? String(pixel_id) : "",
-        backgroundColor,
-        headingColor,
-        buttonColor,
-        imageSize
-      ]
-    );
-
-    res.status(201).json(result.rows[0]);
-
-  } catch (error) {
-    console.error("Create page error:", error);
-
-    res.status(500).json({
-      error: "Could not save page"
-    });
-  }
-});
-
-/* EDIT PAGE */
-
-app.put("/api/pages/:id", auth, async (req, res) => {
-  try {
-    const {
+      RETURNING *
+    `, [
+      req.user.id,
       title,
-      headline,
-      description,
-      image_url,
-      button_text,
-      button_url,
-      whatsapp,
-      pixel_id
-    } = req.body || {};
-
-    if (!title || !String(title).trim()) {
-      return res.status(400).json({
-        error: "Page title is required"
-      });
-    }
-
-    const result = await pool.query(
-      `UPDATE pages SET
-        title=$1,
-        headline=$2,
-        description=$3,
-        image_url=$4,
-        button_text=$5,
-        button_url=$6,
-        whatsapp=$7,
-        pixel_id=$8,
-        background_color=$9,
-        heading_color=$10,
-        button_color=$11,
-        image_size=$12
-       WHERE id=$13 AND user_id=$14
-       RETURNING *`,
-      [
-        String(title).trim(),
-        String(headline || ""),
-        String(description || ""),
-        safeImageUrl(image_url),
-        String(button_text || "Learn More"),
-        safeButtonUrl(button_url),
-        String(whatsapp || "").replace(/\D/g, "").slice(0, 20),
-        /^\d+$/.test(String(pixel_id || "")) ? String(pixel_id) : "",
-        safeColor(req.body.background_color, "#ffffff"),
-        safeColor(req.body.heading_color, "#171717"),
-        safeColor(req.body.button_color, "#22c55e"),
-        safeImageSize(req.body.image_size),
-        req.params.id,
-        req.user.id
-      ]
-    );
-
-    if (!result.rows.length) {
-      return res.status(404).json({
-        error: "Page not found"
-      });
-    }
-
-    res.json(result.rows[0]);
-
-  } catch (error) {
-    console.error("Update page error:", error);
-
-    res.status(500).json({
-      error: "Could not update page"
-    });
-  }
-});
-
-/* PUBLISH PAGE */
-
-app.post("/api/pages/:id/publish", auth, async (req, res) => {
-  try {
-    const result = await pool.query(
-      `UPDATE pages SET published=TRUE
-       WHERE id=$1 AND user_id=$2
-       RETURNING *`,
-      [req.params.id, req.user.id]
-    );
-
-    if (!result.rows.length) {
-      return res.status(404).json({
-        error: "Page not found"
-      });
-    }
-
-    const page = result.rows[0];
-
-    const url = `${req.protocol}://${req.get("host")}/p/${page.slug}`;
-
-    res.json({
-      message: "Page published successfully",
-      url,
-      page
-    });
-
-  } catch (error) {
-    console.error("Publish error:", error);
-
-    res.status(500).json({
-      error: "Could not publish page"
-    });
-  }
-});
-
-/* DELETE PAGE */
-
-app.delete("/api/pages/:id", auth, async (req, res) => {
-  try {
-    const result = await pool.query(
-      `DELETE FROM pages
-       WHERE id=$1 AND user_id=$2
-       RETURNING id`,
-      [req.params.id, req.user.id]
-    );
-
-    if (!result.rows.length) {
-      return res.status(404).json({
-        error: "Page not found"
-      });
-    }
-
-    res.json({
-      message: "Page deleted"
-    });
-
-  } catch (error) {
-    console.error("Delete error:", error);
-
-    res.status(500).json({
-      error: "Could not delete page"
-    });
-  }
-});
-
-/* ADMIN OVERVIEW */
-
-app.get("/api/admin/overview", auth, async (req, res) => {
-  try {
-    if (!isAdmin(req.user)) {
-      return res.status(403).json({
-        error: "Admin only"
-      });
-    }
-
-    const [users, pages, published, events] = await Promise.all([
-      pool.query("SELECT COUNT(*)::int AS total FROM users"),
-      pool.query("SELECT COUNT(*)::int AS total FROM pages"),
-      pool.query("SELECT COUNT(*)::int AS total FROM pages WHERE published=TRUE"),
-      pool.query("SELECT COUNT(*)::int AS total FROM events")
+      cleanText(body.headline, 250),
+      cleanText(body.description, 3000),
+      cleanText(body.image_url, 1000),
+      cleanText(body.button_text, 80) || "Join Now",
+      cleanText(body.button_url, 1000),
+      cleanText(body.whatsapp, 40),
+      cleanText(body.pixel_id, 40),
+      cleanText(body.background_color, 30) || "#0f172a",
+      cleanText(body.heading_color, 30) || "#22c55e",
+      cleanText(body.button_color, 30) || "#0088cc",
+      cleanText(body.image_size, 20) || "medium",
+      slug
     ]);
 
-    res.json({
-      users: users.rows[0].total,
-      pages: pages.rows[0].total,
-      publishedPages: published.rows[0].total,
-      events: events.rows[0].total,
-      leads: 0
+    res.status(201).json({
+      message: "Page created.",
+      page: result.rows[0]
     });
-
   } catch (error) {
-    console.error("Admin overview error:", error);
-
-    res.status(500).json({
-      error: "Could not load admin overview"
-    });
+    console.error("Create page error:", error);
+    res.status(500).json({ error: "Could not create page." });
   }
 });
 
-/* PUBLIC ANALYTICS EVENTS */
-
-app.post("/api/events/:id/:type", async (req, res) => {
+// Update page
+app.put("/api/pages/:id", auth, async (req, res) => {
   try {
-    const allowed = ["visit", "click"];
+    const id = Number(req.params.id);
+    const body = req.body || {};
 
-    if (!allowed.includes(req.params.type)) {
-      return res.status(400).json({
-        error: "Invalid event"
-      });
-    }
-
-    const page = await pool.query(
-      "SELECT id FROM pages WHERE id=$1 AND published=TRUE",
-      [req.params.id]
-    );
-
-    if (!page.rows.length) {
-      return res.status(404).json({
-        error: "Page not found"
-      });
-    }
-
-    await pool.query(
-      `INSERT INTO events (page_id, event_type)
-       VALUES ($1,$2)`,
-      [req.params.id, req.params.type]
-    );
-
-    res.json({ ok: true });
-
-  } catch (error) {
-    console.error("Event error:", error);
-
-    res.status(500).json({
-      error: "Could not record event"
-    });
-  }
-});
-
-/* PAGE ANALYTICS */
-
-app.get("/api/pages/:id/analytics", auth, async (req, res) => {
-  try {
-    const page = await pool.query(
-      `SELECT id FROM pages
-       WHERE id=$1 AND user_id=$2`,
-      [req.params.id, req.user.id]
-    );
-
-    if (!page.rows.length) {
-      return res.status(404).json({
-        error: "Page not found"
-      });
-    }
-
-    const result = await pool.query(
-      `SELECT event_type, COUNT(*)::int AS total
-       FROM events
-       WHERE page_id=$1
-       GROUP BY event_type`,
-      [req.params.id]
-    );
-
-    const counts = {
-      visits: 0,
-      clicks: 0
-    };
-
-    for (const row of result.rows) {
-      if (row.event_type === "visit") {
-        counts.visits = row.total;
-      }
-
-      if (row.event_type === "click") {
-        counts.clicks = row.total;
-      }
-    }
-
-    res.json(counts);
-
-  } catch (error) {
-    console.error("Analytics error:", error);
-
-    res.status(500).json({
-      error: "Could not load analytics"
-    });
-  }
-});
-
-/* PUBLIC LANDING PAGE */
-
-app.get("/p/:slug", async (req, res) => {
-  try {
-    const result = await pool.query(
-      `SELECT * FROM pages
-       WHERE slug=$1 AND published=TRUE`,
-      [req.params.slug]
-    );
-
-    if (!result.rows.length) {
-      return res.status(404).send("Page not found");
-    }
-
-    const p = result.rows[0];
-
-    await pool.query(
-      `INSERT INTO events (page_id,event_type)
-       VALUES ($1,'visit')`,
-      [p.id]
-    );
-
-    // Validate design settings before rendering.
-    const backgroundColor = safeColor(
-      p.background_color,
-      "#ffffff"
-    );
-
-    const headingColor = safeColor(
-      p.heading_color,
-      "#171717"
-    );
-
-    const buttonColor = safeColor(
-      p.button_color,
-      "#22c55e"
-    );
-
-    const imageSize = safeImageSize(p.image_size);
-
-    const imageUrl = safeImageUrl(p.image_url);
-
-    const image = imageUrl
-      ? `<img
-          src="${escapeHtml(imageUrl)}"
-          alt="Landing page image"
-          style="
-            width:${imageSize}px;
-            height:${imageSize}px;
-            max-width:100%;
-            object-fit:contain;
-            display:block;
-            margin:15px auto;
-            border-radius:12px;
-          "
-        >`
-      : "";
-
-    const buttonUrl = p.whatsapp
-      ? `https://wa.me/${String(p.whatsapp).replace(/\D/g, "")}`
-      : safeButtonUrl(p.button_url);
-
-    const pixel = /^\d+$/.test(p.pixel_id || "")
-      ? `<script>
-        !function(f,b,e,v,n,t,s){
-          if(f.fbq)return;
-          n=f.fbq=function(){
-            n.callMethod?
-            n.callMethod.apply(n,arguments):
-            n.queue.push(arguments)
-          };
-          if(!f._fbq)f._fbq=n;
-          n.push=n;
-          n.loaded=!0;
-          n.version='2.0';
-          n.queue=[];
-          t=b.createElement(e);
-          t.async=!0;
-          t.src=v;
-          s=b.getElementsByTagName(e)[0];
-          s.parentNode.insertBefore(t,s)
-        }(
-          window,
-          document,
-          'script',
-          'https://connect.facebook.net/en_US/fbevents.js'
-        );
-        fbq('init','${p.pixel_id}');
-        fbq('track','PageView');
-      </script>`
-      : "";
-
-    res.send(`<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>${escapeHtml(p.title)}</title>
-${pixel}
-<style>
-*{box-sizing:border-box}
-body{
-  margin:0;
-  min-height:100vh;
-  background:${backgroundColor};
-  color:#222;
-  font-family:Arial,sans-serif;
-}
-main{
-  max-width:760px;
-  margin:40px auto;
-  padding:25px;
-  text-align:center;
-}
-h1{
-  font-size:clamp(30px,6vw,52px);
-  color:${headingColor};
-  overflow-wrap:anywhere;
-}
-p{
-  line-height:1.7;
-  color:#555;
-  overflow-wrap:anywhere;
-}
-.action{
-  display:inline-block;
-  background:${buttonColor};
-  color:#07130d;
-  padding:15px 28px;
-  border-radius:12px;
-  text-decoration:none;
-  font-weight:bold;
-  margin-top:20px;
-}
-@med
+    const result = await pool.query(`
+      UPDATE pages SET
+        title = $3,
+        headline = $4,
+        description = $5,
+        image_url = $6,
+        button_text = $7,
+        button_url = $8,
+        whatsapp = $9,
+        pixel_id = $10,
+        background_color = $11,
+        heading_color = $12,
+        button_color = $13,
+        image_size = $14,
+        updated_at = NOW()
+      WHERE id = $1 AN
