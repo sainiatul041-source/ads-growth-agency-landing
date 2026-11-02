@@ -6,94 +6,65 @@
 <title>ADS GROWTH AGENCY</title>
 <style>
 *{box-sizing:border-box}
-body{margin:0;background:#f1f5f9;color:#172033;font-family:Arial,sans-serif}
-header{background:#0f172a;color:white;padding:18px}
-nav{max-width:950px;margin:auto;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
-.logo{font-size:22px;font-weight:bold;color:#4ade80}
-main{max-width:950px;margin:22px auto;padding:0 12px}
-.box{background:white;border-radius:14px;padding:20px;margin-bottom:15px;box-shadow:0 5px 20px #0000000c}
-.hero{text-align:center;background:#0f172a;color:white;padding:45px 20px;border-radius:16px}
-.hero p{color:#cbd5e1;line-height:1.6}
-h1{font-size:clamp(28px,6vw,44px)}
-button{border:0;border-radius:9px;padding:12px 17px;background:#16a34a;color:white;font-weight:bold;cursor:pointer}
-button:disabled{opacity:.5}
-.secondary{background:#e2e8f0;color:#172033}
-.danger{background:#dc2626}
-input,textarea{width:100%;padding:12px;margin:7px 0 14px;border:1px solid #cbd5e1;border-radius:8px;font-size:15px}
-label{font-weight:bold;font-size:13px}
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
-.price{font-size:30px;font-weight:bold}
-.muted{color:#64748b;line-height:1.5}
+body{margin:0;background:#07111f;color:#fff;font-family:Arial,sans-serif}
+header{padding:20px;text-align:center;background:#101d31;border-bottom:1px solid #26364d}
+header h1{color:#22c55e;margin:0;font-size:27px}
+header p{color:#aab8ca}
+main{max-width:950px;margin:20px auto;padding:12px}
+.box{background:#122139;border:1px solid #263c59;padding:20px;border-radius:14px;margin-bottom:18px}
+h2{color:#22c55e}
+input,textarea,select{width:100%;padding:13px;margin:7px 0 14px;border:1px solid #41536d;border-radius:8px;background:#081526;color:white}
+button,.btn{background:#16a34a;color:white;border:0;border-radius:8px;padding:12px 17px;font-weight:bold;cursor:pointer;margin:4px}
+button.secondary{background:#33465f}
+button.danger{background:#b42323}
 .hidden{display:none!important}
-.row,.actions{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
-.item{border:1px solid #e2e8f0;padding:14px;border-radius:10px;margin:10px 0}
-.notice{padding:12px;border-radius:9px;background:#eff6ff;color:#1e40af;margin-bottom:14px}
-.error{background:#fee2e2;color:#991b1b}
-.success{background:#dcfce7;color:#166534}
-.tabs{display:flex;gap:7px;flex-wrap:wrap;margin:15px 0}
-footer{text-align:center;color:#64748b;padding:25px}
+.muted{color:#a9b8ca;font-size:14px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px}
+.item{background:#0b192c;padding:17px;border:1px solid #354966;border-radius:12px}
+.price{font-size:28px;color:#22c55e;font-weight:bold}
+.tabs{display:flex;flex-wrap:wrap;gap:5px}
+.status{padding:5px 9px;border-radius:6px;background:#263c59;display:inline-block}
+a{color:#65b5ff;overflow-wrap:anywhere}
+pre{white-space:pre-wrap;overflow-wrap:anywhere}
+hr{border-color:#34445c}
 </style>
 </head>
 <body>
 <header>
-<nav>
-<div class="logo">ADS GROWTH 📈</div>
-<div class="actions">
-<button class="secondary" id="homeBtn">Home</button>
-<button id="loginBtn">Login</button>
-<button id="registerBtn">Register</button>
-<button class="secondary hidden" id="logoutBtn">Logout</button>
-</div>
-</nav>
+<h1>ADS GROWTH 📈</h1>
+<p>Grow Your Business With Smart Landing Pages</p>
 </header>
 
 <main>
-<div id="message" class="notice hidden"></div>
-
 <section id="home">
-<div class="hero">
-<h1>Grow Your Business Online</h1>
-<p>Create professional landing pages, collect customer enquiries and grow your business with ADS GROWTH.</p>
-<button id="startBtn">Get Started</button>
-</div>
-
 <div class="box">
-<h2>Choose Your Plan</h2>
-<div class="grid">
-<div class="item">
-<h3>Basic</h3><div class="price">$5</div>
-<p class="muted">30 Days · 1 Page</p>
-<button class="planBtn" data-plan="basic">Choose Plan</button>
+<h2>Welcome to ADS GROWTH AGENCY</h2>
+<p>Create landing pages, collect customer leads and grow your business.</p>
+<button onclick="showAuth('register')">Create Account</button>
+<button class="secondary" onclick="showAuth('login')">Login</button>
 </div>
-<div class="item">
-<h3>Prime & Pro</h3><div class="price">$12</div>
-<p class="muted">30 Days · 1 Page</p>
-<button class="planBtn" data-plan="prime_pro">Choose Plan</button>
-</div>
-<div class="item">
-<h3>Basic & Prime</h3><div class="price">$15</div>
-<p class="muted">30 Days · 2 Pages</p>
-<button class="planBtn" data-plan="basic_prime">Choose Plan</button>
-</div>
-</div>
-<p class="muted">Payment requests are manually verified by the administrator.</p>
+<div class="box">
+<h2>Subscription Plans</h2>
+<div id="publicPlans" class="grid"></div>
+<p class="muted">Plans are valid for 30 days. Payment is manually reviewed by the administrator.</p>
 </div>
 </section>
 
 <section id="auth" class="box hidden">
 <h2 id="authTitle">Login</h2>
 <form id="authForm">
-<div id="nameBox" class="hidden">
-<label>Name</label>
-<input name="name" placeholder="Your name">
+<div id="nameWrap" class="hidden">
+<label>Your Name</label>
+<input name="name" placeholder="Full name">
 </div>
 <label>Email</label>
 <input name="email" type="email" required placeholder="Email address">
 <label>Password</label>
-<input name="password" type="password" minlength="8" required placeholder="Password">
-<button id="authSubmit">Login</button>
+<input name="password" type="password" minlength="8" required placeholder="Minimum 8 characters">
+<button id="authButton">Login</button>
 </form>
-<p id="switchText" class="muted"></p>
+<p id="authSwitch" class="muted"></p>
+<button class="secondary" onclick="showHome()">Back</button>
 </section>
 
 <section id="dashboard" class="hidden">
@@ -101,264 +72,292 @@ footer{text-align:center;color:#64748b;padding:25px}
 <h2 id="welcome">Dashboard</h2>
 <p id="accountInfo" class="muted"></p>
 <div class="tabs">
-<button data-tab="builder">Page Builder</button>
-<button class="secondary" data-tab="plans">Plans & Payment</button>
-<button class="secondary" data-tab="pages">My Pages</button>
-<button class="secondary" data-tab="payments">Payment History</button>
-<button class="secondary hidden" id="adminTab">Admin</button>
+<button onclick="tab('builder')">Page Builder</button>
+<button class="secondary" onclick="tab('plans')">Plans & Payment</button>
+<button class="secondary" onclick="tab('pages')">My Pages</button>
+<button class="secondary" onclick="tab('payments')">Payment History</button>
+<button class="secondary hidden" id="adminButton" onclick="tab('admin')">Admin Panel</button>
+<button class="danger" onclick="logout()">Logout</button>
 </div>
 </div>
 
 <div id="builder" class="box">
 <h2>Landing Page Builder</h2>
-<p id="limitInfo" class="muted"></p>
+<p class="muted" id="builderMessage"></p>
 <form id="pageForm">
-<label>Page Title</label>
-<input name="title" required placeholder="My Business">
-<label>Headline</label>
-<input name="headline" required placeholder="Welcome to our business">
-<label>Description</label>
-<textarea name="description" rows="3"></textarea>
-<label>Image URL</label>
-<input name="image_url" type="url" placeholder="https://example.com/image.jpg">
-<label>Button Text</label>
-<input name="button_text" value="Contact Us">
-<label>Button URL</label>
-<input name="button_url" type="url" placeholder="https://example.com">
-<label>WhatsApp Number with country code</label>
-<input name="whatsapp" placeholder="919876543210">
-<label>Meta Pixel ID</label>
-<input name="pixel_id" placeholder="Pixel ID">
-<label>Theme Colour</label>
-<input name="primary_color" type="color" value="#16a34a">
-<button type="submit" id="createBtn">Create Landing Page</button>
+<label>Page Title</label><input name="title" required placeholder="My Business">
+<label>Headline</label><input name="headline" placeholder="Welcome to my business">
+<label>Description</label><textarea name="description" placeholder="Describe your product or service"></textarea>
+<label>Image URL</label><input name="image_url" placeholder="https://example.com/image.jpg">
+<label>Button Text</label><input name="button_text" value="Contact Us">
+<label>Button URL</label><input name="button_url" placeholder="https://example.com">
+<label>WhatsApp Number (with country code)</label><input name="whatsapp" placeholder="919876543210">
+<label>Meta Pixel ID (optional)</label><input name="pixel_id" placeholder="Your own Pixel ID">
+<label>Theme Color</label><input name="primary_color" type="color" value="#16a34a">
+<button>Create Landing Page</button>
 </form>
 </div>
 
 <div id="plans" class="box hidden">
 <h2>Plans & Payment</h2>
-<div id="planChoices" class="grid">
-<div class="item"><h3>Basic $5</h3><button class="planBtn" data-plan="basic">Select</button></div>
-<div class="item"><h3>Prime & Pro $12</h3><button class="planBtn" data-plan="prime_pro">Select</button></div>
-<div class="item"><h3>Basic & Prime $15</h3><button class="planBtn" data-plan="basic_prime">Select</button></div>
-</div>
-<div id="paymentBox" class="item hidden">
-<h3 id="selectedPlan"></h3>
-<p class="muted">Only send USDT TRC20 after verifying the receiving address with the administrator.</p>
-<label>USDT TRC20 Address</label>
-<input id="wallet" readonly>
-<button type="button" class="secondary" id="copyWallet">Copy Address</button>
-<form id="paymentForm">
+<div id="plansList" class="grid"></div>
+<div class="item">
+<h3>Submit Payment Transaction</h3>
+<p class="muted">First select a plan. Send payment only to the verified wallet address shown below.</p>
+<p id="walletAddress"></p>
+<label>Selected Plan</label>
+<select id="paymentPlan">
+<option value="basic">Basic - $5</option>
+<option value="prime_pro">Prime Pro - $12</option>
+<option value="basic_prime">Basic & Prime - $15</option>
+</select>
 <label>Transaction ID (TXID)</label>
-<input name="txid" required minlength="20" placeholder="Paste TXID">
-<button type="submit">Submit Payment Request</button>
-</form>
+<input id="txid" placeholder="Paste transaction ID">
+<button onclick="submitPayment()">Submit Payment for Review</button>
+<p class="muted">Submitting a TXID does not activate your subscription. The administrator must verify the transaction independently.</p>
 </div>
 </div>
 
 <div id="pages" class="box hidden">
-<h2>My Pages</h2><div id="pagesList"></div>
+<h2>My Landing Pages</h2>
+<div id="pagesList"></div>
 </div>
 
 <div id="payments" class="box hidden">
-<h2>Payment History</h2><div id="paymentsList"></div>
+<h2>Payment History</h2>
+<div id="paymentList"></div>
 </div>
 
 <div id="admin" class="box hidden">
-<h2>Admin Panel</h2>
+<h2>Administrator Panel</h2>
 <div id="adminStats" class="grid"></div>
+<hr>
 <h3>Payment Requests</h3>
 <div id="adminPayments"></div>
+<hr>
 <h3>Customer Leads</h3>
 <div id="adminLeads"></div>
 </div>
 </section>
+<div id="message" class="box hidden"></div>
 </main>
-<footer>ADS GROWTH AGENCY © 2026</footer>
 
 <script>
-const $=s=>document.querySelector(s);
-let token=localStorage.getItem("ads_token")||"";
-let user=null,mode="login",selectedPlan="";
-const planNames={
- basic:"Basic $5 USDT",
- prime_pro:"Prime & Pro $12 USDT",
- basic_prime:"Basic & Prime $15 USDT"
-};
+const $ = id => document.getElementById(id);
+let token = localStorage.getItem("ag_token") || "";
+let me = null;
+let config = null;
+let selectedPlan = "basic";
 
-function msg(t,type="notice"){
- const el=$("#message");
- el.textContent=t;
- el.className="notice "+(type==="error"?"error":type==="success"?"success":"");
- window.scrollTo({top:0,behavior:"smooth"});
+function showMessage(text){
+  $("message").textContent = text;
+  $("message").classList.remove("hidden");
+  window.scrollTo(0,0);
 }
-function esc(v){
- return String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+function hideMessage(){ $("message").classList.add("hidden"); }
+function showHome(){
+  hideMessage();
+  $("home").classList.remove("hidden");
+  $("auth").classList.add("hidden");
+  $("dashboard").classList.add("hidden");
 }
-function view(id){
- ["home","auth","dashboard"].forEach(x=>$("#"+x).classList.toggle("hidden",x!==id));
- $("#message").classList.add("hidden");
+function showAuth(mode){
+  hideMessage();
+  $("home").classList.add("hidden");
+  $("dashboard").classList.add("hidden");
+  $("auth").classList.remove("hidden");
+  const reg = mode === "register";
+  $("authTitle").textContent = reg ? "Create Account" : "Login";
+  $("authButton").textContent = reg ? "Register" : "Login";
+  $("nameWrap").classList.toggle("hidden",!reg);
+  $("authSwitch").innerHTML = reg
+    ? 'Already registered? <a href="#" onclick="showAuth(\'login\');return false">Login</a>'
+    : 'New user? <a href="#" onclick="showAuth(\'register\');return false">Create account</a>';
 }
 async function api(url,options={}){
- const headers={...(options.headers||{})};
- if(options.body)headers["Content-Type"]="application/json";
- if(token)headers.Authorization="Bearer "+token;
- const r=await fetch(url,{...options,headers});
- let d={};try{d=await r.json()}catch{}
- if(!r.ok)throw Error(d.error||"Request failed");
- return d;
+  options.headers = {...(options.headers||{})};
+  if(token) options.headers.Authorization = "Bearer " + token;
+  if(options.body && typeof options.body !== "string"){
+    options.headers["Content-Type"]="application/json";
+    options.body=JSON.stringify(options.body);
+  }
+  const response=await fetch(url,options);
+  const data=await response.json().catch(()=>({error:"Unexpected server response."}));
+  if(!response.ok) throw new Error(data.error || "Request failed.");
+  return data;
 }
-function openAuth(m){
- mode=m;
- $("#authTitle").textContent=m==="login"?"Login":"Create Account";
- $("#authSubmit").textContent=m==="login"?"Login":"Register";
- $("#nameBox").classList.toggle("hidden",m!=="register");
- $("#authForm").elements.name.required=m==="register";
- $("#switchText").innerHTML=m==="login"
- ?'New user? <a href="#" id="switchRegister">Create account</a>'
- :'Already registered? <a href="#" id="switchLogin">Login</a>';
- view("auth");
+async function loadConfig(){
+  try{
+    config=await api("/api/config");
+    const plans=config.plans;
+    const html=Object.entries(plans).map(([id,p])=>`
+      <div class="item">
+        <h3>${p.name}</h3><div class="price">$${p.price}</div>
+        <p>30 Days · ${p.pages} Pages</p>
+        <button onclick="choosePlan('${id}')">Choose Plan</button>
+      </div>`).join("");
+    $("publicPlans").innerHTML=html;
+    $("plansList").innerHTML=html;
+    $("walletAddress").textContent=config.paymentAddress
+      ? "USDT TRC20 Address: " + config.paymentAddress
+      : "Payment wallet is not configured yet. Please contact administrator.";
+  }catch(e){showMessage(e.message);}
 }
-async function dashboard(){
- try{
-  const d=await api("/api/me");
-  user=d.user;
-  view("dashboard");
-  $("#welcome").textContent="Welcome, "+user.name;
-  $("#accountInfo").textContent=user.email+" | "+(user.role==="admin"?"Administrator":user.subscription_status);
-  $("#limitInfo").textContent="Pages available: "+d.pageCount+" / "+d.pageLimit;
-  $("#adminTab").classList.toggle("hidden",user.role!=="admin");
-  $("#logoutBtn").classList.remove("hidden");
-  await loadPages();
- }catch(e){
-  token="";localStorage.removeItem("ads_token");
-  openAuth("login");msg(e.message,"error");
- }
+function choosePlan(id){
+  selectedPlan=id;
+  $("paymentPlan").value=id;
+  if(!token){showAuth("register");return;}
+  tab("plans");
 }
-function tab(name){
- ["builder","plans","pages","payments","admin"].forEach(x=>$("#"+x).classList.toggle("hidden",x!==name));
- if(name==="pages")loadPages().catch(e=>msg(e.message,"error"));
- if(name==="payments")loadPayments().catch(e=>msg(e.message,"error"));
- if(name==="admin")loadAdmin().catch(e=>msg(e.message,"error"));
+$("authForm").addEventListener("submit",async e=>{
+  e.preventDefault();
+  const f=new FormData(e.target);
+  const mode=$("authTitle").textContent==="Login"?"login":"register";
+  const body=Object.fromEntries(f.entries());
+  try{
+    const data=await api("/api/auth/"+mode,{method:"POST",body});
+    token=data.token;
+    localStorage.setItem("ag_token",token);
+    await loadDashboard();
+  }catch(err){showMessage(err.message);}
+});
+async function loadDashboard(){
+  try{
+    const data=await api("/api/me");
+    me=data.user;
+    $("home").classList.add("hidden");
+    $("auth").classList.add("hidden");
+    $("dashboard").classList.remove("hidden");
+    $("welcome").textContent="Welcome, "+(me.name||me.email);
+    const expiry=me.subscription_expires
+      ? new Date(me.subscription_expires).toLocaleString()
+      : "No active subscription";
+    $("accountInfo").textContent="Role: "+me.role+" | Plan: "+(me.plan||"None")+" | Expires: "+expiry;
+    const admin=me.role==="admin";
+    $("adminButton").classList.toggle("hidden",!admin);
+    $("builderMessage").textContent=admin
+      ? "Administrator access: no subscription required."
+      : "Your page limit: "+data.pageLimit+". An active subscription is needed to create and publish pages.";
+    await loadPages();
+    await loadPayments();
+    if(admin) await loadAdmin();
+    tab(admin?"admin":"builder");
+  }catch(e){
+    token="";
+    localStorage.removeItem("ag_token");
+    showAuth("login");
+    showMessage(e.message);
+  }
 }
+function tab(id){
+  ["builder","plans","pages","payments","admin"].forEach(x=>{
+    $(x).classList.toggle("hidden",x!==id);
+  });
+}
+$("pageForm").addEventListener("submit",async e=>{
+  e.preventDefault();
+  const body=Object.fromEntries(new FormData(e.target).entries());
+  try{
+    await api("/api/pages",{method:"POST",body});
+    e.target.reset();
+    $("pageForm").primary_color.value="#16a34a";
+    showMessage("Landing page created.");
+    await loadPages();
+    tab("pages");
+  }catch(err){showMessage(err.message);}
+});
 async function loadPages(){
- const d=await api("/api/pages");
- if(!d.pages.length){$("#pagesList").innerHTML='<p class="muted">No pages created.</p>';return;}
- $("#pagesList").innerHTML=d.pages.map(p=>`
- <div class="item">
- <b>${esc(p.title)}</b><p class="muted">${p.published?"Published":"Draft"}</p>
- <div class="actions">
- <button class="publish" data-id="${p.id}">Publish</button>
- <button class="copy secondary" data-url="${location.origin}/p/${encodeURIComponent(p.slug)}">Copy Link</button>
- <button class="delete danger" data-id="${p.id}">Delete</button>
- </div>
- ${p.published?`<a target="_blank" href="/p/${encodeURIComponent(p.slug)}">Open Page</a>`:""}
- </div>`).join("");
+  try{
+    const data=await api("/api/pages");
+    $("pagesList").innerHTML=data.pages.length ? data.pages.map(p=>`
+      <div class="item">
+        <h3>${esc(p.title)}</h3>
+        <p>Status: ${p.published?"Published":"Draft"}</p>
+        <p>Link: ${p.published?`<a target="_blank" href="/p/${encodeURIComponent(p.slug)}">Open Page</a>`:"Not published"}</p>
+        <button onclick="publishPage(${p.id})">${p.published?"Unpublish":"Publish"}</button>
+        <button class="danger" onclick="deletePage(${p.id})">Delete</button>
+      </div>`).join("") : "<p>No pages created yet.</p>";
+  }catch(e){$("pagesList").textContent=e.message;}
+}
+async function publishPage(id){
+  try{
+    const data=await api("/api/pages/"+id+"/publish",{method:"POST",body:{}});
+    showMessage(data.page.published?"Page published: "+data.url:"Page unpublished.");
+    loadPages();
+  }catch(e){showMessage(e.message);}
+}
+async function deletePage(id){
+  if(!confirm("Delete this page?"))return;
+  try{await api("/api/pages/"+id,{method:"DELETE"});loadPages();}
+  catch(e){showMessage(e.message);}
+}
+async function submitPayment(){
+  const plan_id=$("paymentPlan").value;
+  const txid=$("txid").value.trim();
+  if(!txid)return showMessage("Enter your transaction ID.");
+  try{
+    await api("/api/payments",{method:"POST",body:{plan_id,txid}});
+    $("txid").value="";
+    showMessage("Payment submitted. Wait for administrator verification.");
+    loadPayments();
+  }catch(e){showMessage(e.message);}
 }
 async function loadPayments(){
- const d=await api("/api/payments");
- $("#paymentsList").innerHTML=d.payments.length?d.payments.map(p=>`
- <div class="item"><b>${esc(planNames[p.plan_id]||p.plan_id)}</b> · ${esc(p.amount)} USDT
- <p>Status: ${esc(p.status)}</p><small>TXID: ${esc(p.txid)}</small></div>`).join(""):'<p>No payments submitted.</p>';
+  try{
+    const data=await api("/api/payments");
+    $("paymentList").innerHTML=data.payments.length?data.payments.map(p=>`
+      <div class="item"><b>${esc(p.plan)}</b>
+      <p>TXID: ${esc(p.txid)}</p><p>Status: <span class="status">${esc(p.status)}</span></p>
+      <p>${new Date(p.created_at).toLocaleString()}</p></div>`).join(""):"No payment requests yet.";
+  }catch(e){$("paymentList").textContent=e.message;}
 }
 async function loadAdmin(){
- const [s,p,l]=await Promise.all([
- api("/api/admin/stats"),api("/api/admin/payments"),api("/api/admin/leads")
- ]);
- $("#adminStats").innerHTML=Object.entries({
- Users:s.users,Pages:s.pages,Pending:s.pendingPayments,Leads:s.leads
- }).map(([k,v])=>`<div class="item"><b>${k}</b><div class="price">${v}</div></div>`).join("");
- $("#adminPayments").innerHTML=p.payments.map(x=>`
- <div class="item"><b>${esc(x.user_name)} (${esc(x.user_email)})</b>
- <p>${esc(x.plan_id)} · ${esc(x.amount)} USDT</p>
- <small>${esc(x.txid)} · ${esc(x.status)}</small>
- ${x.status==="pending"?`<div class="actions"><button class="review" data-id="${x.id}" data-status="approved">Approve</button><button class="review danger" data-id="${x.id}" data-status="rejected">Reject</button></div>`:""}
- </div>`).join("")||"No payment requests";
- $("#adminLeads").innerHTML=l.leads.map(x=>`
- <div class="item"><b>${esc(x.name)}</b><p>${esc(x.email)} · ${esc(x.phone)}</p><small>${esc(x.message)}</small></div>
- `).join("")||"No leads yet";
-}
-
-$("#homeBtn").onclick=()=>view("home");
-$("#loginBtn").onclick=()=>openAuth("login");
-$("#registerBtn").onclick=()=>openAuth("register");
-$("#startBtn").onclick=()=>openAuth("register");
-$("#logoutBtn").onclick=()=>{
- token="";user=null;localStorage.removeItem("ads_token");
- $("#logoutBtn").classList.add("hidden");view("home");msg("Logged out.","success");
-};
-$("#authForm").onsubmit=async e=>{
- e.preventDefault();const b=$("#authSubmit");b.disabled=true;
- try{
-  const data=Object.fromEntries(new FormData(e.target).entries());
-  const d=await api("/api/auth/"+mode,{method:"POST",body:JSON.stringify(data)});
-  token=d.token;localStorage.setItem("ads_token",token);
-  await dashboard();
- }catch(err){msg(err.message,"error");}
- finally{b.disabled=false;}
-};
-document.addEventListener("click",e=>{
- if(e.target.id==="switchRegister"){e.preventDefault();openAuth("register");}
- if(e.target.id==="switchLogin"){e.preventDefault();openAuth("login");}
- if(e.target.dataset.tab)tab(e.target.dataset.tab);
-});
-$("#pageForm").onsubmit=async e=>{
- e.preventDefault();const b=$("#createBtn");b.disabled=true;
- try{
-  const data=Object.fromEntries(new FormData(e.target).entries());
-  await api("/api/pages",{method:"POST",body:JSON.stringify(data)});
-  e.target.reset();msg("Landing page created. Now open My Pages and publish it.","success");
-  tab("pages");
- }catch(err){msg(err.message,"error");}
- finally{b.disabled=false;}
-};
-document.addEventListener("click",async e=>{
- const t=e.target;
- if(t.classList.contains("planBtn")){
-  if(!token){openAuth("register");msg("Register or login first.");return;}
-  selectedPlan=t.dataset.plan;$("#selectedPlan").textContent=planNames[selectedPlan];
-  $("#paymentBox").classList.remove("hidden");tab("plans");
   try{
-   const d=await api("/api/config");$("#wallet").value=d.paymentAddress||"Address not configured";
-   if(!d.paymentAddress)msg("Admin has not configured the receiving address. Do not send funds.","error");
-  }catch(err){msg(err.message,"error");}
- }
- if(t.classList.contains("publish")){
-  try{const d=await api("/api/pages/"+t.dataset.id+"/publish",{method:"POST",body:"{}"});await loadPages();msg("Published: "+d.url,"success");}
-  catch(err){msg(err.message,"error");}
- }
- if(t.classList.contains("copy")){
-  try{await navigator.clipboard.writeText(t.dataset.url);msg("Link copied.","success");}
-  catch{msg("Copy not available. Copy the link from your browser.","error");}
- }
- if(t.classList.contains("delete")){
-  if(!confirm("Delete this page?"))return;
-  try{await api("/api/pages/"+t.dataset.id,{method:"DELETE"});await loadPages();msg("Page deleted.","success");}
-  catch(err){msg(err.message,"error");}
- }
- if(t.classList.contains("review")){
-  const note=prompt("Admin note (optional)")||"";
-  try{await api("/api/admin/payments/"+t.dataset.id+"/review",{method:"POST",body:JSON.stringify({status:t.dataset.status,admin_note:note})});await loadAdmin();msg("Payment reviewed.","success");}
-  catch(err){msg(err.message,"error");}
- }
-});
-$("#paymentForm").onsubmit=async e=>{
- e.preventDefault();const b=e.target.querySelector("button");b.disabled=true;
- try{
-  const txid=new FormData(e.target).get("txid");
-  const d=await api("/api/payments",{method:"POST",body:JSON.stringify({plan_id:selectedPlan,txid})});
-  e.target.reset();msg(d.message,"success");tab("payments");
- }catch(err){msg(err.message,"error");}
- finally{b.disabled=false;}
-};
-$("#copyWallet").onclick=async()=>{
- const v=$("#wallet").value;
- if(!v||v==="Address not configured")return;
- try{await navigator.clipboard.writeText(v);msg("Address copied.","success");}
- catch{msg("Select and copy the address manually.","error");}
-};
-if(token)dashboard();else view("home");
+    const stats=await api("/api/admin/stats");
+    $("adminStats").innerHTML=Object.entries(stats).map(([k,v])=>`
+      <div class="item"><h3>${k}</h3><div class="price">${v}</div></div>`).join("");
+    const data=await api("/api/admin/payments");
+    $("adminPayments").innerHTML=data.payments.length?data.payments.map(p=>`
+      <div class="item">
+      <b>${esc(p.name)} (${esc(p.email)})</b>
+      <p>Plan: ${esc(p.plan)} | TXID: ${esc(p.txid)}</p>
+      <p>Status: ${esc(p.status)}</p>
+      ${p.status==="pending"?`
+        <button onclick="reviewPayment(${p.id},'approved')">Approve</button>
+        <button class="danger" onclick="reviewPayment(${p.id},'rejected')">Reject</button>`:""}
+      </div>`).join(""):"No payment requests.";
+    const leads=await api("/api/admin/leads");
+    $("adminLeads").innerHTML=leads.leads.length?leads.leads.map(l=>`
+      <div class="item"><b>${esc(l.name)}</b>
+      <p>${esc(l.email)} | ${esc(l.phone)}</p>
+      <p>Page: ${esc(l.page_title)}</p><p>${esc(l.message)}</p></div>`).join(""):"No leads yet.";
+  }catch(e){$("adminPayments").textContent=e.message;}
+}
+async function reviewPayment(id,status){
+  let note=prompt("Admin note (optional):")||"";
+  if(status==="approved" && !confirm("Have you independently verified this USDT transaction on-chain? Approve only if confirmed."))return;
+  try{
+    await api("/api/admin/payments/"+id+"/review",{method:"POST",body:{status,admin_note:note}});
+    showMessage("Payment "+status+".");
+    await loadAdmin();
+  }catch(e){showMessage(e.message);}
+}
+function esc(s){
+  return String(s??"").replace(/[&<>"']/g,c=>({
+    "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+  })[c]);
+}
+function logout(){
+  token="";
+  me=null;
+  localStorage.removeItem("ag_token");
+  showHome();
+}
+(async()=>{
+  await loadConfig();
+  if(token) await loadDashboard();
+})();
 </script>
 </body>
-  </html>
-  
+ </html>
+ 
