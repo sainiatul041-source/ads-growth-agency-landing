@@ -2,38 +2,41 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>ADS GROWTH 📈</title>
 <style>
 *{box-sizing:border-box}
 body{margin:0;background:#081225;color:#fff;font-family:Arial,sans-serif}
-header{background:#101d36;padding:17px;text-align:center;border-bottom:1px solid #263957}
-header h1{margin:0;color:#22c55e;font-size:27px}
-header p{margin:6px 0 0;color:#aab9d0}
+header{background:#101d36;padding:18px;text-align:center;border-bottom:1px solid #293d5e}
+header h1{margin:0;color:#22c55e;font-size:28px}
+header p{color:#b6c6df;margin:7px 0 0}
 .container{max-width:850px;margin:20px auto;padding:14px}
 .card{background:#111f39;border:1px solid #293d5e;border-radius:14px;padding:18px;margin-bottom:15px}
-h2{font-size:21px;margin-top:0;color:#86efac}
+h2{font-size:21px;color:#86efac;margin-top:0}
 h3{margin:8px 0}
-input,textarea,select{width:100%;padding:13px;margin:7px 0 12px;background:#081529;color:#fff;border:1px solid #385071;border-radius:8px;font-size:15px}
+input,textarea{width:100%;padding:13px;margin:7px 0 12px;background:#081529;color:white;border:1px solid #385071;border-radius:8px;font-size:15px}
+input[type=color]{height:48px;padding:4px;cursor:pointer}
 textarea{min-height:90px;resize:vertical}
-button,.btn{border:0;border-radius:8px;padding:12px 17px;background:#0891b2;color:#fff;font-weight:bold;cursor:pointer;margin:4px 3px;text-decoration:none;display:inline-block}
-button:hover,.btn:hover{opacity:.85}
+button{border:0;border-radius:8px;padding:12px 17px;background:#0891b2;color:#fff;font-weight:bold;cursor:pointer;margin:4px 3px}
+button:hover{opacity:.85}
 .green{background:#16a34a}
 .red{background:#dc2626}
 .gray{background:#475569}
 .orange{background:#d97706}
-.small{font-size:13px;color:#aebed5}
-.price{font-size:27px;color:#4ade80;font-weight:bold}
 .plan{border:1px solid #395071;padding:15px;border-radius:12px;margin:10px 0}
+.price{font-size:28px;color:#4ade80;font-weight:bold}
 .hidden{display:none!important}
 .row{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+.small{font-size:13px;color:#aebed5}
 .status{padding:5px 9px;border-radius:6px;background:#334155;font-size:12px}
-a{color:#67e8f9;overflow-wrap:anywhere}
-hr{border:0;border-top:1px solid #34445f;margin:15px 0}
 #message{position:sticky;top:0;z-index:5;padding:10px;text-align:center;background:#14532d;display:none}
-.preview{background:white;color:#111827;padding:20px;border-radius:12px;text-align:center}
-.preview img{max-width:100%;max-height:240px;object-fit:cover;border-radius:10px}
-.preview a{background:#0891b2;color:white;padding:12px 20px;display:inline-block;border-radius:8px;text-decoration:none}
+.preview{padding:20px;border-radius:12px;text-align:center;overflow-wrap:anywhere}
+.preview img{max-width:100%;max-height:260px;object-fit:cover;border-radius:10px}
+.preview a{display:inline-block;padding:12px 20px;border-radius:8px;text-decoration:none}
+label{display:block;color:#cbd5e1;font-size:14px;margin-top:8px}
+.color-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.color-box{background:#0b1930;padding:10px;border-radius:9px}
+@media(max-width:480px){.color-grid{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -55,9 +58,9 @@ hr{border:0;border-top:1px solid #34445f;margin:15px 0}
 <button class="green" onclick="login()">Login</button>
 <hr>
 <h2>Create Account</h2>
-<input id="regName" placeholder="Full name">
+<input id="regName" placeholder="Full Name">
 <input id="regEmail" type="email" placeholder="Email">
-<input id="regPassword" type="password" placeholder="Password (min 8 characters)">
+<input id="regPassword" type="password" placeholder="Password (minimum 8 characters)">
 <button onclick="register()">Register</button>
 </div>
 </section>
@@ -76,34 +79,37 @@ hr{border:0;border-top:1px solid #34445f;margin:15px 0}
 
 <section id="paymentSection" class="card">
 <h2>Choose Your Plan</h2>
-<p class="small">Builder access starts after Admin verifies and approves your payment.</p>
+<p class="small">Payment verification is done manually by Admin.</p>
 
-<div id="plans">
 <div class="plan">
-<h3>Starter</h3><div class="price">₹499</div>
+<h3>Starter</h3>
+<div class="price">₹499</div>
 <p>All Click</p>
 <button onclick="selectPlan('starter')">Choose Starter</button>
 </div>
+
 <div class="plan">
-<h3>Growth</h3><div class="price">₹999</div>
+<h3>Growth</h3>
+<div class="price">₹999</div>
 <p>50% Click</p>
 <button onclick="selectPlan('growth')">Choose Growth</button>
 </div>
+
 <div class="plan">
-<h3>Pro</h3><div class="price">₹1499</div>
+<h3>Pro</h3>
+<div class="price">₹1499</div>
 <p>100% Click</p>
 <button onclick="selectPlan('pro')">Choose Pro</button>
-</div>
 </div>
 
 <div id="paymentForm" class="hidden">
 <hr>
 <h3 id="selectedPlanName"></h3>
-<p>UPI ID: <strong id="upiId"></strong></p>
+<p>UPI ID: <b id="upiId"></b></p>
 <button class="gray" onclick="copyUpi()">Copy UPI ID</button>
-<p class="small">Apne UPI app mein payment karein. Payment verify hone ke baad UTR number submit karein.</p>
-<input id="utr" placeholder="UPI Transaction ID / UTR">
-<input id="screenshotUrl" placeholder="Payment screenshot URL (optional)">
+<p class="small">UPI app mein payment karne ke baad UTR number submit karein.</p>
+<input id="utr" placeholder="Transaction ID / UTR">
+<input id="screenshotUrl" placeholder="Screenshot URL (optional)">
 <button class="green" onclick="submitPayment()">Submit Payment Request</button>
 </div>
 </section>
@@ -114,23 +120,50 @@ hr{border:0;border-top:1px solid #34445f;margin:15px 0}
 </section>
 
 <section id="builderSection" class="hidden">
+
 <div class="card">
 <h2>Landing Page Builder</h2>
 <input id="pageId" type="hidden">
+
 <label>Page Title</label>
-<input id="pageTitle" placeholder="Example: My Business">
+<input id="pageTitle" placeholder="My Business">
+
 <label>Headline</label>
-<input id="headline" placeholder="Enter your main headline">
+<input id="headline" placeholder="Enter main headline">
+
 <label>Description</label>
 <textarea id="description" placeholder="Write your page description"></textarea>
-<label>Image URL (public HTTPS image link)</label>
+
+<label>Image URL (public image link)</label>
 <input id="imageUrl" placeholder="https://example.com/image.jpg">
+
 <label>Button Text</label>
-<input id="buttonText" placeholder="Join Now" value="Join Now">
+<input id="buttonText" value="Join Now" placeholder="Join Now">
+
 <label>Button Link</label>
 <input id="buttonUrl" placeholder="https://example.com">
+
 <label>Meta Pixel ID (optional)</label>
-<input id="pixelId" placeholder="Your Meta Pixel ID">
+<input id="pixelId" placeholder="Meta Pixel ID">
+
+<hr>
+<h2>🎨 Customize Your Page Colors</h2>
+<p class="small">Apni landing page ke teen rang choose karein.</p>
+
+<div class="color-grid">
+<div class="color-box">
+<label>Background Color</label>
+<input type="color" id="bgColor" value="#081225">
+</div>
+<div class="color-box">
+<label>Text Color</label>
+<input type="color" id="textColor" value="#ffffff">
+</div>
+<div class="color-box">
+<label>Button Color</label>
+<input type="color" id="buttonColor" value="#0891b2">
+</div>
+</div>
 
 <div class="row">
 <button class="green" onclick="savePage()">Save Page</button>
@@ -140,19 +173,20 @@ hr{border:0;border-top:1px solid #34445f;margin:15px 0}
 </div>
 
 <div id="previewArea" class="card hidden">
-<h2>Page Preview</h2>
-<div class="preview" id="previewContent"></div>
+<h2>Live Preview</h2>
+<div id="previewContent" class="preview"></div>
 </div>
 
 <div class="card">
 <h2>My Landing Pages</h2>
 <div id="pageList">Loading...</div>
 </div>
+
 </section>
 
 <section id="adminSection" class="card hidden">
 <h2>Admin Panel — Payment Requests</h2>
-<p class="small">Verify each UTR in your UPI/bank app before approving.</p>
+<p class="small">Approve karne se pehle apne UPI/bank app mein payment verify karein.</p>
 <button onclick="loadAdminPayments()">Refresh Requests</button>
 <div id="adminPayments">Loading...</div>
 </section>
@@ -161,19 +195,21 @@ hr{border:0;border-top:1px solid #34445f;margin:15px 0}
 </div>
 
 <script>
-const API = "/api";
-let token = localStorage.getItem("ag_token") || "";
-let currentUser = null;
-let selectedPlan = null;
-let plans = [];
-let upi = "";
+const API="/api";
+let token=localStorage.getItem("ag_token")||"";
+let currentUser=null;
+let selectedPlan=null;
+let plans=[];
+let upi="";
 
 function el(id){return document.getElementById(id)}
+
 function esc(value){
-  return String(value ?? "").replace(/[&<>"']/g,c=>({
+  return String(value??"").replace(/[&<>"']/g,c=>({
     "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
   })[c]);
 }
+
 function message(text,isError=false){
   const box=el("message");
   box.textContent=text;
@@ -182,6 +218,7 @@ function message(text,isError=false){
   window.scrollTo({top:0,behavior:"smooth"});
   setTimeout(()=>box.style.display="none",4500);
 }
+
 async function api(url,options={}){
   const headers={"Content-Type":"application/json",...(options.headers||{})};
   if(token)headers.Authorization="Bearer "+token;
@@ -190,10 +227,12 @@ async function api(url,options={}){
   if(!response.ok)throw new Error(data.error||"Server error");
   return data;
 }
-function saveToken(t){
-  token=t;
-  localStorage.setItem("ag_token",t);
+
+function saveToken(value){
+  token=value;
+  localStorage.setItem("ag_token",value);
 }
+
 async function register(){
   try{
     const data=await api("/register",{
@@ -209,6 +248,7 @@ async function register(){
     message("Account created successfully");
   }catch(e){message(e.message,true)}
 }
+
 async function login(){
   try{
     const data=await api("/login",{
@@ -223,6 +263,7 @@ async function login(){
     message("Login successful");
   }catch(e){message(e.message,true)}
 }
+
 function logout(){
   token="";
   currentUser=null;
@@ -230,9 +271,11 @@ function logout(){
   el("authSection").classList.remove("hidden");
   el("appSection").classList.add("hidden");
 }
+
 async function startApp(){
   const data=await api("/me");
   currentUser=data.user;
+
   el("authSection").classList.add("hidden");
   el("appSection").classList.remove("hidden");
   el("welcome").textContent="Welcome, "+currentUser.name;
@@ -254,21 +297,26 @@ async function startApp(){
     await loadMyPayments();
   }
 }
+
 function selectPlan(id){
   selectedPlan=plans.find(p=>p.id===id);
   if(!selectedPlan)return;
-  el("selectedPlanName").textContent=selectedPlan.name+" — ₹"+selectedPlan.amount;
+  el("selectedPlanName").textContent=
+    selectedPlan.name+" — ₹"+selectedPlan.amount;
   el("paymentForm").classList.remove("hidden");
 }
+
 async function copyUpi(){
   try{
     await navigator.clipboard.writeText(upi);
     message("UPI ID copied");
   }catch(e){message("UPI ID: "+upi)}
 }
+
 async function submitPayment(){
   try{
     if(!selectedPlan)throw new Error("Please choose a plan");
+
     const data=await api("/payments",{
       method:"POST",
       body:JSON.stringify({
@@ -277,6 +325,7 @@ async function submitPayment(){
         screenshotUrl:el("screenshotUrl").value
       })
     });
+
     el("utr").value="";
     el("screenshotUrl").value="";
     el("paymentForm").classList.add("hidden");
@@ -284,9 +333,11 @@ async function submitPayment(){
     await loadMyPayments();
   }catch(e){message(e.message,true)}
 }
+
 async function loadMyPayments(){
   try{
     const data=await api("/payments/mine");
+
     el("myPayments").innerHTML=data.payments.length
       ?data.payments.map(p=>`
         <div class="plan">
@@ -296,48 +347,64 @@ async function loadMyPayments(){
         </div>`).join("")
       :"<p>No payment requests yet.</p>";
 
-    const approved=data.payments.some(p=>p.status==="approved");
-    if(approved){
+    if(data.payments.some(p=>p.status==="approved")){
       el("paymentSection").classList.add("hidden");
       el("builderSection").classList.remove("hidden");
       await loadPages();
     }
   }catch(e){message(e.message,true)}
 }
+
 function clearForm(){
   ["pageId","pageTitle","headline","description","imageUrl",
    "buttonUrl","pixelId"].forEach(id=>el(id).value="");
+
   el("buttonText").value="Join Now";
+  el("bgColor").value="#081225";
+  el("textColor").value="#ffffff";
+  el("buttonColor").value="#0891b2";
   el("previewArea").classList.add("hidden");
 }
+
+function getSafeUrl(value){
+  try{
+    const u=new URL(value);
+    return ["http:","https:"].includes(u.protocol)?u.href:"";
+  }catch(e){return ""}
+}
+
 function showPreview(){
   const title=el("pageTitle").value;
   const headline=el("headline").value;
   const description=el("description").value;
-  const image=el("imageUrl").value;
+  const image=getSafeUrl(el("imageUrl").value);
   const button=el("buttonText").value;
-  const link=el("buttonUrl").value;
-  let safeImage="";
-  try{
-    const u=new URL(image);
-    if(["http:","https:"].includes(u.protocol))safeImage=u.href;
-  }catch(e){}
-  let safeLink="";
-  try{
-    const u=new URL(link);
-    if(["http:","https:"].includes(u.protocol))safeLink=u.href;
-  }catch(e){}
+  const link=getSafeUrl(el("buttonUrl").value);
+
+  const bg=el("bgColor").value;
+  const txt=el("textColor").value;
+  const btn=el("buttonColor").value;
+
+  el("previewContent").style.background=bg;
+  el("previewContent").style.color=txt;
+
   el("previewContent").innerHTML=`
-    <h2>${esc(headline||title||"Your Headline")}</h2>
-    ${safeImage?`<img src="${esc(safeImage)}" alt="">`:""}
+    <h2 style="color:${esc(txt)}">${esc(headline||title||"Your Headline")}</h2>
+    ${image?`<img src="${esc(image)}" alt="">`:""}
     <p>${esc(description).replace(/\n/g,"<br>")}</p>
-    ${safeLink?`<a href="${esc(safeLink)}" target="_blank" rel="noopener">${esc(button)}</a>`:""}
+    ${link?`
+      <a href="${esc(link)}" target="_blank" rel="noopener"
+      style="background:${esc(btn)};color:white">
+      ${esc(button)}</a>`:""}
   `;
+
   el("previewArea").classList.remove("hidden");
 }
+
 async function savePage(){
   try{
     const id=el("pageId").value;
+
     const body={
       title:el("pageTitle").value,
       headline:el("headline").value,
@@ -345,20 +412,27 @@ async function savePage(){
       imageUrl:el("imageUrl").value,
       buttonText:el("buttonText").value,
       buttonUrl:el("buttonUrl").value,
-      pixelId:el("pixelId").value
+      pixelId:el("pixelId").value,
+      bgColor:el("bgColor").value,
+      textColor:el("textColor").value,
+      buttonColor:el("buttonColor").value
     };
+
     const data=await api(id?"/pages/"+id:"/pages",{
       method:id?"PUT":"POST",
       body:JSON.stringify(body)
     });
+
     el("pageId").value=data.page.id;
     message("Page saved successfully");
     await loadPages();
   }catch(e){message(e.message,true)}
 }
+
 async function loadPages(){
   try{
     const data=await api("/pages");
+
     el("pageList").innerHTML=data.pages.length
       ?data.pages.map(p=>`
         <div class="plan">
@@ -373,16 +447,20 @@ async function loadPages(){
               :`<button class="green" onclick="publishPage(${Number(p.id)},true)">Publish</button>`}
             <button class="red" onclick="deletePage(${Number(p.id)})">Delete</button>
           </div>
-          ${p.is_published?`<p><a target="_blank" href="/p/${encodeURIComponent(p.slug)}">Open Published Page</a></p>`:""}
+          ${p.is_published
+            ?`<p><a target="_blank" href="/p/${encodeURIComponent(p.slug)}">Open Published Page</a></p>`
+            :""}
         </div>`).join("")
       :"<p>No landing pages created yet.</p>";
   }catch(e){message(e.message,true)}
 }
+
 async function editPage(id){
   try{
     const data=await api("/pages");
     const p=data.pages.find(x=>Number(x.id)===id);
     if(!p)throw new Error("Page not found");
+
     el("pageId").value=p.id;
     el("pageTitle").value=p.title||"";
     el("headline").value=p.headline||"";
@@ -391,52 +469,56 @@ async function editPage(id){
     el("buttonText").value=p.button_text||"Join Now";
     el("buttonUrl").value=p.button_url||"";
     el("pixelId").value=p.pixel_id||"";
+    el("bgColor").value=p.bg_color||"#081225";
+    el("textColor").value=p.text_color||"#ffffff";
+    el("buttonColor").value=p.button_color||"#0891b2";
+
     el("previewArea").classList.add("hidden");
     window.scrollTo({top:0,behavior:"smooth"});
   }catch(e){message(e.message,true)}
 }
+
 async function previewPage(id){
   try{
-    const data=await api("/pages");
-    const p=data.pages.find(x=>Number(x.id)===id);
-    if(!p)throw new Error("Page not found");
-    el("pageId").value=p.id;
-    el("pageTitle").value=p.title||"";
-    el("headline").value=p.headline||"";
-    el("description").value=p.description||"";
-    el("imageUrl").value=p.image_url||"";
-    el("buttonText").value=p.button_text||"Join Now";
-    el("buttonUrl").value=p.button_url||"";
-    el("pixelId").value=p.pixel_id||"";
+    await editPage(id);
     showPreview();
-    window.scrollTo({top:0,behavior:"smooth"});
   }catch(e){message(e.message,true)}
 }
+
 async function publishPage(id,publish){
   try{
-    await api("/pages/"+id+(publish?"/publish":"/unpublish"),{method:"POST",body:"{}"});
+    await api("/pages/"+id+(publish?"/publish":"/unpublish"),{
+      method:"POST",
+      body:"{}"
+    });
     message(publish?"Page published":"Page unpublished");
     await loadPages();
   }catch(e){message(e.message,true)}
 }
+
 async function deletePage(id){
   if(!confirm("Are you sure you want to delete this page?"))return;
+
   try{
     await api("/pages/"+id,{method:"DELETE"});
     message("Page deleted");
     await loadPages();
   }catch(e){message(e.message,true)}
 }
+
 async function loadAdminPayments(){
   try{
     const data=await api("/admin/payments");
+
     el("adminPayments").innerHTML=data.payments.length
       ?data.payments.map(p=>`
         <div class="plan">
           <h3>${esc(p.name)} — ${esc(p.email)}</h3>
           <p>${esc(p.plan_id.toUpperCase())} | ₹${esc(p.amount)}</p>
           <p>UTR: <b>${esc(p.utr)}</b></p>
-          ${p.screenshot_url?`<p><a href="${esc(p.screenshot_url)}" target="_blank" rel="noopener">View Screenshot</a></p>`:""}
+          ${p.screenshot_url
+            ?`<p><a href="${esc(p.screenshot_url)}" target="_blank" rel="noopener">View Screenshot</a></p>`
+            :""}
           <span class="status">${esc(p.status.toUpperCase())}</span>
           ${p.status==="pending"?`
             <div>
@@ -447,14 +529,18 @@ async function loadAdminPayments(){
       :"<p>No payment requests.</p>";
   }catch(e){el("adminPayments").textContent=e.message}
 }
+
 async function reviewPayment(id,status){
   const promptText=status==="approved"
     ?"Confirm you have verified this payment in your UPI/bank app?"
     :"Reject this payment request?";
+
   if(!confirm(promptText))return;
+
   try{
     await api("/admin/payments/"+id+"/review",{
-      method:"POST",body:JSON.stringify({status})
+      method:"POST",
+      body:JSON.stringify({status})
     });
     message("Payment "+status);
     await loadAdminPayments();
@@ -473,4 +559,3 @@ if(token){
 </script>
 </body>
   </html>
-  
