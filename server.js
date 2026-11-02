@@ -15,7 +15,7 @@ const DATABASE_URL = process.env.DATABASE_URL;
 const JWT_SECRET = process.env.JWT_SECRET;
 
 if (!DATABASE_URL || !JWT_SECRET) {
-  console.error("DATABASE_URL aur JWT_SECRET Render Environment me set karo.");
+  console.error("DATABASE_URL aur JWT_SECRET Render me set karein.");
   process.exit(1);
 }
 
@@ -28,7 +28,6 @@ const pool = new Pool({
 
 app.use(cors());
 app.use(express.json({ limit: "2mb" }));
-app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, "public")));
 
 const PLANS = [
@@ -38,8 +37,40 @@ const PLANS = [
 ];
 
 const UPI_ID = process.env.UPI_ID || "sainiatul041@okhdfcbank";
-const ADMIN_EMAIL = (process.env.ADMIN_EMAIL || "").toLowerCase().trim();
+const ADMIN_EMAIL = (process.env.ADMIN_EMAIL || "").trim().toLowerCase();
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "";
+
+function clean(value, max = 500) {
+  return String(value || "").trim().slice(0, max);
+}
+
+function validUrl(value) {
+  if (!value) return "";
+  try {
+    const url = new URL(value);
+    return ["http:", "https:"].includes(url.protocol) ? url.href : "";
+  } catch {
+    return "";
+  }
+}
+
+function safeColor(value, fallback) {
+  const color = String(value || "").trim();
+  return /^#[0-9a-fA-F]{6}$/.test(color) ? color : fallback;
+}
+
+function slugify(value) {
+  return clean(value, 80).toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "") || "my-page";
+}
+
+function escapeHtml(value) {
+  return String(value || "").replace(/[&<>"']/g, c => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;",
+    '"': "&quot;", "'": "&#39;"
+  })[c]);
+}
 
 function makeToken(user) {
   return jwt.sign(
@@ -53,9 +84,7 @@ function auth(req, res, next) {
   const header = req.headers.authorization || "";
   const token = header.startsWith("Bearer ") ? header.slice(7) : "";
 
-  if (!token) {
-    return res.status(401).json({ error: "Login required" });
-  }
+  if (!token) return res.status(401).json({ error: "Login required" });
 
   try {
     req.user = jwt.verify(token, JWT_SECRET);
@@ -86,29 +115,6 @@ function paidOnly(req, res, next) {
     }
     next();
   }).catch(next);
-}
-
-function clean(value, max = 500) {
-  return String(value || "").trim().slice(0, max);
-}
-
-function slugify(value) {
-  const base = clean(value, 80)
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-|-$/g, "");
-
-  return base || "my-page";
-}
-
-function validUrl(value) {
-  if (!value) return "";
-  try {
-    const url = new URL(value);
-    return ["http:", "https:"].includes(url.protocol) ? url.href : "";
-  } catch {
-    return "";
-  }
 }
 
 async function initDB() {
@@ -146,9 +152,19 @@ async function initDB() {
       pixel_id TEXT DEFAULT '',
       slug TEXT UNIQUE NOT NULL,
       is_published BOOLEAN DEFAULT FALSE,
+      bg_color TEXT DEFAULT '#081225',
+      text_color TEXT DEFAULT '#ffffff',
+      button_color TEXT DEFAULT '#0891b2',
       created_at TIMESTAMPTZ DEFAULT NOW(),
       updated_at TIMESTAMPTZ DEFAULT NOW()
     );
+
+    ALTER TABLE ag2_pages ADD COLUMN IF NOT EXISTS bg_color TEXT DEFAULT '#081225';
+    ALTER TABLE ag2_pages ADD COLUMN IF NOT EXISTS text_color TEXT DEFAULT '#ffffff';
+    ALTER TABLE ag2_pages ADD COLUMN IF NOT EXISTS button_color TEXT DEFAULT '#0891b2';
+    ALTER TABLE ag2_payments ADD COLUMN IF NOT EXISTS amount NUMERIC(10,2);
+    ALTER TABLE ag2_payments ADD COLUMN IF NOT EXISTS screenshot_url TEXT DEFAULT '';
+    ALTER TABLE ag2_payments ADD COLUMN IF NOT EXISTS reviewed_at TIMESTAMPTZ;
   `);
 
   if (ADMIN_EMAIL && ADMIN_PASSWORD) {
@@ -188,8 +204,10 @@ app.post("/api/register", async (req, res, next) => {
       [name, email, hash]
     );
 
-    const user = result.rows[0];
-    res.json({ token: makeToken(user), user });
+    res.json({
+      token: makeToken(result.rows[0]),
+      user: result.rows[0]
+    });
   } catch (err) {
     if (err.code === "23505") {
       return res.status(409).json({ error: "Email already registered" });
@@ -328,6 +346,7 @@ app.post("/api/pages", auth, paidOnly, async (req, res, next) => {
   try {
     const title = clean(req.body.title, 120);
     const headline = clean(req.body.headline, 180);
+
     if (!title || !headline) {
       return res.status(400).json({ error: "Title aur headline zaroori hain" });
     }
@@ -336,8 +355,10 @@ app.post("/api/pages", auth, paidOnly, async (req, res, next) => {
 
     const result = await pool.query(
       `INSERT INTO ag2_pages
-       (user_id,title,headline,description,image_url,button_text,button_url,pixel_id,slug)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING *`,
+       (user_id,title,headline,description,image_url,button_text,
+        button_url,pixel_id,slug,bg_color,text_color,button_color)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)
+       RETURNING *`,
       [
         req.user.id,
         title,
@@ -347,7 +368,10 @@ app.post("/api/pages", auth, paidOnly, async (req, res, next) => {
         clean(req.body.buttonText, 60) || "Join Now",
         validUrl(req.body.buttonUrl),
         clean(req.body.pixelId, 30).replace(/\D/g, ""),
-        slug
+        slug,
+        safeColor(req.body.bgColor, "#081225"),
+        safeColor(req.body.textColor, "#ffffff"),
+        safeColor(req.body.buttonColor, "#0891b2")
       ]
     );
 
@@ -362,8 +386,9 @@ app.put("/api/pages/:id", auth, paidOnly, async (req, res, next) => {
     const result = await pool.query(
       `UPDATE ag2_pages SET
        title=$1,headline=$2,description=$3,image_url=$4,
-       button_text=$5,button_url=$6,pixel_id=$7,updated_at=NOW()
-       WHERE id=$8 AND user_id=$9 RETURNING *`,
+       button_text=$5,button_url=$6,pixel_id=$7,
+       bg_color=$8,text_color=$9,button_color=$10,updated_at=NOW()
+       WHERE id=$11 AND user_id=$12 RETURNING *`,
       [
         clean(req.body.title, 120),
         clean(req.body.headline, 180),
@@ -372,6 +397,9 @@ app.put("/api/pages/:id", auth, paidOnly, async (req, res, next) => {
         clean(req.body.buttonText, 60) || "Join Now",
         validUrl(req.body.buttonUrl),
         clean(req.body.pixelId, 30).replace(/\D/g, ""),
+        safeColor(req.body.bgColor, "#081225"),
+        safeColor(req.body.textColor, "#ffffff"),
+        safeColor(req.body.buttonColor, "#0891b2"),
         req.params.id,
         req.user.id
       ]
@@ -425,13 +453,6 @@ app.delete("/api/pages/:id", auth, paidOnly, async (req, res, next) => {
   }
 });
 
-function escapeHtml(value) {
-  return String(value || "").replace(/[&<>"']/g, char => ({
-    "&": "&amp;", "<": "&lt;", ">": "&gt;",
-    '"': "&quot;", "'": "&#39;"
-  })[char]);
-}
-
 app.get("/p/:slug", async (req, res, next) => {
   try {
     const result = await pool.query(
@@ -442,11 +463,16 @@ app.get("/p/:slug", async (req, res, next) => {
     if (!result.rowCount) return res.status(404).send("Page not found or unpublished");
 
     const p = result.rows[0];
+    const bgColor = safeColor(p.bg_color, "#081225");
+    const textColor = safeColor(p.text_color, "#ffffff");
+    const buttonColor = safeColor(p.button_color, "#0891b2");
     const pixel = /^\d+$/.test(p.pixel_id || "") ? p.pixel_id : "";
-    const image = p.image_url
+
+    const image = validUrl(p.image_url)
       ? `<img class="hero-img" src="${escapeHtml(p.image_url)}" alt="">`
       : "";
-    const button = p.button_url
+
+    const button = validUrl(p.button_url)
       ? `<a class="cta" href="${escapeHtml(p.button_url)}" target="_blank" rel="noopener">${escapeHtml(p.button_text)}</a>`
       : "";
 
@@ -467,12 +493,12 @@ fbq('init','${pixel}');fbq('track','PageView');
 </script>` : ""}
 <style>
 *{box-sizing:border-box}
-body{margin:0;background:#0b1224;color:white;font-family:Arial,sans-serif}
+body{margin:0;background:${bgColor};color:${textColor};font-family:Arial,sans-serif}
 main{max-width:760px;margin:35px auto;padding:24px;text-align:center}
 h1{font-size:34px;line-height:1.25}
-p{font-size:18px;line-height:1.7;color:#dbeafe}
+p{font-size:18px;line-height:1.7;color:${textColor}}
 .hero-img{width:100%;max-height:380px;object-fit:cover;border-radius:18px;margin:20px 0}
-.cta{display:inline-block;margin-top:20px;background:#0891b2;color:white;
+.cta{display:inline-block;margin-top:20px;background:${buttonColor};color:white;
 padding:15px 28px;border-radius:10px;text-decoration:none;font-weight:bold}
 </style>
 </head>
@@ -488,6 +514,10 @@ ${button}
 });
 
 app.get("/health", (req, res) => res.json({ status: "ok" }));
+
+app.get("*", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "index.html"));
+});
 
 app.use((err, req, res, next) => {
   console.error(err);
