@@ -13,7 +13,6 @@ header{background:#101d32;padding:16px;display:flex;justify-content:space-betwee
 button{border:0;border-radius:8px;padding:11px 16px;background:#20c982;color:#061b13;font-weight:bold;cursor:pointer}
 button.secondary{background:#263a55;color:white}
 button.danger{background:#d94b5b;color:white}
-button:disabled{opacity:.5;cursor:not-allowed}
 main{max-width:1050px;margin:auto;padding:18px}
 .card{background:#122139;border:1px solid #263b59;border-radius:13px;padding:18px;margin:14px 0}
 h1,h2,h3{margin-top:0}
@@ -27,9 +26,9 @@ label{font-size:14px;color:#c7d5e8}
 .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 .page-item{background:#0b192d;border:1px solid #2b405d;border-radius:10px;padding:14px;margin:12px 0}
 .status{display:inline-block;background:#244a3b;color:#8ef0b8;padding:5px 9px;border-radius:20px;font-size:12px}
-.notice{padding:12px;border-radius:8px;background:#193653;margin:10px 0}
+.notice{padding:12px;border-radius:8px;background:#193653;margin:10px 0;overflow-wrap:anywhere}
 #message{position:sticky;top:0;z-index:5;padding:10px;text-align:center;background:#174b39;display:none}
-a{color:#64c9ff}
+.plan-tag{color:#9eecc6}
 footer{text-align:center;color:#8ea1bb;padding:25px}
 </style>
 </head>
@@ -41,154 +40,152 @@ footer{text-align:center;color:#8ea1bb;padding:25px}
     <button class="secondary" id="logoutBtn" onclick="logout()" hidden>Logout</button>
   </div>
 </header>
-
 <div id="message"></div>
 
 <main>
-  <section id="authSection" class="card">
-    <h1>Welcome to ADS GROWTH</h1>
-    <p class="muted">अपना अकाउंट बनाएं या लॉगिन करें।</p>
+<section id="authSection" class="card">
+  <h1>Welcome to ADS GROWTH</h1>
+  <p class="muted">अपना अकाउंट बनाएं या लॉगिन करें।</p>
+  <div class="grid">
+    <div>
+      <h3>Login</h3>
+      <form onsubmit="login(event)">
+        <label>Email</label><input id="loginEmail" type="email" required>
+        <label>Password</label><input id="loginPassword" type="password" required>
+        <button type="submit">Login</button>
+      </form>
+    </div>
+    <div>
+      <h3>Create Account</h3>
+      <form onsubmit="register(event)">
+        <label>Name</label><input id="regName" required>
+        <label>Email</label><input id="regEmail" type="email" required>
+        <label>Password</label><input id="regPassword" type="password" minlength="6" required>
+        <button type="submit">Register</button>
+      </form>
+    </div>
+  </div>
+</section>
+
+<section id="appSection" class="hidden">
+  <div class="card">
+    <h2>Dashboard</h2>
+    <p class="muted">अपना प्लान चुनें और अपनी landing page बनाएं।</p>
     <div class="grid">
-      <div>
-        <h3>Login</h3>
-        <form onsubmit="login(event)">
-          <label>Email</label>
-          <input id="loginEmail" type="email" required>
-          <label>Password</label>
-          <input id="loginPassword" type="password" required>
-          <button type="submit">Login</button>
-        </form>
+      <div class="card">
+        <h3>Starter</h3><div class="price">₹499</div>
+        <p class="plan-tag">All Click</p>
+        <button onclick="selectPlan('Starter',499)">Select Starter</button>
       </div>
-      <div>
-        <h3>Create Account</h3>
-        <form onsubmit="register(event)">
-          <label>Name</label>
-          <input id="regName" required>
-          <label>Email</label>
-          <input id="regEmail" type="email" required>
-          <label>Password</label>
-          <input id="regPassword" type="password" minlength="6" required>
-          <button type="submit">Register</button>
-        </form>
+      <div class="card">
+        <h3>Growth</h3><div class="price">₹999</div>
+        <p class="plan-tag">50% Click</p>
+        <button onclick="selectPlan('Growth',999)">Select Growth</button>
+      </div>
+      <div class="card">
+        <h3>Pro</h3><div class="price">₹1499</div>
+        <p class="plan-tag">100% Click</p>
+        <button onclick="selectPlan('Pro',1499)">Select Pro</button>
       </div>
     </div>
-  </section>
+    <p class="muted">Click संबंधी लेबल प्लान का विवरण है; वास्तविक क्लिक और परिणाम ट्रैफिक तथा कैंपेन पर निर्भर करते हैं।</p>
+  </div>
 
-  <section id="appSection" class="hidden">
-    <div class="card">
-      <h2>Dashboard</h2>
-      <p class="muted">अपना प्लान चुनें और अपनी landing page बनाएं।</p>
-      <div class="grid">
-        <div class="card">
-          <h3>Starter</h3>
-          <div class="price">₹499</div>
-          <p>All Click</p>
-          <button onclick="selectPlan('Starter',499,'All Click')">Select Starter</button>
-        </div>
-        <div class="card">
-          <h3>Growth</h3>
-          <div class="price">₹999</div>
-          <p>50% Click</p>
-          <button onclick="selectPlan('Growth',999,'50% Click')">Select Growth</button>
-        </div>
-        <div class="card">
-          <h3>Pro</h3>
-          <div class="price">₹1499</div>
-          <p>100% Click</p>
-          <button onclick="selectPlan('Pro',1499,'100% Click')">Select Pro</button>
-        </div>
+  <section class="card" id="builder">
+    <h2 id="builderTitle">Create Landing Page</h2>
+    <form onsubmit="savePage(event)">
+      <input type="hidden" id="pageId">
+      <label>Landing Page Title</label>
+      <input id="pageTitle" placeholder="अपनी वेबसाइट का नाम लिखें" required>
+      <label>Headline</label>
+      <input id="pageHeadline" placeholder="अपना मुख्य संदेश लिखें" required>
+      <label>Description</label>
+      <textarea id="pageDescription" placeholder="अपने प्रोडक्ट या सर्विस के बारे में लिखें"></textarea>
+      <label>Landing Page Photo URL</label>
+      <input id="pageImage" type="url" placeholder="https://example.com/photo.jpg">
+      <p class="muted">यह सार्वजनिक रूप से खुलने वाला फोटो URL होना चाहिए।</p>
+      <label>Button Text</label>
+      <input id="pageButton" value="Join Now" required>
+      <label>Button Link</label>
+      <input id="pageLink" type="url" placeholder="https://example.com">
+      <label>Background Color</label>
+      <select id="pageColor">
+        <option value="#0b1730">Dark Blue</option>
+        <option value="#142b24">Dark Green</option>
+        <option value="#25152e">Purple</option>
+        <option value="#202020">Black</option>
+      </select>
+      <div class="row">
+        <button type="submit" id="saveButton">Create Page</button>
+        <button type="button" class="secondary" onclick="resetBuilder()">Clear</button>
       </div>
-      <p class="muted">नोट: Click संबंधी विवरण प्लान की सुविधा का लेबल है; वास्तविक क्लिक और परिणाम ट्रैफिक तथा कैंपेन पर निर्भर करते हैं।</p>
-    </div>
-
-    <section class="card" id="builder">
-      <h2 id="builderTitle">Create Landing Page</h2>
-      <form onsubmit="savePage(event)">
-        <input type="hidden" id="pageId">
-        <label>Landing Page Title</label>
-        <input id="pageTitle" placeholder="अपनी वेबसाइट का नाम लिखें" required>
-        <label>Headline</label>
-        <input id="pageHeadline" placeholder="अपना मुख्य संदेश लिखें" required>
-        <label>Description</label>
-        <textarea id="pageDescription" placeholder="अपने प्रोडक्ट या सर्विस के बारे में लिखें"></textarea>
-        <label>Button Text</label>
-        <input id="pageButton" value="Join Now" required>
-        <label>Button Link</label>
-        <input id="pageLink" type="url" placeholder="https://example.com">
-        <label>Background Color</label>
-        <select id="pageColor">
-          <option value="#0b1730">Dark Blue</option>
-          <option value="#142b24">Dark Green</option>
-          <option value="#25152e">Purple</option>
-          <option value="#202020">Black</option>
-        </select>
-        <div class="row">
-          <button type="submit" id="saveButton">Create Page</button>
-          <button type="button" class="secondary" onclick="resetBuilder()">Clear</button>
-        </div>
-      </form>
-    </section>
-
-    <section class="card">
-      <h2>My Landing Pages</h2>
-      <button class="secondary" onclick="loadPages()">Refresh Pages</button>
-      <div id="pagesList"><p class="muted">Loading...</p></div>
-    </section>
-
-    <section class="card">
-      <h2>Payment</h2>
-      <p class="muted">Payment करने के बाद transaction ID जमा करें। भुगतान की पुष्टि Admin द्वारा की जाएगी।</p>
-      <form onsubmit="submitPayment(event)">
-        <label>Plan</label>
-        <select id="paymentPlan">
-          <option value="Starter">Starter - ₹499</option>
-          <option value="Growth">Growth - ₹999</option>
-          <option value="Pro">Pro - ₹1499</option>
-        </select>
-        <label>Amount (₹)</label>
-        <input id="paymentAmount" type="number" min="1" required>
-        <label>Transaction ID / UTR</label>
-        <input id="paymentTxid" required placeholder="अपना Transaction ID लिखें">
-        <button type="submit">Submit Payment Details</button>
-      </form>
-      <h3>Payment History</h3>
-      <div id="paymentList"><p class="muted">No payment details loaded.</p></div>
-    </section>
-
-    <section class="card hidden" id="adminSection">
-      <h2>Admin Panel</h2>
-      <button class="secondary" onclick="loadAdmin()">Refresh Admin Data</button>
-      <div id="adminStats"></div>
-      <h3>Payment Requests</h3>
-      <div id="adminPayments"></div>
-    </section>
+    </form>
   </section>
+
+  <section class="card">
+    <h2>My Landing Pages</h2>
+    <button class="secondary" onclick="loadPages()">Refresh Pages</button>
+    <div id="pagesList"><p class="muted">Loading...</p></div>
+  </section>
+
+  <section class="card">
+    <h2>Payment</h2>
+    <div class="notice">
+      <h3>Pay using UPI</h3>
+      <p>UPI ID: <strong id="upiText">sainiatul041@okhdfcbank</strong></p>
+      <button type="button" onclick="copyUpi()">Copy UPI ID</button>
+      <p class="muted">भुगतान करने से पहले UPI ID ध्यान से जाँच लें। Payment की पुष्टि Admin करेगा।</p>
+    </div>
+    <form onsubmit="submitPayment(event)">
+      <label>Plan</label>
+      <select id="paymentPlan" onchange="syncAmount()">
+        <option value="Starter">Starter - ₹499</option>
+        <option value="Growth">Growth - ₹999</option>
+        <option value="Pro">Pro - ₹1499</option>
+      </select>
+      <label>Amount (₹)</label>
+      <input id="paymentAmount" type="number" readonly required value="499">
+      <label>Transaction ID / UTR</label>
+      <input id="paymentTxid" required placeholder="भुगतान के बाद Transaction ID लिखें">
+      <button type="submit">Submit Payment Details</button>
+    </form>
+    <h3>Payment History</h3>
+    <div id="paymentList"></div>
+  </section>
+
+  <section class="card hidden" id="adminSection">
+    <h2>Admin Panel</h2>
+    <button class="secondary" onclick="loadAdmin()">Refresh Admin Data</button>
+    <div id="adminStats"></div>
+    <h3>Payment Requests</h3>
+    <div id="adminPayments"></div>
+  </section>
+</section>
 </main>
 
 <footer>© <span id="year"></span> ADS GROWTH AGENCY</footer>
 
 <script>
-const API = "";
-let token = localStorage.getItem("ag_token") || "";
-let currentPlan = null;
+const API="";
+let token=localStorage.getItem("ag_token")||"";
+const $=id=>document.getElementById(id);
+const prices={Starter:499,Growth:999,Pro:1499};
 
-const $ = id => document.getElementById(id);
-
-function message(text, error=false){
+function message(msg,error=false){
   const box=$("message");
-  box.textContent=text;
+  box.textContent=msg;
   box.style.background=error?"#71313b":"#174b39";
   box.style.display="block";
   window.scrollTo({top:0,behavior:"smooth"});
   setTimeout(()=>box.style.display="none",4500);
 }
 
-async function request(path, options={}){
+async function request(url,options={}){
   const headers={"Content-Type":"application/json",...(options.headers||{})};
-  if(token) headers.Authorization="Bearer "+token;
-  const response=await fetch(API+path,{...options,headers});
-  const data=await response.json().catch(()=>({}));
-  if(!response.ok) throw new Error(data.error||data.message||"Request failed");
+  if(token)headers.Authorization="Bearer "+token;
+  const r=await fetch(API+url,{...options,headers});
+  const data=await r.json().catch(()=>({}));
+  if(!r.ok)throw new Error(data.error||"Request failed");
   return data;
 }
 
@@ -196,83 +193,73 @@ function showApp(user){
   $("authSection").classList.add("hidden");
   $("appSection").classList.remove("hidden");
   $("logoutBtn").hidden=false;
-  $("userLabel").textContent=user?.name || user?.email || "Logged in";
-  if(user?.role==="admin") $("adminSection").classList.remove("hidden");
-  loadPages();
-  loadPayments();
-  if(user?.role==="admin") loadAdmin();
+  $("userLabel").textContent=user?.name||user?.email||"Logged in";
+  if(user?.role==="admin")$("adminSection").classList.remove("hidden");
+  loadPages();loadPayments();
+  if(user?.role==="admin")loadAdmin();
 }
 
 async function checkLogin(){
-  if(!token){$("authSection").classList.remove("hidden");return;}
-  try{
-    const data=await request("/api/me");
-    showApp(data.user||data);
-  }catch(e){
-    token="";
-    localStorage.removeItem("ag_token");
-    $("authSection").classList.remove("hidden");
-  }
+  if(!token)return;
+  try{const d=await request("/api/me");showApp(d.user||d);}
+  catch{token="";localStorage.removeItem("ag_token");}
 }
 
 async function login(e){
   e.preventDefault();
   try{
-    const data=await request("/api/auth/login",{method:"POST",body:JSON.stringify({
-      email:$("loginEmail").value.trim(),
-      password:$("loginPassword").value
+    const d=await request("/api/auth/login",{method:"POST",body:JSON.stringify({
+      email:$("loginEmail").value.trim(),password:$("loginPassword").value
     })});
-    token=data.token;
-    localStorage.setItem("ag_token",token);
-    showApp(data.user);
-    message("Login successful!");
+    token=d.token;localStorage.setItem("ag_token",token);
+    showApp(d.user);message("Login successful!");
   }catch(e){message(e.message,true);}
 }
 
 async function register(e){
   e.preventDefault();
   try{
-    const data=await request("/api/auth/register",{method:"POST",body:JSON.stringify({
-      name:$("regName").value.trim(),
-      email:$("regEmail").value.trim(),
+    const d=await request("/api/auth/register",{method:"POST",body:JSON.stringify({
+      name:$("regName").value.trim(),email:$("regEmail").value.trim(),
       password:$("regPassword").value
     })});
-    if(data.token){
-      token=data.token;
-      localStorage.setItem("ag_token",token);
-      showApp(data.user);
-    }else{
-      message("Registration successful. अब Login करें।");
-    }
+    token=d.token;localStorage.setItem("ag_token",token);
+    showApp(d.user);message("Account created!");
   }catch(e){message(e.message,true);}
 }
 
 function logout(){
-  token="";
-  localStorage.removeItem("ag_token");
+  token="";localStorage.removeItem("ag_token");
   $("appSection").classList.add("hidden");
   $("authSection").classList.remove("hidden");
-  $("logoutBtn").hidden=true;
-  $("userLabel").textContent="";
+  $("logoutBtn").hidden=true;$("userLabel").textContent="";
   message("You have logged out.");
 }
 
-function selectPlan(name,amount,clickLabel){
-  currentPlan={name,amount,clickLabel};
-  $("paymentPlan").value=name;
-  $("paymentAmount").value=amount;
-  message(name+" plan selected. Payment details भरें।");
+function copyUpi(){
+  const id="sainiatul041@okhdfcbank";
+  if(navigator.clipboard?.writeText){
+    navigator.clipboard.writeText(id)
+      .then(()=>message("UPI ID copied!"))
+      .catch(()=>message("UPI ID: "+id));
+  }else message("UPI ID: "+id);
+}
+
+function syncAmount(){
+  $("paymentAmount").value=prices[$("paymentPlan").value]||499;
+}
+
+function selectPlan(name,amount){
+  $("paymentPlan").value=name;$("paymentAmount").value=amount;
   $("paymentPlan").scrollIntoView({behavior:"smooth",block:"center"});
+  message(name+" plan selected.");
 }
 
 function resetBuilder(){
-  $("pageId").value="";
-  $("pageTitle").value="";
-  $("pageHeadline").value="";
-  $("pageDescription").value="";
-  $("pageButton").value="Join Now";
-  $("pageLink").value="";
-  $("pageColor").value="#0b1730";
+  $("pageId").value="";$("pageTitle").value="";
+  $("pageHeadline").value="";$("pageDescription").value="";
+  $("pageImage").value="";$("pageButton").value="Join Now";
+  $("pageLink").value="";$("pageColor").value="#0b1730";
   $("builderTitle").textContent="Create Landing Page";
   $("saveButton").textContent="Create Page";
 }
@@ -284,95 +271,81 @@ async function savePage(e){
     title:$("pageTitle").value.trim(),
     headline:$("pageHeadline").value.trim(),
     description:$("pageDescription").value.trim(),
+    imageUrl:$("pageImage").value.trim(),
     buttonText:$("pageButton").value.trim(),
     buttonLink:$("pageLink").value.trim(),
     background:$("pageColor").value
   };
   try{
     await request(id?"/api/pages/"+encodeURIComponent(id):"/api/pages",{
-      method:id?"PUT":"POST",
-      body:JSON.stringify(payload)
+      method:id?"PUT":"POST",body:JSON.stringify(payload)
     });
     message(id?"Page updated successfully!":"Landing page created!");
-    resetBuilder();
-    loadPages();
+    resetBuilder();loadPages();
   }catch(e){message(e.message,true);}
-}
-
-async function loadPages(){
-  try{
-    const data=await request("/api/pages");
-    const pages=Array.isArray(data)?data:(data.pages||[]);
-    const list=$("pagesList");
-    if(!pages.length){list.innerHTML='<p class="muted">अभी कोई landing page नहीं है। ऊपर से Create Page करें।</p>';return;}
-    list.innerHTML="";
-    pages.forEach(page=>{
-      const item=document.createElement("div");
-      item.className="page-item";
-      const title=document.createElement("h3");
-      title.textContent=page.title||"Untitled Page";
-      const status=document.createElement("span");
-      status.className="status";
-      status.textContent=page.published?"Published":"Unpublished";
-      const slug=document.createElement("p");
-      slug.className="muted";
-      slug.textContent="Page link: "+(page.slug?location.origin+"/p/"+page.slug:"Not available");
-      const actions=document.createElement("div");
-      actions.className="row";
-      const edit=makeButton("Edit","secondary",()=>editPage(page));
-      const preview=makeButton("Preview","secondary",()=>previewPage(page));
-      const publish=makeButton(page.published?"Unpublish":"Publish","",()=>togglePublish(page));
-      const del=makeButton("Delete","danger",()=>deletePage(page.id));
-      actions.append(edit,preview,publish,del);
-      item.append(title,status,slug,actions);
-      list.append(item);
-    });
-  }catch(e){$("pagesList").textContent=e.message;}
 }
 
 function makeButton(label,cls,fn){
   const b=document.createElement("button");
-  b.textContent=label;
-  if(cls)b.className=cls;
-  b.onclick=fn;
-  return b;
+  b.textContent=label;if(cls)b.className=cls;b.onclick=fn;return b;
 }
 
-function editPage(page){
-  $("pageId").value=page.id;
-  $("pageTitle").value=page.title||"";
-  $("pageHeadline").value=page.headline||"";
-  $("pageDescription").value=page.description||"";
-  $("pageButton").value=page.buttonText||"Join Now";
-  $("pageLink").value=page.buttonLink||"";
-  $("pageColor").value=page.background||"#0b1730";
+async function loadPages(){
+  try{
+    const d=await request("/api/pages");
+    const pages=Array.isArray(d)?d:(d.pages||[]);
+    const list=$("pagesList");list.innerHTML="";
+    if(!pages.length){list.textContent="अभी कोई landing page नहीं है।";return;}
+    pages.forEach(p=>{
+      const item=document.createElement("div");item.className="page-item";
+      const title=document.createElement("h3");title.textContent=p.title||"Untitled";
+      const status=document.createElement("span");status.className="status";
+      status.textContent=p.published?"Published":"Unpublished";
+      const link=document.createElement("p");link.className="muted";
+      link.textContent="Page link: "+(p.slug?location.origin+"/p/"+p.slug:"Not available");
+      const actions=document.createElement("div");actions.className="row";
+      actions.append(
+        makeButton("Edit","secondary",()=>editPage(p)),
+        makeButton("Preview","secondary",()=>previewPage(p)),
+        makeButton(p.published?"Unpublish":"Publish","",()=>togglePublish(p)),
+        makeButton("Delete","danger",()=>deletePage(p.id))
+      );
+      item.append(title,status,link,actions);list.append(item);
+    });
+  }catch(e){$("pagesList").textContent=e.message;}
+}
+
+function editPage(p){
+  $("pageId").value=p.id;$("pageTitle").value=p.title||"";
+  $("pageHeadline").value=p.headline||"";
+  $("pageDescription").value=p.description||"";
+  $("pageImage").value=p.imageUrl||"";
+  $("pageButton").value=p.buttonText||"Join Now";
+  $("pageLink").value=p.buttonLink||"";
+  $("pageColor").value=p.background||"#0b1730";
   $("builderTitle").textContent="Edit Landing Page";
   $("saveButton").textContent="Save Changes";
   $("builder").scrollIntoView({behavior:"smooth"});
 }
 
-function previewPage(page){
-  if(page.slug){
-    window.open("/p/"+encodeURIComponent(page.slug),"_blank");
-  }else{
-    message("इस पेज का preview link अभी उपलब्ध नहीं है।",true);
-  }
+function previewPage(p){
+  if(p.slug)window.open("/p/"+encodeURIComponent(p.slug),"_blank");
+  else message("Preview link not available.",true);
 }
 
-async function togglePublish(page){
+async function togglePublish(p){
   try{
-    await request("/api/pages/"+encodeURIComponent(page.id)+"/publish",{method:"POST"});
-    message(page.published?"Page unpublished.":"Page published!");
+    await request("/api/pages/"+encodeURIComponent(p.id)+"/publish",{method:"POST"});
+    message(p.published?"Page unpublished.":"Page published!");
     loadPages();
   }catch(e){message(e.message,true);}
 }
 
 async function deletePage(id){
-  if(!confirm("क्या आप इस landing page को delete करना चाहते हैं?"))return;
+  if(!confirm("क्या आप यह landing page delete करना चाहते हैं?"))return;
   try{
     await request("/api/pages/"+encodeURIComponent(id),{method:"DELETE"});
-    message("Page deleted.");
-    loadPages();
+    message("Page deleted.");loadPages();
   }catch(e){message(e.message,true);}
 }
 
@@ -392,15 +365,13 @@ async function submitPayment(e){
 
 async function loadPayments(){
   try{
-    const data=await request("/api/payments");
-    const payments=Array.isArray(data)?data:(data.payments||[]);
-    const box=$("paymentList");
+    const d=await request("/api/payments");
+    const payments=Array.isArray(d)?d:(d.payments||[]);
+    const box=$("paymentList");box.innerHTML="";
     if(!payments.length){box.textContent="No payment records yet.";return;}
-    box.innerHTML="";
     payments.forEach(p=>{
-      const div=document.createElement("div");
-      div.className="page-item";
-      div.textContent=(p.plan||"Plan")+" | ₹"+(p.amount||"")+" | "+(p.status||"Pending")+" | "+(p.txid||"");
+      const div=document.createElement("div");div.className="page-item";
+      div.textContent=(p.plan||"Plan")+" | ₹"+p.amount+" | "+(p.status||"Pending")+" | "+(p.txid||"");
       box.append(div);
     });
   }catch(e){$("paymentList").textContent=e.message;}
@@ -408,21 +379,20 @@ async function loadPayments(){
 
 async function loadAdmin(){
   try{
-    const stats=await request("/api/admin/stats");
-    $("adminStats").textContent="Users: "+(stats.users??"-")+" | Pages: "+(stats.pages??"-")+" | Payments: "+(stats.payments??"-");
-    const data=await request("/api/admin/payments");
-    const payments=Array.isArray(data)?data:(data.payments||[]);
-    const box=$("adminPayments");
-    box.innerHTML="";
+    const s=await request("/api/admin/stats");
+    $("adminStats").textContent="Users: "+s.users+" | Pages: "+s.pages+" | Payments: "+s.payments;
+    const d=await request("/api/admin/payments");
+    const payments=Array.isArray(d)?d:(d.payments||[]);
+    const box=$("adminPayments");box.innerHTML="";
     if(!payments.length){box.textContent="No payment requests.";return;}
     payments.forEach(p=>{
-      const div=document.createElement("div");
-      div.className="page-item";
+      const div=document.createElement("div");div.className="page-item";
       const info=document.createElement("p");
-      info.textContent=(p.email||"User")+" | "+(p.plan||"Plan")+" | ₹"+(p.amount||"")+" | "+(p.txid||"")+" | "+(p.status||"Pending");
-      const approve=makeButton("Approve","",()=>changePayment(p.id,"approved"));
-      const reject=makeButton("Reject","danger",()=>changePayment(p.id,"rejected"));
-      div.append(info,approve,reject);
+      info.textContent=(p.email||"User")+" | "+p.plan+" | ₹"+p.amount+" | "+p.txid+" | "+p.status;
+      div.append(info,
+        makeButton("Approve","",()=>changePayment(p.id,"approved")),
+        makeButton("Reject","danger",()=>changePayment(p.id,"rejected"))
+      );
       box.append(div);
     });
   }catch(e){$("adminStats").textContent=e.message;}
@@ -434,9 +404,7 @@ async function changePayment(id,status){
     await request("/api/admin/payments/"+encodeURIComponent(id)+"/status",{
       method:"POST",body:JSON.stringify({status})
     });
-    message("Payment status updated.");
-    loadAdmin();
-    loadPayments();
+    message("Payment status updated.");loadAdmin();loadPayments();
   }catch(e){message(e.message,true);}
 }
 
@@ -444,5 +412,5 @@ $("year").textContent=new Date().getFullYear();
 checkLogin();
 </script>
 </body>
-         </html>
- 
+        </html>
+  
