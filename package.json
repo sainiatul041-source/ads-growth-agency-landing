@@ -1,14 +1,9 @@
-
 {
   "name": "ads-growth-agency",
   "version": "1.0.0",
-  "description": "ADS GROWTH AGENCY",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
-  },
-  "engines": {
-    "node": ">=18"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
