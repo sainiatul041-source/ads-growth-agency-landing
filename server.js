@@ -30,10 +30,11 @@ app.use(cors());
 app.use(express.json({ limit: "2mb" }));
 app.use(express.static(path.join(__dirname, "public")));
 
+// UPDATED PLAN PRICES
 const PLANS = [
-  { id: "starter", name: "Starter", amount: 499, label: "All Click" },
-  { id: "growth", name: "Growth", amount: 999, label: "50% Click" },
-  { id: "pro", name: "Pro", amount: 1499, label: "100% Click" }
+  { id: "starter", name: "Starter", amount: 999, label: "All Click" },
+  { id: "growth", name: "Growth", amount: 1499, label: "50% Click" },
+  { id: "pro", name: "Pro", amount: 1999, label: "100% Click" }
 ];
 
 const UPI_ID = process.env.UPI_ID || "sainiatul041@okhdfcbank";
@@ -67,8 +68,11 @@ function slugify(value) {
 
 function escapeHtml(value) {
   return String(value || "").replace(/[&<>"']/g, c => ({
-    "&": "&amp;", "<": "&lt;", ">": "&gt;",
-    '"': "&quot;", "'": "&#39;"
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#39;"
   })[c]);
 }
 
@@ -84,19 +88,25 @@ function auth(req, res, next) {
   const header = req.headers.authorization || "";
   const token = header.startsWith("Bearer ") ? header.slice(7) : "";
 
-  if (!token) return res.status(401).json({ error: "Login required" });
+  if (!token) {
+    return res.status(401).json({ error: "Login required" });
+  }
 
   try {
     req.user = jwt.verify(token, JWT_SECRET);
     next();
   } catch {
-    return res.status(401).json({ error: "Session expired. Login again." });
+    return res.status(401).json({
+      error: "Session expired. Login again."
+    });
   }
 }
 
 function adminOnly(req, res, next) {
   if (req.user.role !== "admin") {
-    return res.status(403).json({ error: "Admin access required" });
+    return res.status(403).json({
+      error: "Admin access required"
+    });
   }
   next();
 }
@@ -111,7 +121,9 @@ function paidOnly(req, res, next) {
     [req.user.id]
   ).then(result => {
     if (!result.rowCount) {
-      return res.status(403).json({ error: "Payment approval required" });
+      return res.status(403).json({
+        error: "Payment approval required"
+      });
     }
     next();
   }).catch(next);
@@ -169,6 +181,7 @@ async function initDB() {
 
   if (ADMIN_EMAIL && ADMIN_PASSWORD) {
     const hash = await bcrypt.hash(ADMIN_PASSWORD, 12);
+
     await pool.query(
       `INSERT INTO ag2_users (name,email,password_hash,role)
        VALUES ($1,$2,$3,'admin')
@@ -180,10 +193,15 @@ async function initDB() {
   console.log("Database ready");
 }
 
+// PLAN CONFIG
 app.get("/api/config", (req, res) => {
-  res.json({ plans: PLANS, upiId: UPI_ID });
+  res.json({
+    plans: PLANS,
+    upiId: UPI_ID
+  });
 });
 
+// REGISTER
 app.post("/api/register", async (req, res, next) => {
   try {
     const name = clean(req.body.name, 100);
@@ -197,6 +215,7 @@ app.post("/api/register", async (req, res, next) => {
     }
 
     const hash = await bcrypt.hash(password, 12);
+
     const result = await pool.query(
       `INSERT INTO ag2_users (name,email,password_hash)
        VALUES ($1,$2,$3)
@@ -210,12 +229,15 @@ app.post("/api/register", async (req, res, next) => {
     });
   } catch (err) {
     if (err.code === "23505") {
-      return res.status(409).json({ error: "Email already registered" });
+      return res.status(409).json({
+        error: "Email already registered"
+      });
     }
     next(err);
   }
 });
 
+// LOGIN
 app.post("/api/login", async (req, res, next) => {
   try {
     const email = clean(req.body.email, 150).toLowerCase();
@@ -227,33 +249,46 @@ app.post("/api/login", async (req, res, next) => {
       [email]
     );
 
-    if (!result.rowCount ||
-        !(await bcrypt.compare(password, result.rows[0].password_hash))) {
-      return res.status(401).json({ error: "Email ya password galat hai" });
+    if (
+      !result.rowCount ||
+      !(await bcrypt.compare(password, result.rows[0].password_hash))
+    ) {
+      return res.status(401).json({
+        error: "Email ya password galat hai"
+      });
     }
 
     const user = result.rows[0];
     delete user.password_hash;
 
-    res.json({ token: makeToken(user), user });
+    res.json({
+      token: makeToken(user),
+      user
+    });
   } catch (err) {
     next(err);
   }
 });
 
+// CURRENT USER
 app.get("/api/me", auth, async (req, res, next) => {
   try {
     const result = await pool.query(
       `SELECT id,name,email,role FROM ag2_users WHERE id=$1`,
       [req.user.id]
     );
-    if (!result.rowCount) return res.status(404).json({ error: "User not found" });
+
+    if (!result.rowCount) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
     res.json({ user: result.rows[0] });
   } catch (err) {
     next(err);
   }
 });
 
+// PAYMENT REQUEST
 app.post("/api/payments", auth, async (req, res, next) => {
   try {
     const plan = PLANS.find(p => p.id === req.body.planId);
@@ -261,7 +296,9 @@ app.post("/api/payments", auth, async (req, res, next) => {
     const screenshot = validUrl(req.body.screenshotUrl);
 
     if (!plan || utr.length < 6) {
-      return res.status(400).json({ error: "Plan aur valid UTR number daalein" });
+      return res.status(400).json({
+        error: "Plan aur valid UTR number daalein"
+      });
     }
 
     const result = await pool.query(
@@ -272,25 +309,33 @@ app.post("/api/payments", auth, async (req, res, next) => {
       [req.user.id, plan.id, plan.amount, utr, screenshot]
     );
 
-    res.json({ payment: result.rows[0], message: "Payment request submitted" });
+    res.json({
+      payment: result.rows[0],
+      message: "Payment request submitted"
+    });
   } catch (err) {
     next(err);
   }
 });
 
+// USER PAYMENT HISTORY
 app.get("/api/payments/mine", auth, async (req, res, next) => {
   try {
     const result = await pool.query(
       `SELECT id,plan_id,amount,utr,status,created_at
-       FROM ag2_payments WHERE user_id=$1 ORDER BY created_at DESC`,
+       FROM ag2_payments
+       WHERE user_id=$1
+       ORDER BY created_at DESC`,
       [req.user.id]
     );
+
     res.json({ payments: result.rows });
   } catch (err) {
     next(err);
   }
 });
 
+// ADMIN PAYMENT LIST
 app.get("/api/admin/payments", auth, adminOnly, async (req, res, next) => {
   try {
     const result = await pool.query(
@@ -300,28 +345,36 @@ app.get("/api/admin/payments", auth, adminOnly, async (req, res, next) => {
        JOIN ag2_users u ON u.id=p.user_id
        ORDER BY p.created_at DESC`
     );
+
     res.json({ payments: result.rows });
   } catch (err) {
     next(err);
   }
 });
 
+// ADMIN APPROVE / REJECT
 app.post("/api/admin/payments/:id/review", auth, adminOnly, async (req, res, next) => {
   try {
     const status = req.body.status;
+
     if (!["approved", "rejected"].includes(status)) {
-      return res.status(400).json({ error: "Invalid status" });
+      return res.status(400).json({
+        error: "Invalid status"
+      });
     }
 
     const result = await pool.query(
-      `UPDATE ag2_payments SET status=$1,reviewed_at=NOW()
+      `UPDATE ag2_payments
+       SET status=$1,reviewed_at=NOW()
        WHERE id=$2 AND status='pending'
        RETURNING id,status`,
       [status, req.params.id]
     );
 
     if (!result.rowCount) {
-      return res.status(404).json({ error: "Pending payment not found" });
+      return res.status(404).json({
+        error: "Pending payment not found"
+      });
     }
 
     res.json({ payment: result.rows[0] });
@@ -330,28 +383,36 @@ app.post("/api/admin/payments/:id/review", auth, adminOnly, async (req, res, nex
   }
 });
 
+// USER LANDING PAGES
 app.get("/api/pages", auth, paidOnly, async (req, res, next) => {
   try {
     const result = await pool.query(
-      `SELECT * FROM ag2_pages WHERE user_id=$1 ORDER BY created_at DESC`,
+      `SELECT * FROM ag2_pages
+       WHERE user_id=$1
+       ORDER BY created_at DESC`,
       [req.user.id]
     );
+
     res.json({ pages: result.rows });
   } catch (err) {
     next(err);
   }
 });
 
+// CREATE PAGE
 app.post("/api/pages", auth, paidOnly, async (req, res, next) => {
   try {
     const title = clean(req.body.title, 120);
     const headline = clean(req.body.headline, 180);
 
     if (!title || !headline) {
-      return res.status(400).json({ error: "Title aur headline zaroori hain" });
+      return res.status(400).json({
+        error: "Title aur headline zaroori hain"
+      });
     }
 
-    const slug = slugify(title) + "-" + crypto.randomBytes(3).toString("hex");
+    const slug = slugify(title) + "-" +
+      crypto.randomBytes(3).toString("hex");
 
     const result = await pool.query(
       `INSERT INTO ag2_pages
@@ -381,6 +442,7 @@ app.post("/api/pages", auth, paidOnly, async (req, res, next) => {
   }
 });
 
+// EDIT PAGE
 app.put("/api/pages/:id", auth, paidOnly, async (req, res, next) => {
   try {
     const result = await pool.query(
@@ -405,64 +467,90 @@ app.put("/api/pages/:id", auth, paidOnly, async (req, res, next) => {
       ]
     );
 
-    if (!result.rowCount) return res.status(404).json({ error: "Page not found" });
+    if (!result.rowCount) {
+      return res.status(404).json({ error: "Page not found" });
+    }
+
     res.json({ page: result.rows[0] });
   } catch (err) {
     next(err);
   }
 });
 
+// PUBLISH PAGE
 app.post("/api/pages/:id/publish", auth, paidOnly, async (req, res, next) => {
   try {
     const result = await pool.query(
-      `UPDATE ag2_pages SET is_published=TRUE,updated_at=NOW()
+      `UPDATE ag2_pages
+       SET is_published=TRUE,updated_at=NOW()
        WHERE id=$1 AND user_id=$2 RETURNING *`,
       [req.params.id, req.user.id]
     );
-    if (!result.rowCount) return res.status(404).json({ error: "Page not found" });
+
+    if (!result.rowCount) {
+      return res.status(404).json({ error: "Page not found" });
+    }
+
     res.json({ page: result.rows[0] });
   } catch (err) {
     next(err);
   }
 });
 
+// UNPUBLISH PAGE
 app.post("/api/pages/:id/unpublish", auth, paidOnly, async (req, res, next) => {
   try {
     const result = await pool.query(
-      `UPDATE ag2_pages SET is_published=FALSE,updated_at=NOW()
+      `UPDATE ag2_pages
+       SET is_published=FALSE,updated_at=NOW()
        WHERE id=$1 AND user_id=$2 RETURNING *`,
       [req.params.id, req.user.id]
     );
-    if (!result.rowCount) return res.status(404).json({ error: "Page not found" });
+
+    if (!result.rowCount) {
+      return res.status(404).json({ error: "Page not found" });
+    }
+
     res.json({ page: result.rows[0] });
   } catch (err) {
     next(err);
   }
 });
 
+// DELETE PAGE
 app.delete("/api/pages/:id", auth, paidOnly, async (req, res, next) => {
   try {
     const result = await pool.query(
-      `DELETE FROM ag2_pages WHERE id=$1 AND user_id=$2 RETURNING id`,
+      `DELETE FROM ag2_pages
+       WHERE id=$1 AND user_id=$2 RETURNING id`,
       [req.params.id, req.user.id]
     );
-    if (!result.rowCount) return res.status(404).json({ error: "Page not found" });
+
+    if (!result.rowCount) {
+      return res.status(404).json({ error: "Page not found" });
+    }
+
     res.json({ success: true });
   } catch (err) {
     next(err);
   }
 });
 
+// PUBLIC LANDING PAGE
 app.get("/p/:slug", async (req, res, next) => {
   try {
     const result = await pool.query(
-      `SELECT * FROM ag2_pages WHERE slug=$1 AND is_published=TRUE`,
+      `SELECT * FROM ag2_pages
+       WHERE slug=$1 AND is_published=TRUE`,
       [req.params.slug]
     );
 
-    if (!result.rowCount) return res.status(404).send("Page not found or unpublished");
+    if (!result.rowCount) {
+      return res.status(404).send("Page not found or unpublished");
+    }
 
     const p = result.rows[0];
+
     const bgColor = safeColor(p.bg_color, "#081225");
     const textColor = safeColor(p.text_color, "#ffffff");
     const buttonColor = safeColor(p.button_color, "#0891b2");
@@ -473,7 +561,10 @@ app.get("/p/:slug", async (req, res, next) => {
       : "";
 
     const button = validUrl(p.button_url)
-      ? `<a class="cta" href="${escapeHtml(p.button_url)}" target="_blank" rel="noopener">${escapeHtml(p.button_text)}</a>`
+      ? `<a class="cta" href="${escapeHtml(p.button_url)}"
+          target="_blank" rel="noopener">
+          ${escapeHtml(p.button_text)}
+        </a>`
       : "";
 
     res.type("html").send(`<!doctype html>
@@ -485,11 +576,12 @@ app.get("/p/:slug", async (req, res, next) => {
 ${pixel ? `<script>
 !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){
 n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};
-if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+if(!f._fbq)n=f.fbq;n.push=n;n.loaded=!0;n.version='2.0';
 n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;
 s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}
 (window,document,'script','https://connect.facebook.net/en_US/fbevents.js');
-fbq('init','${pixel}');fbq('track','PageView');
+fbq('init','${pixel}');
+fbq('track','PageView');
 </script>` : ""}
 <style>
 *{box-sizing:border-box}
@@ -502,28 +594,39 @@ p{font-size:18px;line-height:1.7;color:${textColor}}
 padding:15px 28px;border-radius:10px;text-decoration:none;font-weight:bold}
 </style>
 </head>
-<body><main>
+<body>
+<main>
 <h1>${escapeHtml(p.headline)}</h1>
 ${image}
 <p>${escapeHtml(p.description).replace(/\n/g, "<br>")}</p>
 ${button}
-</main></body></html>`);
+</main>
+</body>
+</html>`);
   } catch (err) {
     next(err);
   }
 });
 
-app.get("/health", (req, res) => res.json({ status: "ok" }));
+// HEALTH CHECK
+app.get("/health", (req, res) => {
+  res.json({ status: "ok" });
+});
 
+// MAIN PAGE
 app.get("*", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
+// ERROR HANDLER
 app.use((err, req, res, next) => {
   console.error(err);
-  res.status(500).json({ error: "Server error. Render Logs check karein." });
+  res.status(500).json({
+    error: "Server error. Render Logs check karein."
+  });
 });
 
+// START SERVER
 initDB()
   .then(() => {
     app.listen(PORT, "0.0.0.0", () => {
@@ -534,3 +637,4 @@ initDB()
     console.error("Database startup failed:", err);
     process.exit(1);
   });
+  
