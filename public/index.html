@@ -1,481 +1,720 @@
-
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>ADS GROWTH 📈</title>
-
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ADS GROWTH 📈 - Landing Page Builder</title>
 <style>
 *{box-sizing:border-box}
-body{
- margin:0;
- background:linear-gradient(120deg,#0f172a,#020617);
- color:white;
- font-family:Arial,sans-serif
-}
-.wrap{max-width:900px;margin:auto;padding:22px}
-.brand{
- text-align:center;color:#22c55e;
- font-size:30px;font-weight:800;margin:12px
-}
-.card{
- background:#111e36;border:1px solid #263958;
- border-radius:16px;padding:18px;margin:14px 0
-}
-.grid{
- display:grid;
- grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
- gap:12px
-}
+body{margin:0;background:#0b1224;color:#f8fafc;font-family:Arial,sans-serif}
+button,input,textarea{font:inherit}
+button{border:0;border-radius:9px;padding:12px 18px;background:#0891b2;color:white;font-weight:700;cursor:pointer}
+button.secondary{background:#475569}
+button.danger{background:#b91c1c}
+button.green{background:#16a34a}
+button:disabled{opacity:.55;cursor:not-allowed}
+.wrap{max-width:1050px;margin:auto;padding:22px}
+.brand{text-align:center;padding:22px 0}
+.brand h1{font-size:clamp(30px,6vw,48px);color:#22c55e;margin:8px}
+.muted{color:#aab7ce}
+.panel,.plan,.page-card{background:#121f38;border:1px solid #293b5c;border-radius:18px;padding:22px;margin:16px 0}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px}
+.field{margin:12px 0}
+.field label{display:block;font-weight:700;margin-bottom:7px}
+.field input,.field textarea{width:100%;padding:13px;border-radius:9px;border:1px solid #40516d;background:#0b1529;color:white}
+.field textarea{min-height:100px;resize:vertical}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
 .hidden{display:none!important}
-input,textarea,select{
- width:100%;padding:12px;margin:7px 0 12px;
- border-radius:8px;border:1px solid #42516b;
- background:#081226;color:white
-}
-textarea{min-height:85px}
-button{
- border:0;border-radius:8px;padding:12px 16px;
- background:#0088cc;color:white;font-weight:bold;
- cursor:pointer;margin:4px 3px
-}
-.green{background:#16a34a}
-.red{background:#dc2626}
-.gray{background:#475569}
-.muted{color:#aebbd0;font-size:14px}
-.price{font-size:27px;color:#22c55e;font-weight:bold}
-.status{padding:4px 9px;border-radius:20px;background:#334155}
-.row{
- display:flex;gap:8px;flex-wrap:wrap;
- align-items:center;justify-content:space-between
-}
-.notice{padding:12px;border-radius:9px;background:#263958;margin:10px 0}
-.error{color:#fca5a5}
-.success{color:#86efac}
-a{color:#7dd3fc;overflow-wrap:anywhere}
-label{font-size:14px;color:#d6e1f2}
+.price{font-size:32px;color:#22c55e;font-weight:800;margin:12px 0}
+.status{padding:4px 9px;border-radius:20px;background:#334155;font-size:12px}
+.status.approved{background:#166534}
+.status.pending{background:#854d0e}
+.status.rejected{background:#991b1b}
+.page-card h3{margin-top:0}
+.small{font-size:13px;overflow-wrap:anywhere}
+.notice{padding:12px;border-radius:9px;background:#172b48;margin:12px 0}
+.message{margin:12px 0;color:#fbbf24;white-space:pre-wrap}
+.page-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.topbar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.divider{border:0;border-top:1px solid #334155;margin:22px 0}
 </style>
 </head>
-
 <body>
-<main class="wrap">
+<div class="wrap">
 
-<div class="brand">ADS GROWTH 📈</div>
-<p class="muted" style="text-align:center">
-Landing Page Builder & Campaign Tools
-</p>
+<header class="brand">
+<h1>ADS GROWTH 📈</h1>
+<div class="muted">Landing Page Builder & Campaign Tools</div>
+</header>
 
-<section id="auth" class="card">
+<section id="authPanel" class="panel">
 <div class="grid">
-
 <div>
 <h2>Login</h2>
-<input id="loginEmail" placeholder="Email" type="email">
-<input id="loginPass" placeholder="Password" type="password">
-<button onclick="login()">Login</button>
+<form id="loginForm">
+<div class="field">
+<label>Email</label>
+<input id="loginEmail" type="email" required>
+</div>
+<div class="field">
+<label>Password</label>
+<input id="loginPassword" type="password" required>
+</div>
+<button>Login</button>
+</form>
 </div>
 
 <div>
 <h2>Create Account</h2>
-<input id="regName" placeholder="Full name">
-<input id="regEmail" placeholder="Email" type="email">
-<input id="regPass" placeholder="Password (min 8 characters)" type="password">
-<button class="green" onclick="register()">Register</button>
+<form id="registerForm">
+<div class="field">
+<label>Full name</label>
+<input id="regName" required>
 </div>
-
+<div class="field">
+<label>Email</label>
+<input id="regEmail" type="email" required>
 </div>
-<p id="authMsg" class="muted"></p>
+<div class="field">
+<label>Password (min 8 characters)</label>
+<input id="regPassword" type="password" minlength="8" required>
+</div>
+<button>Create Account</button>
+</form>
+</div>
+</div>
+<div id="authMsg" class="message"></div>
 </section>
 
-<section id="app" class="hidden">
+<section id="appPanel" class="hidden">
 
-<div class="row">
-<h2 id="welcome">Dashboard</h2>
-<button class="gray" onclick="logout()">Logout</button>
+<div class="topbar">
+<h2 id="welcome">Welcome</h2>
+<button class="secondary" id="logoutBtn">Logout</button>
 </div>
 
-<div id="paymentGate" class="card hidden">
+<section id="paymentPanel" class="panel hidden">
 <h2>Choose a Plan & Submit Payment</h2>
-<p class="muted">
-Page Builder opens only after admin verifies and approves your payment.
-</p>
+<p class="muted">Page Builder opens only after admin verifies and approves your payment.</p>
 
-<div class="grid" id="plans"></div>
+<div id="plans" class="grid"></div>
 
 <div class="notice">
-UPI ID: <b id="upi"></b>
-<button class="gray" onclick="copyUpi()">Copy UPI</button>
-<p class="muted">
-Pay the exact amount in your UPI app. Then enter the UTR/reference number.
-</p>
+UPI ID: <b id="upiText"></b>
+<button class="secondary" id="copyUpiBtn">Copy UPI ID</button>
 </div>
 
-<label>Selected plan</label>
-<select id="payPlan">
-<option value="starter">Starter — ₹499</option>
-<option value="growth">Growth — ₹999</option>
-<option value="pro">Pro — ₹1499</option>
-</select>
+<form id="paymentForm">
+<input type="hidden" id="selectedPlan" value="">
 
-<label>UTR / Transaction Reference Number *</label>
-<input id="utr" placeholder="Enter UTR number">
+<div class="field">
+<label>Selected Plan</label>
+<input id="selectedPlanName" readonly placeholder="Select a plan above">
+</div>
 
-<label>Payment screenshot public HTTPS link (optional)</label>
-<input id="shot" placeholder="https://...">
+<div class="field">
+<label>UTR / Transaction Reference</label>
+<input id="utrInput" required placeholder="Enter UPI transaction UTR">
+</div>
 
-<button class="green" onclick="submitPayment()">Submit for Approval</button>
-<p id="payMsg" class="muted"></p>
+<div class="field">
+<label>Payment screenshot URL (optional)</label>
+<input id="shotInput" type="url" placeholder="https://...">
+</div>
 
+<button>Submit Payment for Approval</button>
+</form>
+
+<div id="paymentMsg" class="message"></div>
 <h3>My Payment Requests</h3>
 <div id="myPayments"></div>
+</section>
+
+<section id="builderPanel" class="panel hidden">
+<div class="topbar">
+<div>
+<h2>Landing Page Builder</h2>
+<div class="muted">Create, edit, preview and publish your pages.</div>
+</div>
+<button id="newPageBtn">+ Create Landing Page</button>
 </div>
 
-<div id="builder" class="card hidden">
-<h2 id="formTitle">Create Landing Page</h2>
+<form id="pageForm">
+<input type="hidden" id="pageId">
 
-<input id="pageId" type="hidden">
+<div class="grid">
+<div class="field">
+<label>Page Title</label>
+<input id="pageTitle" required maxlength="160" placeholder="My Campaign">
+</div>
 
-<label>Page Title *</label>
-<input id="title" placeholder="My Campaign">
-
+<div class="field">
 <label>Headline</label>
-<input id="headline" placeholder="Your main headline">
+<input id="pageHeadline" required maxlength="250" placeholder="Your main offer headline">
+</div>
+</div>
 
+<div class="field">
 <label>Description</label>
-<textarea id="description" placeholder="Describe your offer"></textarea>
-
-<label>Landing page image URL (public HTTPS link)</label>
-<input id="image" placeholder="https://example.com/image.jpg">
-
-<label>Button text</label>
-<input id="buttonText" value="Join Now">
-
-<label>Button destination URL</label>
-<input id="buttonUrl" placeholder="https://...">
-
-<label>Meta Pixel ID (numbers only)</label>
-<input id="pixel" placeholder="Example: 123456789012345">
-
-<p class="muted">
-Published page will send Meta Pixel PageView events.
-Never enter passwords or access tokens here.
-</p>
-
-<button class="green" onclick="savePage()">Save Landing Page</button>
-<button class="gray" onclick="resetForm()">Clear</button>
-<p id="pageMsg" class="muted"></p>
+<textarea id="pageDescription" placeholder="Describe your offer"></textarea>
 </div>
 
-<div id="pagesBox" class="card hidden">
+<div class="grid">
+<div class="field">
+<label>Landing Page Image URL</label>
+<input id="imageUrl" type="url" placeholder="https://example.com/image.jpg">
+</div>
+
+<div class="field">
+<label>Meta Pixel ID</label>
+<input id="pixelId" inputmode="numeric" placeholder="Enter numeric Meta Pixel ID">
+</div>
+
+<div class="field">
+<label>Button Text</label>
+<input id="buttonText" value="Learn More">
+</div>
+
+<div class="field">
+<label>Button URL</label>
+<input id="buttonUrl" type="url" placeholder="https://example.com">
+</div>
+</div>
+
+<div class="row">
+<button id="savePageBtn">Save Landing Page</button>
+<button type="button" class="secondary" id="previewFormBtn">Preview</button>
+<button type="button" class="secondary" id="cancelEditBtn">Clear Form</button>
+</div>
+
+<div id="pageMsg" class="message"></div>
+</form>
+
+<hr class="divider">
 <h2>My Landing Pages</h2>
-<div id="pages"></div>
-</div>
+<div id="pagesList"></div>
+</section>
 
-<div id="admin" class="card hidden">
+<section id="adminPanel" class="panel hidden">
 <h2>Admin Panel</h2>
-<div id="stats" class="notice"></div>
-<h3>Payment Approvals</h3>
+<div id="adminStats" class="notice"></div>
+<h3>Payment Requests — Verify UTR in your UPI/bank app before approving</h3>
 <div id="adminPayments"></div>
-</div>
+</section>
 
 </section>
-</main>
+</div>
 
 <script>
-let token = localStorage.getItem("ag_token") || "";
-let me = null;
-let config = null;
-
 const $ = id => document.getElementById(id);
 
-const api = async (url, method="GET", body) => {
- const response = await fetch(url,{
-  method,
-  headers:{
-   "Content-Type":"application/json",
-   ...(token ? {Authorization:"Bearer "+token} : {})
-  },
-  ...(body ? {body:JSON.stringify(body)} : {})
- });
+let token = localStorage.getItem("ag_token") || "";
+let currentUser = null;
+let currentPaid = false;
+let config = {plans:{},upiId:""};
+let pagesCache = [];
 
- const data = await response.json().catch(() => ({
-  error:"Server response error"
- }));
-
- if(!response.ok) throw Error(data.error || "Request failed");
- return data;
-};
-
-function msg(id,text,ok=false){
- $(id).textContent=text;
- $(id).className=ok ? "success" : "error";
-}
-
-function esc(value){
- return String(value ?? "").replace(/[&<>"']/g,c=>({
-  "&":"&amp;","<":"&lt;",">":"&gt;",
-  '"':"&quot;","'":"&#39;"
- }[c]));
-}
-
-async function login(){
- try{
-  const data=await api("/api/auth/login","POST",{
-   email:$("loginEmail").value,
-   password:$("loginPass").value
-  });
-  token=data.token;
-  localStorage.setItem("ag_token",token);
-  await start();
- }catch(e){msg("authMsg",e.message)}
-}
-
-async function register(){
- try{
-  const data=await api("/api/auth/register","POST",{
-   name:$("regName").value,
-   email:$("regEmail").value,
-   password:$("regPass").value
-  });
-  token=data.token;
-  localStorage.setItem("ag_token",token);
-  await start();
- }catch(e){msg("authMsg",e.message)}
-}
-
-function logout(){
- token="";
- localStorage.removeItem("ag_token");
- location.reload();
-}
-
-async function start(){
- try{
-  config=await api("/api/config");
-  $("upi").textContent=config.upiId;
-
-  const data=await api("/api/me");
-  me=data.user;
-
-  $("auth").classList.add("hidden");
-  $("app").classList.remove("hidden");
-  $("welcome").textContent="Welcome, "+me.name;
-
-  if(data.paid){
-   $("builder").classList.remove("hidden");
-   $("pagesBox").classList.remove("hidden");
-   $("paymentGate").classList.add("hidden");
-   await loadPages();
-  }else{
-   $("paymentGate").classList.remove("hidden");
-   $("builder").classList.add("hidden");
-   $("pagesBox").classList.add("hidden");
-   await loadPayments();
-  }
-
-  if(me.role==="admin"){
-   $("admin").classList.remove("hidden");
-   await loadAdmin();
-  }
- }catch(e){
-  token="";
-  localStorage.removeItem("ag_token");
-  $("auth").classList.remove("hidden");
-  msg("authMsg",e.message);
- }
-}
-
-function copyUpi(){
- if(navigator.clipboard){
-  navigator.clipboard.writeText(config.upiId)
-   .then(()=>msg("payMsg","UPI ID copied.",true))
-   .catch(()=>msg("payMsg","UPI ID: "+config.upiId,true));
- }else{
-  msg("payMsg","UPI ID: "+config.upiId,true);
- }
-}
-
-function renderPlans(){
- $("plans").innerHTML=Object.entries(config.plans).map(([key,plan])=>`
-  <div class="card">
-   <h3>${esc(plan.name)}</h3>
-   <div class="price">₹${plan.amount}</div>
-   <p>${esc(plan.label)}</p>
-   <button onclick="$('payPlan').value='${key}'">Select Plan</button>
-  </div>
- `).join("");
-}
-
-async function submitPayment(){
- try{
-  const data=await api("/api/payments","POST",{
-   plan:$("payPlan").value,
-   utr:$("utr").value,
-   screenshot_url:$("shot").value
-  });
-  msg("payMsg",data.message,true);
-  $("utr").value="";
-  await loadPayments();
- }catch(e){msg("payMsg",e.message)}
-}
-
-async function loadPayments(){
- renderPlans();
- const data=await api("/api/payments");
-
- $("myPayments").innerHTML=data.length
- ? data.map(p=>`
-  <div class="notice">
-   ₹${p.amount} — ${esc(p.plan)} —
-   <b>${esc(p.status)}</b><br>
-   UTR: ${esc(p.utr)}
-   ${p.admin_note ? "<br>Note: "+esc(p.admin_note) : ""}
-  </div>
- `).join("")
- : "No payment requests yet.";
-}
-
-function resetForm(){
- ["pageId","title","headline","description","image","buttonUrl","pixel"]
- .forEach(id=>$(id).value="");
-
- $("buttonText").value="Join Now";
- $("formTitle").textContent="Create Landing Page";
-}
-
-async function savePage(){
- try{
-  const id=$("pageId").value;
-
-  const body={
-   title:$("title").value,
-   headline:$("headline").value,
-   description:$("description").value,
-   image_url:$("image").value,
-   button_text:$("buttonText").value,
-   button_url:$("buttonUrl").value,
-   pixel_id:$("pixel").value
+async function api(url, options={}) {
+  const headers = {
+    "Content-Type":"application/json",
+    ...(options.headers || {})
   };
 
-  const data=await api(
-   id ? "/api/pages/"+id : "/api/pages",
-   id ? "PUT" : "POST",
-   body
-  );
+  if (token) headers.Authorization = "Bearer " + token;
 
-  msg("pageMsg","Saved: "+location.origin+"/p/"+data.slug,true);
-  resetForm();
-  await loadPages();
- }catch(e){msg("pageMsg",e.message)}
+  const response = await fetch(url,{...options,headers});
+  const type = response.headers.get("content-type") || "";
+
+  const data = type.includes("application/json")
+    ? await response.json()
+    : await response.text();
+
+  if (!response.ok) {
+    throw new Error(data && data.error ? data.error : "Server response error");
+  }
+
+  return data;
 }
 
-async function loadPages(){
- const data=await api("/api/pages");
-
- $("pages").innerHTML=data.length
- ? data.map(p=>`
-  <div class="notice">
-   <div class="row">
-    <b>${esc(p.title)}</b>
-    <span class="status">${p.published?"Published":"Unpublished"}</span>
-   </div>
-
-   <p class="muted">
-    /${esc(p.slug)} · Pixel: ${p.pixel_id?"Added":"Not added"}
-   </p>
-
-   <button onclick="editPage(${p.id})">Edit</button>
-   <button class="gray" onclick="togglePage(${p.id})">
-    ${p.published?"Unpublish":"Publish"}
-   </button>
-   <button class="gray" onclick="window.open('/p/${encodeURIComponent(p.slug)}','_blank')">
-    Preview
-   </button>
-   <button class="red" onclick="deletePage(${p.id})">Delete</button>
-  </div>
- `).join("")
- : "No pages created yet.";
+function msg(id,text,good=false) {
+  $(id).textContent = text || "";
+  $(id).style.color = good ? "#86efac" : "#fbbf24";
 }
 
-async function editPage(id){
- const data=await api("/api/pages");
- const page=data.find(p=>p.id===id);
- if(!page)return;
-
- $("pageId").value=page.id;
- $("title").value=page.title;
- $("headline").value=page.headline||"";
- $("description").value=page.description||"";
- $("image").value=page.image_url||"";
- $("buttonText").value=page.button_text||"Join Now";
- $("buttonUrl").value=page.button_url||"";
- $("pixel").value=page.pixel_id||"";
-
- $("formTitle").textContent="Edit Landing Page";
- window.scrollTo({top:0,behavior:"smooth"});
+function esc(s) {
+  return String(s ?? "").replace(/[&<>"']/g,c => ({
+    "&":"&amp;",
+    "<":"&lt;",
+    ">":"&gt;",
+    '"':"&quot;",
+    "'":"&#39;"
+  }[c]));
 }
 
-async function togglePage(id){
- try{
-  await api("/api/pages/"+id+"/publish","POST",{});
-  await loadPages();
- }catch(e){alert(e.message)}
+function showAuth() {
+  $("authPanel").classList.remove("hidden");
+  $("appPanel").classList.add("hidden");
 }
 
-async function deletePage(id){
- if(!confirm("Delete this landing page?"))return;
-
- try{
-  await api("/api/pages/"+id,"DELETE");
-  await loadPages();
- }catch(e){alert(e.message)}
+function showApp() {
+  $("authPanel").classList.add("hidden");
+  $("appPanel").classList.remove("hidden");
 }
 
-async function loadAdmin(){
- const stats=await api("/api/admin/stats");
+async function loadConfig() {
+  config = await api("/api/config");
+  $("upiText").textContent = config.upiId;
 
- $("stats").textContent=
-  `Users: ${stats.users} | Pages: ${stats.pages} | Pending: ${stats.pending} | Approved amount: ₹${stats.approvedAmount}`;
-
- const data=await api("/api/admin/payments");
-
- $("adminPayments").innerHTML=data.length
- ? data.map(p=>`
-  <div class="notice">
-   <b>${esc(p.name)} (${esc(p.email)})</b><br>
-   ₹${p.amount} — ${esc(p.plan)} — UTR: ${esc(p.utr)}<br>
-   Status: <b>${esc(p.status)}</b>
-
-   ${p.screenshot_url
-    ? `<br><a target="_blank" rel="noopener" href="${esc(p.screenshot_url)}">Open screenshot</a>`
-    : ""}
-
-   ${p.status==="pending"
-    ? `<br>
-       <button class="green" onclick="decide(${p.id},'approved')">Approve</button>
-       <button class="red" onclick="decide(${p.id},'rejected')">Reject</button>`
-    : ""}
-  </div>
- `).join("")
- : "No payments yet.";
+  $("plans").innerHTML = Object.entries(config.plans).map(([key,p]) => `
+    <div class="plan">
+      <h3>${esc(p.name)}</h3>
+      <div class="price">₹${p.amount}</div>
+      <p>${esc(p.label)}</p>
+      <button type="button" onclick="selectPlan('${key}')">Select Plan</button>
+    </div>
+  `).join("");
 }
 
-async function decide(id,status){
- const note=prompt("Admin note (optional):")||"";
+window.selectPlan = key => {
+  const p = config.plans[key];
+  $("selectedPlan").value = key;
+  $("selectedPlanName").value =
+    `${p.name} — ₹${p.amount} (${p.label})`;
+  msg("paymentMsg","");
+};
 
- try{
-  await api("/api/admin/payments/"+id+"/status","POST",{
-   status,
-   admin_note:note
-  });
-  await loadAdmin();
-  alert("Payment status updated.");
- }catch(e){alert(e.message)}
+async function loadPayments() {
+  const rows = await api("/api/payments");
+
+  $("myPayments").innerHTML = rows.length
+    ? rows.map(p => `
+      <div class="notice">
+        <b>${esc(p.plan.toUpperCase())} — ₹${esc(p.amount)}</b>
+        <span class="status ${esc(p.status)}">${esc(p.status)}</span>
+        <div class="small">
+          UTR: ${esc(p.utr)} · ${new Date(p.created_at).toLocaleString()}
+        </div>
+      </div>
+    `).join("")
+    : '<p class="muted">No payment requests yet.</p>';
 }
 
-if(token)start();
+function resetPageForm() {
+  $("pageForm").reset();
+  $("pageId").value = "";
+  $("buttonText").value = "Learn More";
+  $("savePageBtn").textContent = "Save Landing Page";
+  msg("pageMsg","");
+}
+
+function pagePayload() {
+  return {
+    title:$("pageTitle").value,
+    headline:$("pageHeadline").value,
+    description:$("pageDescription").value,
+    imageUrl:$("imageUrl").value,
+    pixelId:$("pixelId").value,
+    buttonText:$("buttonText").value,
+    buttonUrl:$("buttonUrl").value || "#"
+  };
+}
+
+function previewData(p) {
+  const image = p.imageUrl
+    ? `<img src="${esc(p.imageUrl)}" alt="">`
+    : "";
+
+  const button = p.buttonUrl && p.buttonUrl !== "#"
+    ? `<p><a href="${esc(p.buttonUrl)}" target="_blank">${esc(p.buttonText || "Learn More")}</a></p>`
+    : "";
+
+  const w = window.open("", "_blank");
+
+  if (!w) {
+    alert("Please allow pop-ups to preview.");
+    return;
+  }
+
+  w.document.write(`
+    <!doctype html>
+    <html>
+    <head>
+      <title>${esc(p.title)}</title>
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      <style>
+        body{font-family:Arial;background:#0b1224;color:white;text-align:center;padding:30px}
+        img{max-width:100%;max-height:350px}
+        p{line-height:1.6}
+        a{display:inline-block;background:#0891b2;color:white;padding:14px 25px;border-radius:8px;text-decoration:none}
+      </style>
+    </head>
+    <body>
+      <h1>${esc(p.headline)}</h1>
+      ${image}
+      <p>${esc(p.description).replace(/\n/g,"<br>")}</p>
+      ${button}
+    </body>
+    </html>
+  `);
+
+  w.document.close();
+}
+
+async function loadPages() {
+  pagesCache = await api("/api/pages");
+
+  $("pagesList").innerHTML = pagesCache.length
+    ? pagesCache.map(p => `
+      <article class="page-card">
+        <div class="topbar">
+          <h3>${esc(p.title)}</h3>
+          <span class="status ${p.is_published ? "approved" : "pending"}">
+            ${p.is_published ? "Public" : "Unpublished"}
+          </span>
+        </div>
+
+        <p>${esc(p.headline)}</p>
+
+        <div class="small muted">
+          Pixel ID: ${esc(p.pixel_id || "Not set")}
+          · URL: ${esc(location.origin + "/p/" + p.slug)}
+        </div>
+
+        <div class="page-actions">
+          <button type="button" onclick="editPage('${p.id}')">Edit</button>
+
+          <button type="button" class="secondary"
+            onclick="previewPage('${p.id}')">Preview</button>
+
+          <button type="button"
+            class="${p.is_published ? "secondary" : "green"}"
+            onclick="togglePublish('${p.id}',${!p.is_published})">
+            ${p.is_published ? "Unpublish" : "Publish / Make Public"}
+          </button>
+
+          ${p.is_published ? `
+            <button type="button" class="secondary"
+              onclick="copyPageUrl('${p.slug}')">Copy Public Link</button>
+          ` : ""}
+
+          <button type="button" class="danger"
+            onclick="deletePage('${p.id}')">Delete</button>
+        </div>
+      </article>
+    `).join("")
+    : '<p class="muted">No landing pages yet. Click Create Landing Page to start.</p>';
+}
+
+window.editPage = id => {
+  const p = pagesCache.find(x => String(x.id) === String(id));
+  if (!p) return;
+
+  $("pageId").value = p.id;
+  $("pageTitle").value = p.title || "";
+  $("pageHeadline").value = p.headline || "";
+  $("pageDescription").value = p.description || "";
+  $("imageUrl").value = p.image_url || "";
+  $("pixelId").value = p.pixel_id || "";
+  $("buttonText").value = p.button_text || "Learn More";
+  $("buttonUrl").value = p.button_url || "";
+
+  $("savePageBtn").textContent = "Update Landing Page";
+  $("pageForm").scrollIntoView({behavior:"smooth"});
+};
+
+window.previewPage = id => {
+  const p = pagesCache.find(x => String(x.id) === String(id));
+
+  if (p) {
+    previewData({
+      title:p.title,
+      headline:p.headline,
+      description:p.description,
+      imageUrl:p.image_url,
+      buttonText:p.button_text,
+      buttonUrl:p.button_url
+    });
+  }
+};
+
+window.togglePublish = async (id,published) => {
+  try {
+    await api(`/api/pages/${id}/publish`,{
+      method:"POST",
+      body:JSON.stringify({published})
+    });
+    await loadPages();
+  } catch(e) {
+    alert(e.message);
+  }
+};
+
+window.deletePage = async id => {
+  if (!confirm("Delete this landing page permanently?")) return;
+
+  try {
+    await api(`/api/pages/${id}`,{method:"DELETE"});
+    await loadPages();
+  } catch(e) {
+    alert(e.message);
+  }
+};
+
+window.copyPageUrl = async slug => {
+  const url = location.origin + "/p/" + slug;
+
+  try {
+    await navigator.clipboard.writeText(url);
+    alert("Public link copied: " + url);
+  } catch {
+    prompt("Copy public link:",url);
+  }
+};
+
+async function loadAdmin() {
+  if (!currentUser || currentUser.role !== "admin") return;
+
+  const stats = await api("/api/admin/stats");
+
+  $("adminStats").textContent =
+    `Users: ${stats.users} · Pending payments: ${stats.pendingPayments} · Landing pages: ${stats.pages}`;
+
+  const rows = await api("/api/admin/payments");
+
+  $("adminPayments").innerHTML = rows.length
+    ? rows.map(p => `
+      <div class="notice">
+        <b>${esc(p.full_name || "User")} (${esc(p.email || "")})</b>
+
+        <div>
+          ${esc(p.plan)} — ₹${esc(p.amount)}
+          · <span class="status ${esc(p.status)}">${esc(p.status)}</span>
+        </div>
+
+        <div class="small">
+          UTR: ${esc(p.utr)} · ${new Date(p.created_at).toLocaleString()}
+        </div>
+
+        ${p.screenshot_url ? `
+          <div>
+            <a href="${esc(p.screenshot_url)}" target="_blank">Open payment screenshot</a>
+          </div>
+        ` : ""}
+
+        ${p.status === "pending" ? `
+          <div class="page-actions">
+            <button class="green"
+              onclick="reviewPayment('${p.id}','approved')">Approve</button>
+            <button class="danger"
+              onclick="reviewPayment('${p.id}','rejected')">Reject</button>
+          </div>
+        ` : ""}
+      </div>
+    `).join("")
+    : '<p class="muted">No payment requests.</p>';
+}
+
+window.reviewPayment = async (id,status) => {
+  const note = status === "approved"
+    ? "Have you verified the UTR in your UPI/bank app?"
+    : "Reject this payment request?";
+
+  if (!confirm(note)) return;
+
+  try {
+    await api(`/api/admin/payments/${id}/status`,{
+      method:"POST",
+      body:JSON.stringify({status})
+    });
+
+    await loadAdmin();
+  } catch(e) {
+    alert(e.message);
+  }
+};
+
+async function enterApp() {
+  try {
+    const me = await api("/api/me");
+
+    currentUser = me.user;
+    currentPaid = me.paid;
+
+    showApp();
+
+    $("welcome").textContent =
+      `Welcome, ${currentUser.role === "admin" ? "Administrator" : currentUser.full_name}`;
+
+    $("adminPanel").classList.toggle(
+      "hidden",currentUser.role !== "admin"
+    );
+
+    // Admin can use Builder without payment.
+    $("paymentPanel").classList.toggle(
+      "hidden",currentUser.role === "admin" || currentPaid
+    );
+
+    $("builderPanel").classList.toggle(
+      "hidden",currentUser.role !== "admin" && !currentPaid
+    );
+
+    if (currentUser.role === "admin" || currentPaid) {
+      await loadPages();
+    } else {
+      await loadPayments();
+    }
+
+    if (currentUser.role === "admin") {
+      await loadAdmin();
+    }
+  } catch(e) {
+    token = "";
+    localStorage.removeItem("ag_token");
+    showAuth();
+    msg("authMsg",e.message);
+  }
+}
+
+$("loginForm").addEventListener("submit",async e => {
+  e.preventDefault();
+  msg("authMsg","Logging in...");
+
+  try {
+    const data = await api("/api/login",{
+      method:"POST",
+      body:JSON.stringify({
+        email:$("loginEmail").value,
+        password:$("loginPassword").value
+      })
+    });
+
+    token = data.token;
+    localStorage.setItem("ag_token",token);
+    await enterApp();
+  } catch(err) {
+    msg("authMsg",err.message);
+  }
+});
+
+$("registerForm").addEventListener("submit",async e => {
+  e.preventDefault();
+  msg("authMsg","Creating account...");
+
+  try {
+    const data = await api("/api/register",{
+      method:"POST",
+      body:JSON.stringify({
+        fullName:$("regName").value,
+        email:$("regEmail").value,
+        password:$("regPassword").value
+      })
+    });
+
+    token = data.token;
+    localStorage.setItem("ag_token",token);
+    await enterApp();
+  } catch(err) {
+    msg("authMsg",err.message);
+  }
+});
+
+$("logoutBtn").onclick = () => {
+  token = "";
+  currentUser = null;
+  localStorage.removeItem("ag_token");
+  showAuth();
+};
+
+$("copyUpiBtn").onclick = async () => {
+  try {
+    await navigator.clipboard.writeText(config.upiId);
+    alert("UPI ID copied.");
+  } catch {
+    prompt("Copy UPI ID:",config.upiId);
+  }
+};
+
+$("paymentForm").addEventListener("submit",async e => {
+  e.preventDefault();
+
+  try {
+    if (!$("selectedPlan").value) {
+      throw new Error("Please select a plan first.");
+    }
+
+    const data = await api("/api/payments",{
+      method:"POST",
+      body:JSON.stringify({
+        plan:$("selectedPlan").value,
+        utr:$("utrInput").value,
+        screenshotUrl:$("shotInput").value
+      })
+    });
+
+    msg("paymentMsg",data.message,true);
+    $("paymentForm").reset();
+    $("selectedPlan").value = "";
+    await loadPayments();
+  } catch(err) {
+    msg("paymentMsg",err.message);
+  }
+});
+
+$("newPageBtn").onclick = () => {
+  resetPageForm();
+  $("pageForm").scrollIntoView({behavior:"smooth"});
+};
+
+$("cancelEditBtn").onclick = resetPageForm;
+
+$("previewFormBtn").onclick = () => {
+  previewData(pagePayload());
+};
+
+$("pageForm").addEventListener("submit",async e => {
+  e.preventDefault();
+
+  try {
+    const id = $("pageId").value;
+
+    await api(
+      id ? `/api/pages/${id}` : "/api/pages",
+      {
+        method:id ? "PUT" : "POST",
+        body:JSON.stringify(pagePayload())
+      }
+    );
+
+    msg(
+      "pageMsg",
+      id ? "Landing page updated." : "Landing page saved.",
+      true
+    );
+
+    resetPageForm();
+    await loadPages();
+
+    if (currentUser.role === "admin") {
+      await loadAdmin();
+    }
+  } catch(err) {
+    msg("pageMsg",err.message);
+  }
+});
+
+(async function start() {
+  try {
+    await loadConfig();
+  } catch(e) {
+    msg("authMsg",e.message);
+  }
+
+  if (token) {
+    await enterApp();
+  } else {
+    showAuth();
+  }
+})();
 </script>
 </body>
-  </html>
-  
+ </html>
