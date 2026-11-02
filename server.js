@@ -1,407 +1,472 @@
+
 const express = require("express");
 const { Pool } = require("pg");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const path = require("path");
+const crypto = require("crypto");
 
 const app = express();
-const PORT = process.env.PORT || 10000;
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: process.env.DB_SSL === "false" ? false : { rejectUnauthorized: false }
-});
-
 app.use(express.json({ limit: "1mb" }));
 app.use(express.urlencoded({ extended: true }));
 
-const PLANS = {
-  basic: { name: "Basic", price: 5, days: 30, pages: 1 },
-  prime_pro: { name: "Prime Pro", price: 12, days: 30, pages: 2 },
-  basic_prime: { name: "Basic & Prime", price: 15, days: 30, pages: 2 }
-};
+const PORT = process.env.PORT || 3000;
+const DATABASE_URL = process.env.DATABASE_URL;
+const JWT_SECRET = process.env.JWT_SECRET;
+const ADMIN_EMAIL = (process.env.ADMIN_EMAIL || "").toLowerCase().trim();
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "";
 
-const sign = user => jwt.sign(
-  { id: user.id, email: user.email, role: user.role },
-  process.env.JWT_SECRET,
-  { expiresIn: "7d" }
-);
+if (!DATABASE_URL || !JWT_SECRET) {
+  console.error("DATABASE_URL and JWT_SECRET environment variables are required.");
+  process.exit(1);
+}
 
-const auth = async (req, res, next) => {
+const pool = new Pool({
+  connectionString: DATABASE_URL,
+  ssl: process.env.DB_SSL === "false" ? false : { rejectUnauthorized: false }
+});
+
+app.use(express.static(path.join(__dirname, "public")));
+
+function slugify(text) {
+  const base = String(text || "landing-page")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "")
+    .slice(0, 45) || "landing-page";
+
+  return base + "-" + crypto.randomBytes(3).toString("hex");
+}
+
+function signToken(user) {
+  return jwt.sign(
+    { id: user.id, email: user.email, role: user.role },
+    JWT_SECRET,
+    { expiresIn: "7d" }
+  );
+}
+
+async function auth(req, res, next) {
   try {
-    const token = (req.headers.authorization || "").replace(/^Bearer\s+/i, "");
-    if (!token) return res.status(401).json({ error: "Please login." });
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const result = await pool.query(
-      "SELECT id,email,role,plan,subscription_expires FROM ag_users WHERE id=$1",
-      [decoded.id]
-    );
-    if (!result.rows[0]) return res.status(401).json({ error: "Account not found." });
-    req.user = result.rows[0];
+    const header = req.headers.authorization || "";
+    const token = header.startsWith("Bearer ") ? header.slice(7) : "";
+    if (!token) return res.status(401).json({ error: "Please login first." });
+
+    req.user = jwt.verify(token, JWT_SECRET);
     next();
   } catch {
-    res.status(401).json({ error: "Session expired. Please login again." });
+    return res.status(401).json({ error: "Invalid or expired login. Please login again." });
   }
-};
+}
 
-const adminOnly = (req, res, next) => {
+function adminOnly(req, res, next) {
   if (req.user.role !== "admin") {
-    return res.status(403).json({ error: "Admin access only." });
+    return res.status(403).json({ error: "Admin access required." });
   }
   next();
-};
+}
 
-const activeSubscription = (req, res, next) => {
-  // Admin is always exempt from subscription checks.
-  if (req.user.role === "admin") return next();
-
-  if (!req.user.subscription_expires ||
-      new Date(req.user.subscription_expires) <= new Date()) {
-    return res.status(403).json({ error: "An active subscription is required." });
-  }
-  next();
-};
-
-const clean = value => String(value || "").trim();
-const slugify = value =>
-  clean(value).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")
-  + "-" + Math.random().toString(36).slice(2, 7);
+function cleanPage(body) {
+  return {
+    title: String(body.title || "").trim().slice(0, 120),
+    headline: String(body.headline || "").trim().slice(0, 180),
+    description: String(body.description || "").trim().slice(0, 3000),
+    buttonText: String(body.buttonText || "Join Now").trim().slice(0, 60),
+    buttonLink: String(body.buttonLink || "").trim().slice(0, 1000),
+    background: /^#[0-9a-fA-F]{6}$/.test(body.background || "")
+      ? body.background
+      : "#0b1730"
+  };
+}
 
 async function initDatabase() {
   await pool.query(`
     CREATE TABLE IF NOT EXISTS ag_users (
-      id BIGSERIAL PRIMARY KEY,
-      name TEXT NOT NULL,
-      email TEXT UNIQUE NOT NULL,
+      id SERIAL PRIMARY KEY,
+      name VARCHAR(120) NOT NULL,
+      email VARCHAR(255) UNIQUE NOT NULL,
       password_hash TEXT NOT NULL,
-      role TEXT NOT NULL DEFAULT 'user',
-      plan TEXT,
-      subscription_expires TIMESTAMPTZ,
+      role VARCHAR(20) NOT NULL DEFAULT 'user',
       created_at TIMESTAMPTZ DEFAULT NOW()
     );
 
     CREATE TABLE IF NOT EXISTS ag_pages (
-      id BIGSERIAL PRIMARY KEY,
-      user_id BIGINT REFERENCES ag_users(id) ON DELETE CASCADE,
-      title TEXT NOT NULL,
-      headline TEXT,
-      description TEXT,
-      image_url TEXT,
-      button_text TEXT DEFAULT 'Contact Us',
-      button_url TEXT,
-      whatsapp TEXT,
-      pixel_id TEXT,
-      primary_color TEXT DEFAULT '#16a34a',
-      slug TEXT UNIQUE NOT NULL,
+      id SERIAL PRIMARY KEY,
+      user_id INTEGER NOT NULL REFERENCES ag_users(id) ON DELETE CASCADE,
+      title VARCHAR(120) NOT NULL,
+      headline VARCHAR(180) NOT NULL,
+      description TEXT DEFAULT '',
+      button_text VARCHAR(60) DEFAULT 'Join Now',
+      button_link TEXT DEFAULT '',
+      background VARCHAR(7) DEFAULT '#0b1730',
+      slug VARCHAR(100) UNIQUE NOT NULL,
       published BOOLEAN DEFAULT FALSE,
-      created_at TIMESTAMPTZ DEFAULT NOW()
+      created_at TIMESTAMPTZ DEFAULT NOW(),
+      updated_at TIMESTAMPTZ DEFAULT NOW()
     );
 
     CREATE TABLE IF NOT EXISTS ag_payments (
-      id BIGSERIAL PRIMARY KEY,
-      user_id BIGINT REFERENCES ag_users(id),
-      plan TEXT NOT NULL,
-      txid TEXT NOT NULL,
-      status TEXT DEFAULT 'pending',
-      admin_note TEXT,
-      created_at TIMESTAMPTZ DEFAULT NOW()
-    );
-
-    CREATE TABLE IF NOT EXISTS ag_leads (
-      id BIGSERIAL PRIMARY KEY,
-      page_id BIGINT REFERENCES ag_pages(id) ON DELETE CASCADE,
-      name TEXT,
-      email TEXT,
-      phone TEXT,
-      message TEXT,
+      id SERIAL PRIMARY KEY,
+      user_id INTEGER NOT NULL REFERENCES ag_users(id) ON DELETE CASCADE,
+      plan VARCHAR(40) NOT NULL,
+      amount NUMERIC(10,2) NOT NULL,
+      txid VARCHAR(200) NOT NULL,
+      status VARCHAR(20) DEFAULT 'pending',
       created_at TIMESTAMPTZ DEFAULT NOW()
     );
   `);
 
-  // Create or refresh the Admin account from Render Environment variables.
-  const email = clean(process.env.ADMIN_EMAIL).toLowerCase();
-  const password = process.env.ADMIN_PASSWORD;
-  if (!email || !password || password.length < 8) {
-    throw new Error("Set ADMIN_EMAIL and ADMIN_PASSWORD (minimum 8 characters) in Render Environment.");
+  // Add fields for an older installation where these columns are missing.
+  await pool.query(`
+    ALTER TABLE ag_pages ADD COLUMN IF NOT EXISTS button_text VARCHAR(60) DEFAULT 'Join Now';
+    ALTER TABLE ag_pages ADD COLUMN IF NOT EXISTS button_link TEXT DEFAULT '';
+    ALTER TABLE ag_pages ADD COLUMN IF NOT EXISTS background VARCHAR(7) DEFAULT '#0b1730';
+    ALTER TABLE ag_pages ADD COLUMN IF NOT EXISTS published BOOLEAN DEFAULT FALSE;
+    ALTER TABLE ag_pages ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW();
+  `);
+
+  if (ADMIN_EMAIL && ADMIN_PASSWORD) {
+    const hash = await bcrypt.hash(ADMIN_PASSWORD, 12);
+    await pool.query(
+      `INSERT INTO ag_users (name,email,password_hash,role)
+       VALUES ($1,$2,$3,'admin')
+       ON CONFLICT (email) DO UPDATE SET role='admin'`,
+      ["Admin", ADMIN_EMAIL, hash]
+    );
   }
 
-  const hash = await bcrypt.hash(password, 12);
-  await pool.query(`
-    INSERT INTO ag_users(name,email,password_hash,role)
-    VALUES('Administrator',$1,$2,'admin')
-    ON CONFLICT(email) DO UPDATE SET
-      password_hash=EXCLUDED.password_hash,
-      role='admin'
-  `, [email, hash]);
+  console.log("Database tables ready.");
 }
 
-app.get("/health", (req, res) => res.json({ status: "ok" }));
-
-app.get("/api/config", (req, res) => {
-  res.json({
-    plans: PLANS,
-    paymentAddress: process.env.USDT_TRC20_ADDRESS || ""
-  });
-});
-
+// Register
 app.post("/api/auth/register", async (req, res) => {
   try {
-    const name = clean(req.body.name);
-    const email = clean(req.body.email).toLowerCase();
+    const name = String(req.body.name || "").trim();
+    const email = String(req.body.email || "").trim().toLowerCase();
     const password = String(req.body.password || "");
-    if (!name || !email || password.length < 8) {
-      return res.status(400).json({ error: "Name, valid email and 8-character password required." });
+
+    if (!name || !email || password.length < 6) {
+      return res.status(400).json({ error: "Name, valid email and password of at least 6 characters are required." });
     }
-    if (email === clean(process.env.ADMIN_EMAIL).toLowerCase()) {
-      return res.status(403).json({ error: "This email is reserved for the administrator." });
-    }
+
     const hash = await bcrypt.hash(password, 12);
     const result = await pool.query(
-      "INSERT INTO ag_users(name,email,password_hash) VALUES($1,$2,$3) RETURNING id,name,email,role,plan,subscription_expires",
+      `INSERT INTO ag_users (name,email,password_hash)
+       VALUES ($1,$2,$3)
+       RETURNING id,name,email,role`,
       [name, email, hash]
     );
+
     const user = result.rows[0];
-    res.json({ token: sign(user), user });
-  } catch (e) {
-    res.status(400).json({ error: e.code === "23505" ? "Email already registered." : "Registration failed." });
+    res.status(201).json({ token: signToken(user), user });
+  } catch (error) {
+    if (error.code === "23505") {
+      return res.status(409).json({ error: "This email is already registered." });
+    }
+    console.error(error);
+    res.status(500).json({ error: "Registration failed." });
   }
 });
 
+// Login
 app.post("/api/auth/login", async (req, res) => {
   try {
-    const email = clean(req.body.email).toLowerCase();
+    const email = String(req.body.email || "").trim().toLowerCase();
     const password = String(req.body.password || "");
-    const result = await pool.query("SELECT * FROM ag_users WHERE email=$1", [email]);
+
+    const result = await pool.query(
+      "SELECT * FROM ag_users WHERE email=$1",
+      [email]
+    );
     const user = result.rows[0];
+
     if (!user || !(await bcrypt.compare(password, user.password_hash))) {
-      return res.status(401).json({ error: "Invalid email or password." });
+      return res.status(401).json({ error: "Incorrect email or password." });
     }
+
     res.json({
-      token: sign(user),
-      user: {
-        id: user.id, name: user.name, email: user.email,
-        role: user.role, plan: user.plan,
-        subscription_expires: user.subscription_expires
-      }
+      token: signToken(user),
+      user: { id: user.id, name: user.name, email: user.email, role: user.role }
     });
-  } catch {
+  } catch (error) {
+    console.error(error);
     res.status(500).json({ error: "Login failed." });
   }
 });
 
+// Current user
 app.get("/api/me", auth, async (req, res) => {
-  const count = await pool.query("SELECT COUNT(*)::int AS count FROM ag_pages WHERE user_id=$1", [req.user.id]);
-  res.json({
-    user: req.user,
-    pageCount: count.rows[0].count,
-    pageLimit: req.user.role === "admin" ? 9999 :
-      (PLANS[req.user.plan]?.pages || 0)
-  });
-});
-
-app.get("/api/pages", auth, async (req, res) => {
-  const result = await pool.query(
-    "SELECT * FROM ag_pages WHERE user_id=$1 ORDER BY id DESC", [req.user.id]
-  );
-  res.json({ pages: result.rows });
-});
-
-app.post("/api/pages", auth, activeSubscription, async (req, res) => {
   try {
-    const count = await pool.query(
-      "SELECT COUNT(*)::int AS count FROM ag_pages WHERE user_id=$1", [req.user.id]
+    const result = await pool.query(
+      "SELECT id,name,email,role FROM ag_users WHERE id=$1",
+      [req.user.id]
     );
-    const limit = req.user.role === "admin" ? 9999 : (PLANS[req.user.plan]?.pages || 0);
-    if (count.rows[0].count >= limit) {
-      return res.status(403).json({ error: "Your plan page limit has been reached." });
+    if (!result.rows.length) return res.status(404).json({ error: "User not found." });
+    res.json({ user: result.rows[0] });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Could not load account." });
+  }
+});
+
+// List user's pages
+app.get("/api/pages", auth, async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT id,title,headline,description,
+              button_text AS "buttonText",
+              button_link AS "buttonLink",
+              background,slug,published,created_at,updated_at
+       FROM ag_pages WHERE user_id=$1 ORDER BY id DESC`,
+      [req.user.id]
+    );
+    res.json({ pages: result.rows });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Could not load pages." });
+  }
+});
+
+// Create page
+app.post("/api/pages", auth, async (req, res) => {
+  try {
+    const page = cleanPage(req.body);
+    if (!page.title || !page.headline) {
+      return res.status(400).json({ error: "Title and headline are required." });
     }
 
-    const b = req.body;
-    if (!clean(b.title)) return res.status(400).json({ error: "Page title is required." });
+    const result = await pool.query(
+      `INSERT INTO ag_pages
+       (user_id,title,headline,description,button_text,button_link,background,slug)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
+       RETURNING id,title,headline,description,
+       button_text AS "buttonText",button_link AS "buttonLink",
+       background,slug,published`,
+      [
+        req.user.id, page.title, page.headline, page.description,
+        page.buttonText, page.buttonLink, page.background, slugify(page.title)
+      ]
+    );
 
-    const result = await pool.query(`
-      INSERT INTO ag_pages
-      (user_id,title,headline,description,image_url,button_text,button_url,whatsapp,pixel_id,primary_color,slug)
-      VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) RETURNING *
-    `, [
-      req.user.id, clean(b.title), clean(b.headline), clean(b.description),
-      clean(b.image_url), clean(b.button_text) || "Contact Us",
-      clean(b.button_url), clean(b.whatsapp), clean(b.pixel_id),
-      /^#[0-9a-fA-F]{6}$/.test(b.primary_color) ? b.primary_color : "#16a34a",
-      slugify(b.title)
-    ]);
-    res.json({ page: result.rows[0] });
-  } catch (e) {
-    console.error(e);
+    res.status(201).json({ page: result.rows[0] });
+  } catch (error) {
+    console.error(error);
     res.status(500).json({ error: "Could not create page." });
   }
 });
 
-app.post("/api/pages/:id/publish", auth, activeSubscription, async (req, res) => {
-  const result = await pool.query(
-    "UPDATE ag_pages SET published=NOT published WHERE id=$1 AND user_id=$2 RETURNING *",
-    [req.params.id, req.user.id]
-  );
-  if (!result.rows[0]) return res.status(404).json({ error: "Page not found." });
-  res.json({ page: result.rows[0], url: `${req.protocol}://${req.get("host")}/p/${result.rows[0].slug}` });
-});
-
-app.delete("/api/pages/:id", auth, async (req, res) => {
-  const result = await pool.query(
-    "DELETE FROM ag_pages WHERE id=$1 AND user_id=$2 RETURNING id",
-    [req.params.id, req.user.id]
-  );
-  if (!result.rowCount) return res.status(404).json({ error: "Page not found." });
-  res.json({ message: "Page deleted." });
-});
-
-app.post("/api/payments", auth, async (req, res) => {
-  const plan = PLANS[req.body.plan_id];
-  const txid = clean(req.body.txid);
-  if (!plan || txid.length < 8) {
-    return res.status(400).json({ error: "Choose a plan and enter a valid transaction ID." });
-  }
-  const result = await pool.query(
-    "INSERT INTO ag_payments(user_id,plan,txid) VALUES($1,$2,$3) RETURNING *",
-    [req.user.id, req.body.plan_id, txid]
-  );
-  res.json({ payment: result.rows[0], message: "Payment submitted for manual review." });
-});
-
-app.get("/api/payments", auth, async (req, res) => {
-  const result = await pool.query(
-    "SELECT * FROM ag_payments WHERE user_id=$1 ORDER BY id DESC", [req.user.id]
-  );
-  res.json({ payments: result.rows });
-});
-
-app.get("/api/admin/stats", auth, adminOnly, async (req, res) => {
-  const [users, pages, payments, leads] = await Promise.all([
-    pool.query("SELECT COUNT(*)::int AS n FROM ag_users WHERE role='user'"),
-    pool.query("SELECT COUNT(*)::int AS n FROM ag_pages"),
-    pool.query("SELECT COUNT(*)::int AS n FROM ag_payments WHERE status='pending'"),
-    pool.query("SELECT COUNT(*)::int AS n FROM ag_leads")
-  ]);
-  res.json({
-    users: users.rows[0].n, pages: pages.rows[0].n,
-    pendingPayments: payments.rows[0].n, leads: leads.rows[0].n
-  });
-});
-
-app.get("/api/admin/payments", auth, adminOnly, async (req, res) => {
-  const result = await pool.query(`
-    SELECT p.*,u.name,u.email FROM ag_payments p
-    JOIN ag_users u ON u.id=p.user_id ORDER BY p.id DESC
-  `);
-  res.json({ payments: result.rows });
-});
-
-app.get("/api/admin/leads", auth, adminOnly, async (req, res) => {
-  const result = await pool.query(`
-    SELECT l.*,p.title AS page_title FROM ag_leads l
-    JOIN ag_pages p ON p.id=l.page_id ORDER BY l.id DESC
-  `);
-  res.json({ leads: result.rows });
-});
-
-app.post("/api/admin/payments/:id/review", auth, adminOnly, async (req, res) => {
-  const status = req.body.status;
-  if (!["approved", "rejected"].includes(status)) {
-    return res.status(400).json({ error: "Invalid review status." });
-  }
-
-  const client = await pool.connect();
+// Edit page
+app.put("/api/pages/:id", auth, async (req, res) => {
   try {
-    await client.query("BEGIN");
-    const found = await client.query(
-      "SELECT * FROM ag_payments WHERE id=$1 FOR UPDATE", [req.params.id]
-    );
-    const payment = found.rows[0];
-    if (!payment || payment.status !== "pending") {
-      await client.query("ROLLBACK");
-      return res.status(404).json({ error: "Pending payment not found." });
+    const page = cleanPage(req.body);
+    if (!page.title || !page.headline) {
+      return res.status(400).json({ error: "Title and headline are required." });
     }
 
-    await client.query(
-      "UPDATE ag_payments SET status=$1,admin_note=$2 WHERE id=$3",
-      [status, clean(req.body.admin_note), payment.id]
+    const result = await pool.query(
+      `UPDATE ag_pages SET
+       title=$1,headline=$2,description=$3,button_text=$4,
+       button_link=$5,background=$6,updated_at=NOW()
+       WHERE id=$7 AND user_id=$8
+       RETURNING id,title,headline,description,
+       button_text AS "buttonText",button_link AS "buttonLink",
+       background,slug,published`,
+      [
+        page.title,page.headline,page.description,page.buttonText,
+        page.buttonLink,page.background,req.params.id,req.user.id
+      ]
     );
 
-    if (status === "approved") {
-      const plan = PLANS[payment.plan];
-      if (!plan) throw new Error("Unknown plan.");
-      await client.query(`
-        UPDATE ag_users SET plan=$1,
-        subscription_expires=GREATEST(COALESCE(subscription_expires,NOW()),NOW()) + ($2 * INTERVAL '1 day')
-        WHERE id=$3
-      `, [payment.plan, plan.days, payment.user_id]);
-    }
-    await client.query("COMMIT");
-    res.json({ message: "Payment " + status + "." });
-  } catch (e) {
-    await client.query("ROLLBACK");
-    console.error(e);
-    res.status(500).json({ error: "Payment review failed." });
-  } finally {
-    client.release();
+    if (!result.rows.length) return res.status(404).json({ error: "Page not found." });
+    res.json({ page: result.rows[0] });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Could not update page." });
   }
 });
 
-const escapeHtml = value => String(value || "").replace(/[&<>"']/g, c => ({
-  "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
-}[c]));
+// Delete page
+app.delete("/api/pages/:id", auth, async (req, res) => {
+  try {
+    const result = await pool.query(
+      "DELETE FROM ag_pages WHERE id=$1 AND user_id=$2 RETURNING id",
+      [req.params.id, req.user.id]
+    );
+    if (!result.rows.length) return res.status(404).json({ error: "Page not found." });
+    res.json({ success: true });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Could not delete page." });
+  }
+});
 
+// Publish / Unpublish
+app.post("/api/pages/:id/publish", auth, async (req, res) => {
+  try {
+    const result = await pool.query(
+      `UPDATE ag_pages SET published=NOT published,updated_at=NOW()
+       WHERE id=$1 AND user_id=$2 RETURNING id,published,slug`,
+      [req.params.id, req.user.id]
+    );
+    if (!result.rows.length) return res.status(404).json({ error: "Page not found." });
+    res.json({ success: true, page: result.rows[0] });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Could not change page status." });
+  }
+});
+
+// Public landing page
 app.get("/p/:slug", async (req, res) => {
-  const result = await pool.query(
-    "SELECT * FROM ag_pages WHERE slug=$1 AND published=TRUE", [req.params.slug]
-  );
-  const p = result.rows[0];
-  if (!p) return res.status(404).send("Page not found.");
-  res.type("html").send(`<!doctype html><html><head>
-    <meta name="viewport" content="width=device-width,initial-scale=1">
-    <title>${escapeHtml(p.title)}</title>
-    ${p.pixel_id ? `<!-- Meta Pixel ID configured: ${escapeHtml(p.pixel_id)} -->` : ""}
-    </head><body style="font-family:Arial;text-align:center;padding:30px;background:#101827;color:white">
-    <h1>${escapeHtml(p.headline || p.title)}</h1><p>${escapeHtml(p.description)}</p>
-    ${p.image_url ? `<img src="${escapeHtml(p.image_url)}" style="max-width:100%;max-height:420px">` : ""}
-    <p><a style="display:inline-block;padding:14px 24px;background:${escapeHtml(p.primary_color)};color:white;border-radius:8px;text-decoration:none" href="${escapeHtml(p.button_url)}">${escapeHtml(p.button_text)}</a></p>
-    ${p.whatsapp ? `<p><a href="https://wa.me/${encodeURIComponent(p.whatsapp.replace(/\D/g,""))}">WhatsApp</a></p>` : ""}
-    <hr><h3>Contact Us</h3><form method="post" action="/p/${encodeURIComponent(p.slug)}/lead">
-    <input name="name" placeholder="Your name" required><br><br>
-    <input name="email" type="email" placeholder="Email"><br><br>
-    <input name="phone" placeholder="Phone"><br><br>
-    <textarea name="message" placeholder="Message"></textarea><br><br>
-    <button>Submit</button></form></body></html>`);
-});
+  try {
+    const result = await pool.query(
+      `SELECT title,headline,description,button_text,button_link,background
+       FROM ag_pages WHERE slug=$1 AND published=TRUE`,
+      [req.params.slug]
+    );
 
-app.post("/p/:slug/lead", async (req, res) => {
-  const page = await pool.query(
-    "SELECT id FROM ag_pages WHERE slug=$1 AND published=TRUE", [req.params.slug]
-  );
-  if (!page.rows[0]) return res.status(404).send("Page not found.");
-  await pool.query(
-    "INSERT INTO ag_leads(page_id,name,email,phone,message) VALUES($1,$2,$3,$4,$5)",
-    [page.rows[0].id, clean(req.body.name), clean(req.body.email),
-     clean(req.body.phone), clean(req.body.message)]
-  );
-  res.send("Thank you! Your details have been submitted.");
-});
+    if (!result.rows.length) return res.status(404).send("Page not found or not published.");
 
-app.use(express.static(path.join(__dirname, "public")));
-app.get("/", (req, res) => res.sendFile(path.join(__dirname, "public", "index.html")));
-app.use((err, req, res, next) => {
-  console.error(err);
-  res.status(500).json({ error: "Server error. Please try again." });
-});
+    const p = result.rows[0];
+    const safe = value => String(value || "").replace(/[&<>"']/g, c => ({
+      "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+    })[c]);
 
-async function start() {
-  if (!process.env.DATABASE_URL || !process.env.JWT_SECRET || process.env.JWT_SECRET.length < 32) {
-    throw new Error("Set DATABASE_URL and JWT_SECRET (minimum 32 characters) in Render.");
+    const link = /^https?:\/\//i.test(p.button_link || "") ? safe(p.button_link) : "#";
+    const color = /^#[0-9a-fA-F]{6}$/.test(p.background || "") ? p.background : "#0b1730";
+
+    res.send(`<!DOCTYPE html>
+<html lang="hi"><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>${safe(p.title)}</title>
+<style>
+body{margin:0;min-height:100vh;display:grid;place-items:center;background:${color};color:white;font-family:Arial}
+main{max-width:650px;padding:35px;text-align:center}
+h1{font-size:38px}p{line-height:1.7;color:#d4dfed}
+a{display:inline-block;padding:14px 25px;background:#20c982;color:#071b12;text-decoration:none;border-radius:8px;font-weight:bold}
+</style></head><body><main>
+<h1>${safe(p.headline)}</h1>
+<h2>${safe(p.title)}</h2>
+<p>${safe(p.description)}</p>
+<a href="${link}" target="_blank" rel="noopener noreferrer">${safe(p.button_text || "Join Now")}</a>
+</main></body></html>`);
+  } catch (error) {
+    console.error(error);
+    res.status(500).send("Could not display this page.");
   }
-  await initDatabase();
-  app.listen(PORT, () => console.log("ADS GROWTH server running on " + PORT));
-}
-start().catch(e => {
-  console.error("Startup failed:", e);
-  process.exit(1);
 });
-  
+
+// Submit payment details
+app.post("/api/payments", auth, async (req, res) => {
+  try {
+    const plan = String(req.body.plan || "");
+    const amount = Number(req.body.amount);
+    const txid = String(req.body.txid || "").trim();
+
+    const prices = { Starter: 499, Growth: 999, Pro: 1499 };
+    if (!prices[plan] || amount !== prices[plan] || !txid || txid.length > 200) {
+      return res.status(400).json({ error: "Please select a valid plan, amount and transaction ID." });
+    }
+
+    const result = await pool.query(
+      `INSERT INTO ag_payments (user_id,plan,amount,txid)
+       VALUES ($1,$2,$3,$4)
+       RETURNING id,plan,amount,txid,status,created_at`,
+      [req.user.id,plan,amount,txid]
+    );
+    res.status(201).json({ payment: result.rows[0] });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Could not submit payment details." });
+  }
+});
+
+// User payment history
+app.get("/api/payments", auth, async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT id,plan,amount,txid,status,created_at
+       FROM ag_payments WHERE user_id=$1 ORDER BY id DESC`,
+      [req.user.id]
+    );
+    res.json({ payments: result.rows });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Could not load payments." });
+  }
+});
+
+// Admin statistics
+app.get("/api/admin/stats", auth, adminOnly, async (req, res) => {
+  try {
+    const [users,pages,payments] = await Promise.all([
+      pool.query("SELECT COUNT(*)::int AS count FROM ag_users"),
+      pool.query("SELECT COUNT(*)::int AS count FROM ag_pages"),
+      pool.query("SELECT COUNT(*)::int AS count FROM ag_payments")
+    ]);
+    res.json({
+      users:users.rows[0].count,
+      pages:pages.rows[0].count,
+      payments:payments.rows[0].count
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Could not load admin stats." });
+  }
+});
+
+// Admin payment list
+app.get("/api/admin/payments", auth, adminOnly, async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT p.id,p.plan,p.amount,p.txid,p.status,p.created_at,
+              u.email
+       FROM ag_payments p JOIN ag_users u ON u.id=p.user_id
+       ORDER BY p.id DESC LIMIT 200`
+    );
+    res.json({ payments: result.rows });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Could not load admin payments." });
+  }
+});
+
+// Approve or reject payment after checking it independently
+app.post("/api/admin/payments/:id/status", auth, adminOnly, async (req, res) => {
+  try {
+    const status = String(req.body.status || "");
+    if (!["approved","rejected"].includes(status)) {
+      return res.status(400).json({ error: "Status must be approved or rejected." });
+    }
+
+    const result = await pool.query(
+      `UPDATE ag_payments SET status=$1 WHERE id=$2
+       RETURNING id,status,plan,amount`,
+      [status,req.params.id]
+    );
+    if (!result.rows.length) return res.status(404).json({ error: "Payment not found." });
+    res.json({ success:true,payment:result.rows[0] });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Could not update payment." });
+  }
+});
+
+// Health check
+app.get("/health", (req,res) => res.json({ status:"ok" }));
+
+app.get("/", (req,res) => {
+  res.sendFile(path.join(__dirname,"public","index.html"));
+});
+
+initDatabase()
+  .then(() => {
+    app.listen(PORT,"0.0.0.0",() => {
+      console.log("ADS GROWTH server running on port "+PORT);
+    });
+  })
+  .catch(error => {
+    console.error("Database initialization failed:",error);
+    process.exit(1);
+  });
+                                         
