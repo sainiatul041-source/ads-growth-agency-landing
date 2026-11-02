@@ -1,7 +1,7 @@
 
 {
   "name": "ads-growth-agency",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "ADS GROWTH landing page builder",
   "main": "server.js",
   "scripts": {
