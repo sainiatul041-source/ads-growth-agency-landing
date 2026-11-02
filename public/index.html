@@ -1,375 +1,448 @@
 
 <!DOCTYPE html>
-<html lang="en">
+<html lang="hi">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>ADS GROWTH AGENCY</title>
 <style>
 *{box-sizing:border-box}
-body{margin:0;background:#081225;color:#fff;font-family:Arial,sans-serif}
-header{padding:22px;text-align:center;background:#101d35;border-bottom:1px solid #263653}
-header h1{margin:0;color:#22c55e;font-size:28px}
-header p{color:#bdc9dc}
-.container{max-width:950px;margin:25px auto;padding:15px}
-.card{background:#111f38;border:1px solid #263b5c;border-radius:14px;padding:20px;margin-bottom:18px}
-h2{color:#22c55e}
-input,textarea,select{width:100%;padding:13px;margin:8px 0 14px;border:1px solid #52627b;border-radius:8px;background:#fff;color:#111;font-size:16px}
-button{border:0;border-radius:8px;padding:13px 18px;background:#16a34a;color:white;font-weight:bold;font-size:15px;cursor:pointer;margin:4px}
-.secondary{background:#2563eb}
-.danger{background:#dc2626}
+body{margin:0;background:#07111f;color:#fff;font-family:Arial,sans-serif}
+header{background:#101d32;padding:16px;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.logo{font-size:22px;font-weight:bold;color:#35df91}
+button{border:0;border-radius:8px;padding:11px 16px;background:#20c982;color:#061b13;font-weight:bold;cursor:pointer}
+button.secondary{background:#263a55;color:white}
+button.danger{background:#d94b5b;color:white}
+button:disabled{opacity:.5;cursor:not-allowed}
+main{max-width:1050px;margin:auto;padding:18px}
+.card{background:#122139;border:1px solid #263b59;border-radius:13px;padding:18px;margin:14px 0}
+h1,h2,h3{margin-top:0}
+input,textarea,select{width:100%;padding:12px;margin:7px 0 13px;border:1px solid #344b69;border-radius:8px;background:#09172a;color:white;font-size:15px}
+textarea{min-height:100px;resize:vertical}
+label{font-size:14px;color:#c7d5e8}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px}
+.price{font-size:30px;font-weight:bold;color:#38e49b;margin:10px 0}
+.muted{color:#aabbd1;font-size:14px}
 .hidden{display:none!important}
-.muted{color:#aebbd0}
-.status{padding:12px;border-radius:8px;background:#1c3150;margin:10px 0;white-space:pre-wrap;overflow-wrap:anywhere}
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}
-.stat{background:#1b2e4c;padding:18px;border-radius:10px}
-.stat strong{display:block;font-size:24px;color:#4ade80;margin-top:8px}
-.tabs{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:15px}
-a{color:#60a5fa;overflow-wrap:anywhere}
-footer{text-align:center;color:#9aabc4;padding:25px}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.page-item{background:#0b192d;border:1px solid #2b405d;border-radius:10px;padding:14px;margin:12px 0}
+.status{display:inline-block;background:#244a3b;color:#8ef0b8;padding:5px 9px;border-radius:20px;font-size:12px}
+.notice{padding:12px;border-radius:8px;background:#193653;margin:10px 0}
+#message{position:sticky;top:0;z-index:5;padding:10px;text-align:center;background:#174b39;display:none}
+a{color:#64c9ff}
+footer{text-align:center;color:#8ea1bb;padding:25px}
 </style>
 </head>
 <body>
-
 <header>
-<h1>ADS GROWTH 📈</h1>
-<p>Grow Your Business With Digital Marketing</p>
+  <div class="logo">ADS GROWTH 📈</div>
+  <div class="row">
+    <span id="userLabel" class="muted"></span>
+    <button class="secondary" id="logoutBtn" onclick="logout()" hidden>Logout</button>
+  </div>
 </header>
 
-<main class="container">
-<div id="message" class="status hidden"></div>
+<div id="message"></div>
 
-<section id="home">
-<div class="card">
-<h2>Welcome to ADS GROWTH</h2>
-<p>Build landing pages and grow your business with ADS GROWTH AGENCY.</p>
-<button onclick="showAuth('register')">Create Account</button>
-<button class="secondary" onclick="showAuth('login')">Login</button>
-</div>
-</section>
+<main>
+  <section id="authSection" class="card">
+    <h1>Welcome to ADS GROWTH</h1>
+    <p class="muted">अपना अकाउंट बनाएं या लॉगिन करें।</p>
+    <div class="grid">
+      <div>
+        <h3>Login</h3>
+        <form onsubmit="login(event)">
+          <label>Email</label>
+          <input id="loginEmail" type="email" required>
+          <label>Password</label>
+          <input id="loginPassword" type="password" required>
+          <button type="submit">Login</button>
+        </form>
+      </div>
+      <div>
+        <h3>Create Account</h3>
+        <form onsubmit="register(event)">
+          <label>Name</label>
+          <input id="regName" required>
+          <label>Email</label>
+          <input id="regEmail" type="email" required>
+          <label>Password</label>
+          <input id="regPassword" type="password" minlength="6" required>
+          <button type="submit">Register</button>
+        </form>
+      </div>
+    </div>
+  </section>
 
-<section id="auth" class="hidden">
-<div class="card">
-<h2 id="authTitle">Login</h2>
-<form id="loginForm">
-<label>Email</label>
-<input type="email" id="loginEmail" required placeholder="Enter email">
-<label>Password</label>
-<input type="password" id="loginPassword" required placeholder="Enter password">
-<button type="submit">Login</button>
-</form>
+  <section id="appSection" class="hidden">
+    <div class="card">
+      <h2>Dashboard</h2>
+      <p class="muted">अपना प्लान चुनें और अपनी landing page बनाएं।</p>
+      <div class="grid">
+        <div class="card">
+          <h3>Starter</h3>
+          <div class="price">₹499</div>
+          <p>All Click</p>
+          <button onclick="selectPlan('Starter',499,'All Click')">Select Starter</button>
+        </div>
+        <div class="card">
+          <h3>Growth</h3>
+          <div class="price">₹999</div>
+          <p>50% Click</p>
+          <button onclick="selectPlan('Growth',999,'50% Click')">Select Growth</button>
+        </div>
+        <div class="card">
+          <h3>Pro</h3>
+          <div class="price">₹1499</div>
+          <p>100% Click</p>
+          <button onclick="selectPlan('Pro',1499,'100% Click')">Select Pro</button>
+        </div>
+      </div>
+      <p class="muted">नोट: Click संबंधी विवरण प्लान की सुविधा का लेबल है; वास्तविक क्लिक और परिणाम ट्रैफिक तथा कैंपेन पर निर्भर करते हैं।</p>
+    </div>
 
-<form id="registerForm" class="hidden">
-<label>Your Name</label>
-<input id="regName" required placeholder="Enter your name">
-<label>Email</label>
-<input type="email" id="regEmail" required placeholder="Enter email">
-<label>Password</label>
-<input type="password" id="regPassword" minlength="8" required placeholder="Minimum 8 characters">
-<button type="submit">Create Account</button>
-</form>
-<button class="secondary" onclick="showHome()">Back</button>
-</div>
-</section>
+    <section class="card" id="builder">
+      <h2 id="builderTitle">Create Landing Page</h2>
+      <form onsubmit="savePage(event)">
+        <input type="hidden" id="pageId">
+        <label>Landing Page Title</label>
+        <input id="pageTitle" placeholder="अपनी वेबसाइट का नाम लिखें" required>
+        <label>Headline</label>
+        <input id="pageHeadline" placeholder="अपना मुख्य संदेश लिखें" required>
+        <label>Description</label>
+        <textarea id="pageDescription" placeholder="अपने प्रोडक्ट या सर्विस के बारे में लिखें"></textarea>
+        <label>Button Text</label>
+        <input id="pageButton" value="Join Now" required>
+        <label>Button Link</label>
+        <input id="pageLink" type="url" placeholder="https://example.com">
+        <label>Background Color</label>
+        <select id="pageColor">
+          <option value="#0b1730">Dark Blue</option>
+          <option value="#142b24">Dark Green</option>
+          <option value="#25152e">Purple</option>
+          <option value="#202020">Black</option>
+        </select>
+        <div class="row">
+          <button type="submit" id="saveButton">Create Page</button>
+          <button type="button" class="secondary" onclick="resetBuilder()">Clear</button>
+        </div>
+      </form>
+    </section>
 
-<section id="dashboard" class="hidden">
-<div class="card">
-<h2>My Dashboard</h2>
-<p>Welcome, <strong id="userName">User</strong></p>
-<p class="muted" id="userEmail"></p>
-<button class="danger" onclick="logout()">Logout</button>
-</div>
+    <section class="card">
+      <h2>My Landing Pages</h2>
+      <button class="secondary" onclick="loadPages()">Refresh Pages</button>
+      <div id="pagesList"><p class="muted">Loading...</p></div>
+    </section>
 
-<div class="tabs">
-<button onclick="openTab('homeTab')">Dashboard</button>
-<button onclick="openTab('plans')">Plans</button>
-<button onclick="openTab('builder')">Page Builder</button>
-<button onclick="openTab('mypages')">My Pages</button>
-<button onclick="openTab('payments')">Payments</button>
-<button id="adminTabButton" class="secondary hidden" onclick="openTab('admin')">Admin Panel</button>
-</div>
+    <section class="card">
+      <h2>Payment</h2>
+      <p class="muted">Payment करने के बाद transaction ID जमा करें। भुगतान की पुष्टि Admin द्वारा की जाएगी।</p>
+      <form onsubmit="submitPayment(event)">
+        <label>Plan</label>
+        <select id="paymentPlan">
+          <option value="Starter">Starter - ₹499</option>
+          <option value="Growth">Growth - ₹999</option>
+          <option value="Pro">Pro - ₹1499</option>
+        </select>
+        <label>Amount (₹)</label>
+        <input id="paymentAmount" type="number" min="1" required>
+        <label>Transaction ID / UTR</label>
+        <input id="paymentTxid" required placeholder="अपना Transaction ID लिखें">
+        <button type="submit">Submit Payment Details</button>
+      </form>
+      <h3>Payment History</h3>
+      <div id="paymentList"><p class="muted">No payment details loaded.</p></div>
+    </section>
 
-<div id="homeTab" class="tab card">
-<h2>Account Overview</h2>
-<div class="grid">
-<div class="stat">Account<strong id="accountRole">User</strong></div>
-<div class="stat">Subscription<strong id="subscriptionStatus">Check status</strong></div>
-<div class="stat">My Pages<strong id="pageCount">0</strong></div>
-</div>
-</div>
-
-<div id="plans" class="tab card hidden">
-<h2>Choose Your Plan</h2>
-<div class="grid">
-<div class="stat"><h3>Starter</h3><strong>₹99</strong><p>Starter Plan</p><button onclick="selectPlan('Starter')">Choose</button></div>
-<div class="stat"><h3>Growth</h3><strong>₹299</strong><p>Growth Plan</p><button onclick="selectPlan('Growth')">Choose</button></div>
-<div class="stat"><h3>Premium</h3><strong>₹499</strong><p>Premium Plan</p><button onclick="selectPlan('Premium')">Choose</button></div>
-</div>
-<p class="muted">Payment approval is subject to administrator verification.</p>
-</div>
-
-<div id="builder" class="tab card hidden">
-<h2>Create Landing Page</h2>
-<label>Page Title</label>
-<input id="pageTitle" placeholder="Enter page title">
-<label>Main Heading</label>
-<input id="pageHeading" placeholder="Enter heading">
-<label>Description</label>
-<textarea id="pageDescription" rows="4" placeholder="Enter description"></textarea>
-<label>Button Text</label>
-<input id="pageButton" value="Learn More">
-<label>Button Link</label>
-<input id="pageLink" placeholder="https://example.com">
-<label>Meta Pixel ID (optional)</label>
-<input id="pixelId" placeholder="Your Pixel ID">
-<button onclick="createPage()">Create Page</button>
-</div>
-
-<div id="mypages" class="tab card hidden">
-<h2>My Landing Pages</h2>
-<button class="secondary" onclick="loadPages()">Refresh Pages</button>
-<div id="pagesList" class="status">Loading...</div>
-</div>
-
-<div id="payments" class="tab card hidden">
-<h2>Payment Verification</h2>
-<label>Plan</label>
-<select id="paymentPlan">
-<option value="Starter">Starter - ₹99</option>
-<option value="Growth">Growth - ₹299</option>
-<option value="Premium">Premium - ₹499</option>
-</select>
-<label>Transaction ID / UTR</label>
-<input id="paymentTxid" placeholder="Enter transaction ID">
-<button onclick="submitPayment()">Submit Payment</button>
-<h3>Payment History</h3>
-<div id="paymentList" class="status">No payment history loaded.</div>
-</div>
-
-<div id="admin" class="tab card hidden">
-<h2>Admin Panel</h2>
-<button onclick="loadAdmin()">Refresh Admin Data</button>
-<div class="grid">
-<div class="stat">Users<strong id="adminUsers">-</strong></div>
-<div class="stat">Pages<strong id="adminPages">-</strong></div>
-<div class="stat">Payments<strong id="adminPayments">-</strong></div>
-<div class="stat">Leads<strong id="adminLeads">-</strong></div>
-</div>
-<h3>Payment Requests</h3>
-<div id="adminPaymentList" class="status"></div>
-<h3>Customer Leads</h3>
-<div id="adminLeadList" class="status"></div>
-</div>
-</section>
+    <section class="card hidden" id="adminSection">
+      <h2>Admin Panel</h2>
+      <button class="secondary" onclick="loadAdmin()">Refresh Admin Data</button>
+      <div id="adminStats"></div>
+      <h3>Payment Requests</h3>
+      <div id="adminPayments"></div>
+    </section>
+  </section>
 </main>
 
-<footer>© ADS GROWTH AGENCY</footer>
+<footer>© <span id="year"></span> ADS GROWTH AGENCY</footer>
 
 <script>
-let token=localStorage.getItem("ag_token")||"";
-let currentUser=null;
+const API = "";
+let token = localStorage.getItem("ag_token") || "";
+let currentPlan = null;
 
-function msg(t){
- const m=document.getElementById("message");
- m.textContent=t;
- m.classList.remove("hidden");
- window.scrollTo(0,0);
-}
-function hideMsg(){document.getElementById("message").classList.add("hidden")}
+const $ = id => document.getElementById(id);
 
-async function api(url,options={}){
- const headers={...(options.headers||{})};
- if(token)headers.Authorization="Bearer "+token;
- if(options.body && typeof options.body!=="string"){
-  headers["Content-Type"]="application/json";
-  options.body=JSON.stringify(options.body);
- }
- const r=await fetch(url,{...options,headers});
- const d=await r.json().catch(()=>({}));
- if(!r.ok)throw new Error(d.error||d.message||"Request failed");
- return d;
+function message(text, error=false){
+  const box=$("message");
+  box.textContent=text;
+  box.style.background=error?"#71313b":"#174b39";
+  box.style.display="block";
+  window.scrollTo({top:0,behavior:"smooth"});
+  setTimeout(()=>box.style.display="none",4500);
 }
 
-function showHome(){
- hideMsg();
- document.getElementById("home").classList.remove("hidden");
- document.getElementById("auth").classList.add("hidden");
- document.getElementById("dashboard").classList.add("hidden");
-}
-function showAuth(mode){
- hideMsg();
- document.getElementById("home").classList.add("hidden");
- document.getElementById("dashboard").classList.add("hidden");
- document.getElementById("auth").classList.remove("hidden");
- document.getElementById("loginForm").classList.toggle("hidden",mode!=="login");
- document.getElementById("registerForm").classList.toggle("hidden",mode!=="register");
- document.getElementById("authTitle").textContent=mode==="login"?"Login":"Create Account";
-}
-function openTab(id){
- document.querySelectorAll(".tab").forEach(x=>x.classList.add("hidden"));
- document.getElementById(id).classList.remove("hidden");
- if(id==="mypages")loadPages();
- if(id==="payments")loadPayments();
- if(id==="admin")loadAdmin();
+async function request(path, options={}){
+  const headers={"Content-Type":"application/json",...(options.headers||{})};
+  if(token) headers.Authorization="Bearer "+token;
+  const response=await fetch(API+path,{...options,headers});
+  const data=await response.json().catch(()=>({}));
+  if(!response.ok) throw new Error(data.error||data.message||"Request failed");
+  return data;
 }
 
-document.getElementById("loginForm").addEventListener("submit",async e=>{
- e.preventDefault();
- try{
-  const d=await api("/api/auth/login",{method:"POST",body:{
-   email:document.getElementById("loginEmail").value,
-   password:document.getElementById("loginPassword").value
-  }});
-  token=d.token;
-  localStorage.setItem("ag_token",token);
-  await loadMe();
- }catch(e){msg(e.message)}
-});
+function showApp(user){
+  $("authSection").classList.add("hidden");
+  $("appSection").classList.remove("hidden");
+  $("logoutBtn").hidden=false;
+  $("userLabel").textContent=user?.name || user?.email || "Logged in";
+  if(user?.role==="admin") $("adminSection").classList.remove("hidden");
+  loadPages();
+  loadPayments();
+  if(user?.role==="admin") loadAdmin();
+}
 
-document.getElementById("registerForm").addEventListener("submit",async e=>{
- e.preventDefault();
- try{
-  const d=await api("/api/auth/register",{method:"POST",body:{
-   name:document.getElementById("regName").value,
-   email:document.getElementById("regEmail").value,
-   password:document.getElementById("regPassword").value
-  }});
-  token=d.token;
-  localStorage.setItem("ag_token",token);
-  await loadMe();
- }catch(e){msg(e.message)}
-});
+async function checkLogin(){
+  if(!token){$("authSection").classList.remove("hidden");return;}
+  try{
+    const data=await request("/api/me");
+    showApp(data.user||data);
+  }catch(e){
+    token="";
+    localStorage.removeItem("ag_token");
+    $("authSection").classList.remove("hidden");
+  }
+}
 
-async function loadMe(){
- try{
-  const d=await api("/api/me");
-  currentUser=d.user||d;
-  document.getElementById("home").classList.add("hidden");
-  document.getElementById("auth").classList.add("hidden");
-  document.getElementById("dashboard").classList.remove("hidden");
-  document.getElementById("userName").textContent=currentUser.name||"User";
-  document.getElementById("userEmail").textContent=currentUser.email||"";
-  document.getElementById("accountRole").textContent=currentUser.role||"User";
-  document.getElementById("subscriptionStatus").textContent=currentUser.subscription_status||"Check status";
-  const isAdmin=currentUser.role==="admin";
-  document.getElementById("adminTabButton").classList.toggle("hidden",!isAdmin);
-  await loadPages();
-  openTab(isAdmin?"admin":"homeTab");
- }catch(e){
-  token="";
-  localStorage.removeItem("ag_token");
-  showAuth("login");
-  msg(e.message);
- }
+async function login(e){
+  e.preventDefault();
+  try{
+    const data=await request("/api/auth/login",{method:"POST",body:JSON.stringify({
+      email:$("loginEmail").value.trim(),
+      password:$("loginPassword").value
+    })});
+    token=data.token;
+    localStorage.setItem("ag_token",token);
+    showApp(data.user);
+    message("Login successful!");
+  }catch(e){message(e.message,true);}
+}
+
+async function register(e){
+  e.preventDefault();
+  try{
+    const data=await request("/api/auth/register",{method:"POST",body:JSON.stringify({
+      name:$("regName").value.trim(),
+      email:$("regEmail").value.trim(),
+      password:$("regPassword").value
+    })});
+    if(data.token){
+      token=data.token;
+      localStorage.setItem("ag_token",token);
+      showApp(data.user);
+    }else{
+      message("Registration successful. अब Login करें।");
+    }
+  }catch(e){message(e.message,true);}
 }
 
 function logout(){
- token="";
- currentUser=null;
- localStorage.removeItem("ag_token");
- showHome();
+  token="";
+  localStorage.removeItem("ag_token");
+  $("appSection").classList.add("hidden");
+  $("authSection").classList.remove("hidden");
+  $("logoutBtn").hidden=true;
+  $("userLabel").textContent="";
+  message("You have logged out.");
 }
 
-function selectPlan(name){
- document.getElementById("paymentPlan").value=name;
- openTab("payments");
- msg("Selected "+name+". Submit your payment transaction ID after payment.");
+function selectPlan(name,amount,clickLabel){
+  currentPlan={name,amount,clickLabel};
+  $("paymentPlan").value=name;
+  $("paymentAmount").value=amount;
+  message(name+" plan selected. Payment details भरें।");
+  $("paymentPlan").scrollIntoView({behavior:"smooth",block:"center"});
 }
 
-async function createPage(){
- try{
-  const d=await api("/api/pages",{method:"POST",body:{
-   title:document.getElementById("pageTitle").value,
-   heading:document.getElementById("pageHeading").value,
-   description:document.getElementById("pageDescription").value,
-   button_text:document.getElementById("pageButton").value,
-   button_url:document.getElementById("pageLink").value,
-   pixel_id:document.getElementById("pixelId").value
-  }});
-  msg(d.message||"Page created successfully.");
-  openTab("mypages");
- }catch(e){msg(e.message)}
+function resetBuilder(){
+  $("pageId").value="";
+  $("pageTitle").value="";
+  $("pageHeadline").value="";
+  $("pageDescription").value="";
+  $("pageButton").value="Join Now";
+  $("pageLink").value="";
+  $("pageColor").value="#0b1730";
+  $("builderTitle").textContent="Create Landing Page";
+  $("saveButton").textContent="Create Page";
+}
+
+async function savePage(e){
+  e.preventDefault();
+  const id=$("pageId").value;
+  const payload={
+    title:$("pageTitle").value.trim(),
+    headline:$("pageHeadline").value.trim(),
+    description:$("pageDescription").value.trim(),
+    buttonText:$("pageButton").value.trim(),
+    buttonLink:$("pageLink").value.trim(),
+    background:$("pageColor").value
+  };
+  try{
+    await request(id?"/api/pages/"+encodeURIComponent(id):"/api/pages",{
+      method:id?"PUT":"POST",
+      body:JSON.stringify(payload)
+    });
+    message(id?"Page updated successfully!":"Landing page created!");
+    resetBuilder();
+    loadPages();
+  }catch(e){message(e.message,true);}
 }
 
 async function loadPages(){
- try{
-  const d=await api("/api/pages");
-  const pages=d.pages||d;
-  document.getElementById("pageCount").textContent=Array.isArray(pages)?pages.length:0;
-  const list=document.getElementById("pagesList");
-  list.innerHTML="";
-  if(!Array.isArray(pages)||!pages.length){list.textContent="No pages created yet.";return}
-  pages.forEach(p=>{
-   const box=document.createElement("div");
-   box.className="card";
-   const title=document.createElement("h3");
-   title.textContent=p.title||"Untitled";
-   const status=document.createElement("p");
-   status.textContent="Status: "+(p.published?"Published":"Draft");
-   const btn=document.createElement("button");
-   btn.textContent=p.published?"Unpublish":"Publish";
-   btn.onclick=()=>publishPage(p.id);
-   box.append(title,status,btn);
-   if(p.url){
-    const a=document.createElement("a");
-    a.href=p.url;a.target="_blank";a.rel="noopener";
-    a.textContent="Open Page";
-    box.append(a);
-   }
-   list.append(box);
-  });
- }catch(e){document.getElementById("pagesList").textContent=e.message}
+  try{
+    const data=await request("/api/pages");
+    const pages=Array.isArray(data)?data:(data.pages||[]);
+    const list=$("pagesList");
+    if(!pages.length){list.innerHTML='<p class="muted">अभी कोई landing page नहीं है। ऊपर से Create Page करें।</p>';return;}
+    list.innerHTML="";
+    pages.forEach(page=>{
+      const item=document.createElement("div");
+      item.className="page-item";
+      const title=document.createElement("h3");
+      title.textContent=page.title||"Untitled Page";
+      const status=document.createElement("span");
+      status.className="status";
+      status.textContent=page.published?"Published":"Unpublished";
+      const slug=document.createElement("p");
+      slug.className="muted";
+      slug.textContent="Page link: "+(page.slug?location.origin+"/p/"+page.slug:"Not available");
+      const actions=document.createElement("div");
+      actions.className="row";
+      const edit=makeButton("Edit","secondary",()=>editPage(page));
+      const preview=makeButton("Preview","secondary",()=>previewPage(page));
+      const publish=makeButton(page.published?"Unpublish":"Publish","",()=>togglePublish(page));
+      const del=makeButton("Delete","danger",()=>deletePage(page.id));
+      actions.append(edit,preview,publish,del);
+      item.append(title,status,slug,actions);
+      list.append(item);
+    });
+  }catch(e){$("pagesList").textContent=e.message;}
 }
 
-async function publishPage(id){
- try{
-  await api("/api/pages/"+encodeURIComponent(id)+"/publish",{method:"POST"});
-  msg("Page status updated.");
-  await loadPages();
- }catch(e){msg(e.message)}
+function makeButton(label,cls,fn){
+  const b=document.createElement("button");
+  b.textContent=label;
+  if(cls)b.className=cls;
+  b.onclick=fn;
+  return b;
 }
 
-async function submitPayment(){
- const txid=document.getElementById("paymentTxid").value.trim();
- if(!txid){msg("Enter transaction ID.");return}
- try{
-  const d=await api("/api/payments",{method:"POST",body:{
-   plan:document.getElementById("paymentPlan").value,
-   txid:txid
-  }});
-  msg(d.message||"Payment submitted for verification.");
-  document.getElementById("paymentTxid").value="";
-  loadPayments();
- }catch(e){msg(e.message)}
+function editPage(page){
+  $("pageId").value=page.id;
+  $("pageTitle").value=page.title||"";
+  $("pageHeadline").value=page.headline||"";
+  $("pageDescription").value=page.description||"";
+  $("pageButton").value=page.buttonText||"Join Now";
+  $("pageLink").value=page.buttonLink||"";
+  $("pageColor").value=page.background||"#0b1730";
+  $("builderTitle").textContent="Edit Landing Page";
+  $("saveButton").textContent="Save Changes";
+  $("builder").scrollIntoView({behavior:"smooth"});
+}
+
+function previewPage(page){
+  if(page.slug){
+    window.open("/p/"+encodeURIComponent(page.slug),"_blank");
+  }else{
+    message("इस पेज का preview link अभी उपलब्ध नहीं है।",true);
+  }
+}
+
+async function togglePublish(page){
+  try{
+    await request("/api/pages/"+encodeURIComponent(page.id)+"/publish",{method:"POST"});
+    message(page.published?"Page unpublished.":"Page published!");
+    loadPages();
+  }catch(e){message(e.message,true);}
+}
+
+async function deletePage(id){
+  if(!confirm("क्या आप इस landing page को delete करना चाहते हैं?"))return;
+  try{
+    await request("/api/pages/"+encodeURIComponent(id),{method:"DELETE"});
+    message("Page deleted.");
+    loadPages();
+  }catch(e){message(e.message,true);}
+}
+
+async function submitPayment(e){
+  e.preventDefault();
+  try{
+    await request("/api/payments",{method:"POST",body:JSON.stringify({
+      plan:$("paymentPlan").value,
+      amount:Number($("paymentAmount").value),
+      txid:$("paymentTxid").value.trim()
+    })});
+    $("paymentTxid").value="";
+    message("Payment details submitted. Verification pending.");
+    loadPayments();
+  }catch(e){message(e.message,true);}
 }
 
 async function loadPayments(){
- try{
-  const d=await api("/api/payments");
-  document.getElementById("paymentList").textContent=JSON.stringify(d.payments||d,null,2);
- }catch(e){document.getElementById("paymentList").textContent=e.message}
+  try{
+    const data=await request("/api/payments");
+    const payments=Array.isArray(data)?data:(data.payments||[]);
+    const box=$("paymentList");
+    if(!payments.length){box.textContent="No payment records yet.";return;}
+    box.innerHTML="";
+    payments.forEach(p=>{
+      const div=document.createElement("div");
+      div.className="page-item";
+      div.textContent=(p.plan||"Plan")+" | ₹"+(p.amount||"")+" | "+(p.status||"Pending")+" | "+(p.txid||"");
+      box.append(div);
+    });
+  }catch(e){$("paymentList").textContent=e.message;}
 }
 
 async function loadAdmin(){
- if(!currentUser||currentUser.role!=="admin"){msg("Admin access only.");return}
- try{
-  const [s,p,l]=await Promise.all([
-   api("/api/admin/stats"),
-   api("/api/admin/payments"),
-   api("/api/admin/leads")
-  ]);
-  const stats=s.stats||s;
-  document.getElementById("adminUsers").textContent=stats.users??"-";
-  document.getElementById("adminPages").textContent=stats.pages??"-";
-  document.getElementById("adminPayments").textContent=stats.payments??"-";
-  document.getElementById("adminLeads").textContent=stats.leads??"-";
-  document.getElementById("adminPaymentList").textContent=JSON.stringify(p.payments||p,null,2);
-  document.getElementById("adminLeadList").textContent=JSON.stringify(l.leads||l,null,2);
- }catch(e){msg(e.message)}
+  try{
+    const stats=await request("/api/admin/stats");
+    $("adminStats").textContent="Users: "+(stats.users??"-")+" | Pages: "+(stats.pages??"-")+" | Payments: "+(stats.payments??"-");
+    const data=await request("/api/admin/payments");
+    const payments=Array.isArray(data)?data:(data.payments||[]);
+    const box=$("adminPayments");
+    box.innerHTML="";
+    if(!payments.length){box.textContent="No payment requests.";return;}
+    payments.forEach(p=>{
+      const div=document.createElement("div");
+      div.className="page-item";
+      const info=document.createElement("p");
+      info.textContent=(p.email||"User")+" | "+(p.plan||"Plan")+" | ₹"+(p.amount||"")+" | "+(p.txid||"")+" | "+(p.status||"Pending");
+      const approve=makeButton("Approve","",()=>changePayment(p.id,"approved"));
+      const reject=makeButton("Reject","danger",()=>changePayment(p.id,"rejected"));
+      div.append(info,approve,reject);
+      box.append(div);
+    });
+  }catch(e){$("adminStats").textContent=e.message;}
 }
 
-(async()=>{if(token)await loadMe()})();
+async function changePayment(id,status){
+  if(!confirm("Payment status "+status+" करना चाहते हैं?"))return;
+  try{
+    await request("/api/admin/payments/"+encodeURIComponent(id)+"/status",{
+      method:"POST",body:JSON.stringify({status})
+    });
+    message("Payment status updated.");
+    loadAdmin();
+    loadPayments();
+  }catch(e){message(e.message,true);}
+}
+
+$("year").textContent=new Date().getFullYear();
+checkLogin();
 </script>
 </body>
- </html>
+         </html>
  
