@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -7,26 +8,24 @@
 <style>
 *{box-sizing:border-box}
 body{margin:0;background:#081225;color:#fff;font-family:Arial,sans-serif}
-header{padding:20px;text-align:center;background:#101d35;border-bottom:1px solid #263653}
-header h1{margin:0;color:#22c55e;font-size:27px}
-header p{color:#bdc9dc;margin:8px 0 0}
+header{padding:22px;text-align:center;background:#101d35;border-bottom:1px solid #263653}
+header h1{margin:0;color:#22c55e;font-size:28px}
+header p{color:#bdc9dc}
 .container{max-width:950px;margin:25px auto;padding:15px}
 .card{background:#111f38;border:1px solid #263b5c;border-radius:14px;padding:20px;margin-bottom:18px}
-h2,h3{margin-top:0}
+h2{color:#22c55e}
 input,textarea,select{width:100%;padding:13px;margin:8px 0 14px;border:1px solid #52627b;border-radius:8px;background:#fff;color:#111;font-size:16px}
 button{border:0;border-radius:8px;padding:13px 18px;background:#16a34a;color:white;font-weight:bold;font-size:15px;cursor:pointer;margin:4px}
-button.secondary{background:#2563eb}
-button.danger{background:#dc2626}
-button:disabled{opacity:.5}
-.tabs{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:15px}
-.tabs button{flex:1}
+.secondary{background:#2563eb}
+.danger{background:#dc2626}
 .hidden{display:none!important}
 .muted{color:#aebbd0}
-.status{padding:12px;border-radius:8px;background:#1c3150;margin:10px 0;white-space:pre-wrap}
+.status{padding:12px;border-radius:8px;background:#1c3150;margin:10px 0;white-space:pre-wrap;overflow-wrap:anywhere}
 .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}
 .stat{background:#1b2e4c;padding:18px;border-radius:10px}
 .stat strong{display:block;font-size:24px;color:#4ade80;margin-top:8px}
-a{color:#60a5fa}
+.tabs{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:15px}
+a{color:#60a5fa;overflow-wrap:anywhere}
 footer{text-align:center;color:#9aabc4;padding:25px}
 </style>
 </head>
@@ -38,37 +37,38 @@ footer{text-align:center;color:#9aabc4;padding:25px}
 </header>
 
 <main class="container">
-
 <div id="message" class="status hidden"></div>
 
-<section id="auth">
+<section id="home">
 <div class="card">
 <h2>Welcome to ADS GROWTH</h2>
-<p class="muted">Login to your account or create a new account.</p>
-<div class="tabs">
-<button onclick="showAuth('login')">Login</button>
-<button class="secondary" onclick="showAuth('register')">Register</button>
+<p>Build landing pages and grow your business with ADS GROWTH AGENCY.</p>
+<button onclick="showAuth('register')">Create Account</button>
+<button class="secondary" onclick="showAuth('login')">Login</button>
 </div>
+</section>
 
+<section id="auth" class="hidden">
+<div class="card">
+<h2 id="authTitle">Login</h2>
 <form id="loginForm">
-<h3>Login</h3>
 <label>Email</label>
-<input type="email" id="loginEmail" placeholder="Enter email" required>
+<input type="email" id="loginEmail" required placeholder="Enter email">
 <label>Password</label>
-<input type="password" id="loginPassword" placeholder="Enter password" required>
+<input type="password" id="loginPassword" required placeholder="Enter password">
 <button type="submit">Login</button>
 </form>
 
 <form id="registerForm" class="hidden">
-<h3>Create Account</h3>
 <label>Your Name</label>
-<input id="regName" placeholder="Enter your name" required>
+<input id="regName" required placeholder="Enter your name">
 <label>Email</label>
-<input type="email" id="regEmail" placeholder="Enter email" required>
+<input type="email" id="regEmail" required placeholder="Enter email">
 <label>Password</label>
-<input type="password" id="regPassword" minlength="8" placeholder="At least 8 characters" required>
+<input type="password" id="regPassword" minlength="8" required placeholder="Minimum 8 characters">
 <button type="submit">Create Account</button>
 </form>
+<button class="secondary" onclick="showHome()">Back</button>
 </div>
 </section>
 
@@ -81,7 +81,7 @@ footer{text-align:center;color:#9aabc4;padding:25px}
 </div>
 
 <div class="tabs">
-<button onclick="openTab('home')">Dashboard</button>
+<button onclick="openTab('homeTab')">Dashboard</button>
 <button onclick="openTab('plans')">Plans</button>
 <button onclick="openTab('builder')">Page Builder</button>
 <button onclick="openTab('mypages')">My Pages</button>
@@ -89,64 +89,50 @@ footer{text-align:center;color:#9aabc4;padding:25px}
 <button id="adminTabButton" class="secondary hidden" onclick="openTab('admin')">Admin Panel</button>
 </div>
 
-<div id="home" class="tab card">
-<h3>Account Overview</h3>
+<div id="homeTab" class="tab card">
+<h2>Account Overview</h2>
 <div class="grid">
 <div class="stat">Account<strong id="accountRole">User</strong></div>
 <div class="stat">Subscription<strong id="subscriptionStatus">Check status</strong></div>
 <div class="stat">My Pages<strong id="pageCount">0</strong></div>
 </div>
-<p class="muted">Use the Page Builder to create your landing page.</p>
 </div>
 
 <div id="plans" class="tab card hidden">
-<h3>Choose Your Plan</h3>
+<h2>Choose Your Plan</h2>
 <div class="grid">
-<div class="stat">
-<h3>Starter</h3><strong>₹99</strong>
-<p class="muted">Starter plan</p>
-<button onclick="selectPlan('Starter',99)">Choose Plan</button>
+<div class="stat"><h3>Starter</h3><strong>₹99</strong><p>Starter Plan</p><button onclick="selectPlan('Starter')">Choose</button></div>
+<div class="stat"><h3>Growth</h3><strong>₹299</strong><p>Growth Plan</p><button onclick="selectPlan('Growth')">Choose</button></div>
+<div class="stat"><h3>Premium</h3><strong>₹499</strong><p>Premium Plan</p><button onclick="selectPlan('Premium')">Choose</button></div>
 </div>
-<div class="stat">
-<h3>Growth</h3><strong>₹299</strong>
-<p class="muted">Growth plan</p>
-<button onclick="selectPlan('Growth',299)">Choose Plan</button>
-</div>
-<div class="stat">
-<h3>Premium</h3><strong>₹499</strong>
-<p class="muted">Premium plan</p>
-<button onclick="selectPlan('Premium',499)">Choose Plan</button>
-</div>
-</div>
-<p class="muted">Payment approval is subject to verification by the administrator.</p>
+<p class="muted">Payment approval is subject to administrator verification.</p>
 </div>
 
 <div id="builder" class="tab card hidden">
-<h3>Create Landing Page</h3>
+<h2>Create Landing Page</h2>
 <label>Page Title</label>
 <input id="pageTitle" placeholder="Enter page title">
-<label>Heading</label>
-<input id="pageHeading" placeholder="Your main heading">
+<label>Main Heading</label>
+<input id="pageHeading" placeholder="Enter heading">
 <label>Description</label>
-<textarea id="pageDescription" rows="4" placeholder="Write your page description"></textarea>
+<textarea id="pageDescription" rows="4" placeholder="Enter description"></textarea>
 <label>Button Text</label>
-<input id="pageButton" placeholder="Contact Us">
+<input id="pageButton" value="Learn More">
 <label>Button Link</label>
 <input id="pageLink" placeholder="https://example.com">
 <label>Meta Pixel ID (optional)</label>
-<input id="pixelId" placeholder="Meta Pixel ID">
+<input id="pixelId" placeholder="Your Pixel ID">
 <button onclick="createPage()">Create Page</button>
 </div>
 
 <div id="mypages" class="tab card hidden">
-<h3>My Landing Pages</h3>
+<h2>My Landing Pages</h2>
 <button class="secondary" onclick="loadPages()">Refresh Pages</button>
 <div id="pagesList" class="status">Loading...</div>
 </div>
 
 <div id="payments" class="tab card hidden">
-<h3>Submit Payment for Verification</h3>
-<p class="muted">Select a plan and enter your transaction ID after making payment.</p>
+<h2>Payment Verification</h2>
 <label>Plan</label>
 <select id="paymentPlan">
 <option value="Starter">Starter - ₹99</option>
@@ -161,7 +147,7 @@ footer{text-align:center;color:#9aabc4;padding:25px}
 </div>
 
 <div id="admin" class="tab card hidden">
-<h3>Admin Panel</h3>
+<h2>Admin Panel</h2>
 <button onclick="loadAdmin()">Refresh Admin Data</button>
 <div class="grid">
 <div class="stat">Users<strong id="adminUsers">-</strong></div>
@@ -170,9 +156,9 @@ footer{text-align:center;color:#9aabc4;padding:25px}
 <div class="stat">Leads<strong id="adminLeads">-</strong></div>
 </div>
 <h3>Payment Requests</h3>
-<div id="adminPaymentList" class="status">Loading...</div>
-<h3>Leads</h3>
-<div id="adminLeadList" class="status">Loading...</div>
+<div id="adminPaymentList" class="status"></div>
+<h3>Customer Leads</h3>
+<div id="adminLeadList" class="status"></div>
 </div>
 </section>
 </main>
@@ -180,180 +166,210 @@ footer{text-align:center;color:#9aabc4;padding:25px}
 <footer>© ADS GROWTH AGENCY</footer>
 
 <script>
-const API = "";
-let token = localStorage.getItem("ag_token") || "";
-let currentUser = null;
-let selectedPlan = "Starter";
+let token=localStorage.getItem("ag_token")||"";
+let currentUser=null;
 
-function message(text){
- const box=document.getElementById("message");
- box.textContent=text;
- box.classList.remove("hidden");
- window.scrollTo({top:0,behavior:"smooth"});
+function msg(t){
+ const m=document.getElementById("message");
+ m.textContent=t;
+ m.classList.remove("hidden");
+ window.scrollTo(0,0);
 }
-function hideMessage(){
- document.getElementById("message").classList.add("hidden");
+function hideMsg(){document.getElementById("message").classList.add("hidden")}
+
+async function api(url,options={}){
+ const headers={...(options.headers||{})};
+ if(token)headers.Authorization="Bearer "+token;
+ if(options.body && typeof options.body!=="string"){
+  headers["Content-Type"]="application/json";
+  options.body=JSON.stringify(options.body);
+ }
+ const r=await fetch(url,{...options,headers});
+ const d=await r.json().catch(()=>({}));
+ if(!r.ok)throw new Error(d.error||d.message||"Request failed");
+ return d;
 }
-async function request(path, options={}){
- const headers={"Content-Type":"application/json",...(options.headers||{})};
- if(token) headers.Authorization="Bearer "+token;
- const response=await fetch(API+path,{...options,headers});
- let data={};
- try{data=await response.json()}catch(e){}
- if(!response.ok) throw new Error(data.error||data.message||"Request failed ("+response.status+")");
- return data;
+
+function showHome(){
+ hideMsg();
+ document.getElementById("home").classList.remove("hidden");
+ document.getElementById("auth").classList.add("hidden");
+ document.getElementById("dashboard").classList.add("hidden");
 }
-function showAuth(type){
- document.getElementById("loginForm").classList.toggle("hidden",type!=="login");
- document.getElementById("registerForm").classList.toggle("hidden",type!=="register");
- hideMessage();
+function showAuth(mode){
+ hideMsg();
+ document.getElementById("home").classList.add("hidden");
+ document.getElementById("dashboard").classList.add("hidden");
+ document.getElementById("auth").classList.remove("hidden");
+ document.getElementById("loginForm").classList.toggle("hidden",mode!=="login");
+ document.getElementById("registerForm").classList.toggle("hidden",mode!=="register");
+ document.getElementById("authTitle").textContent=mode==="login"?"Login":"Create Account";
 }
 function openTab(id){
- document.querySelectorAll(".tab").forEach(el=>el.classList.add("hidden"));
+ document.querySelectorAll(".tab").forEach(x=>x.classList.add("hidden"));
  document.getElementById(id).classList.remove("hidden");
- if(id==="mypages") loadPages();
- if(id==="payments") loadPayments();
- if(id==="admin") loadAdmin();
+ if(id==="mypages")loadPages();
+ if(id==="payments")loadPayments();
+ if(id==="admin")loadAdmin();
 }
+
 document.getElementById("loginForm").addEventListener("submit",async e=>{
- e.preventDefault();hideMessage();
+ e.preventDefault();
  try{
-  const data=await request("/api/auth/login",{method:"POST",body:JSON.stringify({
+  const d=await api("/api/auth/login",{method:"POST",body:{
    email:document.getElementById("loginEmail").value,
    password:document.getElementById("loginPassword").value
-  })});
-  token=data.token;
+  }});
+  token=d.token;
   localStorage.setItem("ag_token",token);
   await loadMe();
- }catch(err){message(err.message)}
+ }catch(e){msg(e.message)}
 });
+
 document.getElementById("registerForm").addEventListener("submit",async e=>{
- e.preventDefault();hideMessage();
+ e.preventDefault();
  try{
-  const data=await request("/api/auth/register",{method:"POST",body:JSON.stringify({
+  const d=await api("/api/auth/register",{method:"POST",body:{
    name:document.getElementById("regName").value,
    email:document.getElementById("regEmail").value,
    password:document.getElementById("regPassword").value
-  })});
-  token=data.token;
-  if(token)localStorage.setItem("ag_token",token);
+  }});
+  token=d.token;
+  localStorage.setItem("ag_token",token);
   await loadMe();
- }catch(err){message(err.message)}
+ }catch(e){msg(e.message)}
 });
+
 async function loadMe(){
  try{
-  const data=await request("/api/me");
-  currentUser=data.user||data;
+  const d=await api("/api/me");
+  currentUser=d.user||d;
+  document.getElementById("home").classList.add("hidden");
   document.getElementById("auth").classList.add("hidden");
   document.getElementById("dashboard").classList.remove("hidden");
   document.getElementById("userName").textContent=currentUser.name||"User";
   document.getElementById("userEmail").textContent=currentUser.email||"";
   document.getElementById("accountRole").textContent=currentUser.role||"User";
-  document.getElementById("subscriptionStatus").textContent=currentUser.subscription_status||currentUser.subscriptionStatus||(currentUser.subscription_expires_at?"Active":"Not active");
-  if(currentUser.role==="admin")document.getElementById("adminTabButton").classList.remove("hidden");
+  document.getElementById("subscriptionStatus").textContent=currentUser.subscription_status||"Check status";
+  const isAdmin=currentUser.role==="admin";
+  document.getElementById("adminTabButton").classList.toggle("hidden",!isAdmin);
   await loadPages();
- }catch(err){
-  token="";localStorage.removeItem("ag_token");
-  document.getElementById("auth").classList.remove("hidden");
-  document.getElementById("dashboard").classList.add("hidden");
+  openTab(isAdmin?"admin":"homeTab");
+ }catch(e){
+  token="";
+  localStorage.removeItem("ag_token");
   showAuth("login");
-  if(err.message!=="Request failed (401)")message(err.message);
+  msg(e.message);
  }
 }
+
 function logout(){
- token="";currentUser=null;localStorage.removeItem("ag_token");
- document.getElementById("dashboard").classList.add("hidden");
- document.getElementById("auth").classList.remove("hidden");
- showAuth("login");
+ token="";
+ currentUser=null;
+ localStorage.removeItem("ag_token");
+ showHome();
 }
-function selectPlan(name,price){
- selectedPlan=name;
+
+function selectPlan(name){
  document.getElementById("paymentPlan").value=name;
  openTab("payments");
- message("Selected "+name+" plan. Complete payment and submit your transaction ID.");
+ msg("Selected "+name+". Submit your payment transaction ID after payment.");
 }
+
 async function createPage(){
- hideMessage();
  try{
-  const data=await request("/api/pages",{method:"POST",body:JSON.stringify({
+  const d=await api("/api/pages",{method:"POST",body:{
    title:document.getElementById("pageTitle").value,
    heading:document.getElementById("pageHeading").value,
    description:document.getElementById("pageDescription").value,
    button_text:document.getElementById("pageButton").value,
    button_url:document.getElementById("pageLink").value,
    pixel_id:document.getElementById("pixelId").value
-  })});
-  message(data.message||"Page created successfully.");
+  }});
+  msg(d.message||"Page created successfully.");
   openTab("mypages");
- }catch(err){message(err.message)}
+ }catch(e){msg(e.message)}
 }
+
 async function loadPages(){
  try{
-  const data=await request("/api/pages");
-  const pages=data.pages||data;
+  const d=await api("/api/pages");
+  const pages=d.pages||d;
   document.getElementById("pageCount").textContent=Array.isArray(pages)?pages.length:0;
-  document.getElementById("pagesList").innerHTML="";
-  if(!Array.isArray(pages)||!pages.length){document.getElementById("pagesList").textContent="No pages created yet.";return}
-  pages.forEach(page=>{
-   const div=document.createElement("div");
-   div.className="card";
-   const title=document.createElement("h3");title.textContent=page.title||"Untitled page";
-   const status=document.createElement("p");status.textContent="Status: "+(page.published?"Published":"Draft");
-   const publish=document.createElement("button");publish.textContent=page.published?"Unpublish":"Publish";
-   publish.onclick=()=>publishPage(page.id);
-   div.append(title,status,publish);
-   if(page.url){const link=document.createElement("a");link.href=page.url;link.target="_blank";link.rel="noopener";link.textContent="Open page";div.append(link)}
-   document.getElementById("pagesList").append(div);
+  const list=document.getElementById("pagesList");
+  list.innerHTML="";
+  if(!Array.isArray(pages)||!pages.length){list.textContent="No pages created yet.";return}
+  pages.forEach(p=>{
+   const box=document.createElement("div");
+   box.className="card";
+   const title=document.createElement("h3");
+   title.textContent=p.title||"Untitled";
+   const status=document.createElement("p");
+   status.textContent="Status: "+(p.published?"Published":"Draft");
+   const btn=document.createElement("button");
+   btn.textContent=p.published?"Unpublish":"Publish";
+   btn.onclick=()=>publishPage(p.id);
+   box.append(title,status,btn);
+   if(p.url){
+    const a=document.createElement("a");
+    a.href=p.url;a.target="_blank";a.rel="noopener";
+    a.textContent="Open Page";
+    box.append(a);
+   }
+   list.append(box);
   });
- }catch(err){document.getElementById("pagesList").textContent=err.message}
+ }catch(e){document.getElementById("pagesList").textContent=e.message}
 }
+
 async function publishPage(id){
  try{
-  await request("/api/pages/"+encodeURIComponent(id)+"/publish",{method:"POST"});
-  message("Page status updated.");
-  loadPages();
- }catch(err){message(err.message)}
+  await api("/api/pages/"+encodeURIComponent(id)+"/publish",{method:"POST"});
+  msg("Page status updated.");
+  await loadPages();
+ }catch(e){msg(e.message)}
 }
+
 async function submitPayment(){
  const txid=document.getElementById("paymentTxid").value.trim();
- if(!txid){message("Please enter your transaction ID.");return}
+ if(!txid){msg("Enter transaction ID.");return}
  try{
-  const data=await request("/api/payments",{method:"POST",body:JSON.stringify({
+  const d=await api("/api/payments",{method:"POST",body:{
    plan:document.getElementById("paymentPlan").value,
-   txid
-  })});
-  message(data.message||"Payment submitted for verification.");
+   txid:txid
+  }});
+  msg(d.message||"Payment submitted for verification.");
   document.getElementById("paymentTxid").value="";
   loadPayments();
- }catch(err){message(err.message)}
+ }catch(e){msg(e.message)}
 }
+
 async function loadPayments(){
  try{
-  const data=await request("/api/payments");
-  document.getElementById("paymentList").textContent=JSON.stringify(data.payments||data,null,2);
- }catch(err){document.getElementById("paymentList").textContent=err.message}
+  const d=await api("/api/payments");
+  document.getElementById("paymentList").textContent=JSON.stringify(d.payments||d,null,2);
+ }catch(e){document.getElementById("paymentList").textContent=e.message}
 }
+
 async function loadAdmin(){
- if(!currentUser||currentUser.role!=="admin"){message("Admin access only.");return}
+ if(!currentUser||currentUser.role!=="admin"){msg("Admin access only.");return}
  try{
-  const [stats,payments,leads]=await Promise.all([
-   request("/api/admin/stats"),
-   request("/api/admin/payments"),
-   request("/api/admin/leads")
+  const [s,p,l]=await Promise.all([
+   api("/api/admin/stats"),
+   api("/api/admin/payments"),
+   api("/api/admin/leads")
   ]);
-  const s=stats.stats||stats;
-  document.getElementById("adminUsers").textContent=s.users??"-";
-  document.getElementById("adminPages").textContent=s.pages??"-";
-  document.getElementById("adminPayments").textContent=s.payments??"-";
-  document.getElementById("adminLeads").textContent=s.leads??"-";
-  document.getElementById("adminPaymentList").textContent=JSON.stringify(payments.payments||payments,null,2);
-  document.getElementById("adminLeadList").textContent=JSON.stringify(leads.leads||leads,null,2);
- }catch(err){message(err.message)}
+  const stats=s.stats||s;
+  document.getElementById("adminUsers").textContent=stats.users??"-";
+  document.getElementById("adminPages").textContent=stats.pages??"-";
+  document.getElementById("adminPayments").textContent=stats.payments??"-";
+  document.getElementById("adminLeads").textContent=stats.leads??"-";
+  document.getElementById("adminPaymentList").textContent=JSON.stringify(p.payments||p,null,2);
+  document.getElementById("adminLeadList").textContent=JSON.stringify(l.leads||l,null,2);
+ }catch(e){msg(e.message)}
 }
-(async()=>{
- if(token)await loadMe();
-})();
+
+(async()=>{if(token)await loadMe()})();
 </script>
 </body>
-  </html>
-  
+ </html>
+ 
