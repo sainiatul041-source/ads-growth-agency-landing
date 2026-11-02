@@ -1,585 +1,636 @@
-
 const express = require("express");
 const { Pool } = require("pg");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+const crypto = require("crypto");
 const path = require("path");
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+app.use(express.json({ limit: "2mb" }));
+app.use(express.urlencoded({ extended: true }));
+
+const PORT = process.env.PORT || 10000;
 const DATABASE_URL = process.env.DATABASE_URL;
 const JWT_SECRET = process.env.JWT_SECRET;
 const ADMIN_EMAIL = (process.env.ADMIN_EMAIL || "").trim().toLowerCase();
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "";
 const UPI_ID = process.env.UPI_ID || "sainiatul041@okhdfcbank";
 
-if (!DATABASE_URL || !JWT_SECRET) {
-  console.error("DATABASE_URL and JWT_SECRET are required.");
+if (!DATABASE_URL || ! JWT_SECRET) {
+  console.error("Missing DATABASE_URL or JWT_SECRET.");
   process.exit(1);
 }
 
 const pool = new Pool({
   connectionString: DATABASE_URL,
-  ssl: process.env.DB_SSL === "false"
-    ? false
-    : { rejectUnauthorized: false }
+  ssl: process.env.DB_SSL === "false" ? false : { rejectUnauthorized: false }
 });
 
-app.use(express.json({ limit: "1mb" }));
-app.use(express.static(path.join(__dirname, "public")));
-
-const PLANS = {
+const plans = {
   starter: { name: "Starter", amount: 499, label: "All Click" },
   growth: { name: "Growth", amount: 999, label: "50% Click" },
   pro: { name: "Pro", amount: 1499, label: "100% Click" }
 };
 
-const emailOf = value => String(value || "").trim().toLowerCase();
+async function initDB() {
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS ag_users (
+      id BIGSERIAL PRIMARY KEY,
+      full_name TEXT NOT NULL DEFAULT '',
+      email TEXT UNIQUE NOT NULL,
+      password_hash TEXT NOT NULL,
+      role TEXT NOT NULL DEFAULT 'user',
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
 
-function slugify(value) {
-  return String(value || "")
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-|-$/g, "")
-    .slice(0, 50) || "landing-page";
-}
+    CREATE TABLE IF NOT EXISTS ag_payments (
+      id BIGSERIAL PRIMARY KEY,
+      user_id BIGINT,
+      plan TEXT NOT NULL DEFAULT 'starter',
+      amount NUMERIC(10,2) NOT NULL DEFAULT 0,
+      utr TEXT NOT NULL DEFAULT '',
+      screenshot_url TEXT NOT NULL DEFAULT '',
+      status TEXT NOT NULL DEFAULT 'pending',
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      reviewed_at TIMESTAMPTZ
+    );
 
-function validPixel(value) {
-  return !value || /^\d{5,25}$/.test(String(value).trim());
+    CREATE TABLE IF NOT EXISTS ag_pages (
+      id BIGSERIAL PRIMARY KEY,
+      user_id BIGINT,
+      title TEXT NOT NULL DEFAULT '',
+      headline TEXT NOT NULL DEFAULT '',
+      description TEXT NOT NULL DEFAULT '',
+      image_url TEXT NOT NULL DEFAULT '',
+      button_text TEXT NOT NULL DEFAULT 'Learn More',
+      button_url TEXT NOT NULL DEFAULT '#',
+      pixel_id TEXT NOT NULL DEFAULT '',
+      slug TEXT UNIQUE,
+      is_published BOOLEAN NOT NULL DEFAULT FALSE,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+  `);
+
+  const migrations = [
+    "ALTER TABLE ag_users ADD COLUMN IF NOT EXISTS full_name TEXT NOT NULL DEFAULT ''",
+    "ALTER TABLE ag_users ADD COLUMN IF NOT EXISTS email TEXT",
+    "ALTER TABLE ag_users ADD COLUMN IF NOT EXISTS password_hash TEXT",
+    "ALTER TABLE ag_users ADD COLUMN IF NOT EXISTS role TEXT NOT NULL DEFAULT 'user'",
+    "ALTER TABLE ag_users ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()",
+
+    "ALTER TABLE ag_payments ADD COLUMN IF NOT EXISTS user_id BIGINT",
+    "ALTER TABLE ag_payments ADD COLUMN IF NOT EXISTS plan TEXT NOT NULL DEFAULT 'starter'",
+    "ALTER TABLE ag_payments ADD COLUMN IF NOT EXISTS amount NUMERIC(10,2) NOT NULL DEFAULT 0",
+    "ALTER TABLE ag_payments ADD COLUMN IF NOT EXISTS utr TEXT NOT NULL DEFAULT ''",
+    "ALTER TABLE ag_payments ADD COLUMN IF NOT EXISTS screenshot_url TEXT NOT NULL DEFAULT ''",
+    "ALTER TABLE ag_payments ADD COLUMN IF NOT EXISTS status TEXT NOT NULL DEFAULT 'pending'",
+    "ALTER TABLE ag_payments ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()",
+    "ALTER TABLE ag_payments ADD COLUMN IF NOT EXISTS reviewed_at TIMESTAMPTZ",
+
+    "ALTER TABLE ag_pages ADD COLUMN IF NOT EXISTS user_id BIGINT",
+    "ALTER TABLE ag_pages ADD COLUMN IF NOT EXISTS title TEXT NOT NULL DEFAULT ''",
+    "ALTER TABLE ag_pages ADD COLUMN IF NOT EXISTS headline TEXT NOT NULL DEFAULT ''",
+    "ALTER TABLE ag_pages ADD COLUMN IF NOT EXISTS description TEXT NOT NULL DEFAULT ''",
+    "ALTER TABLE ag_pages ADD COLUMN IF NOT EXISTS image_url TEXT NOT NULL DEFAULT ''",
+    "ALTER TABLE ag_pages ADD COLUMN IF NOT EXISTS button_text TEXT NOT NULL DEFAULT 'Learn More'",
+    "ALTER TABLE ag_pages ADD COLUMN IF NOT EXISTS button_url TEXT NOT NULL DEFAULT '#'",
+    "ALTER TABLE ag_pages ADD COLUMN IF NOT EXISTS pixel_id TEXT NOT NULL DEFAULT ''",
+    "ALTER TABLE ag_pages ADD COLUMN IF NOT EXISTS slug TEXT",
+    "ALTER TABLE ag_pages ADD COLUMN IF NOT EXISTS is_published BOOLEAN NOT NULL DEFAULT FALSE",
+    "ALTER TABLE ag_pages ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()",
+    "ALTER TABLE ag_pages ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()"
+  ];
+
+  for (const sql of migrations) await pool.query(sql);
+
+  if (ADMIN_EMAIL && ADMIN_PASSWORD) {
+    const existing = await pool.query(
+      "SELECT id FROM ag_users WHERE LOWER(email)=LOWER($1)",
+      [ADMIN_EMAIL]
+    );
+
+    if (existing.rowCount) {
+      await pool.query(
+        "UPDATE ag_users SET role='admin' WHERE LOWER(email)=LOWER($1)",
+        [ADMIN_EMAIL]
+      );
+    } else {
+      const hash = await bcrypt.hash(ADMIN_PASSWORD, 12);
+      await pool.query(
+        "INSERT INTO ag_users(full_name,email,password_hash,role) VALUES($1,$2,$3,'admin')",
+        ["Administrator", ADMIN_EMAIL, hash]
+      );
+    }
+  }
 }
 
 function signToken(user) {
   return jwt.sign(
-    { id: user.id, email: user.email, role: user.role },
+    { id: String(user.id), email: user.email, role: user.role },
     JWT_SECRET,
-    { expiresIn: "7d" }
+    { expiresIn: "14d" }
   );
 }
 
-function auth(req, res, next) {
+async function auth(req, res, next) {
   try {
     const header = req.headers.authorization || "";
-    if (!header.startsWith("Bearer ")) throw new Error();
-    req.user = jwt.verify(header.slice(7), JWT_SECRET);
+    const token = header.startsWith("Bearer ") ? header.slice(7) : "";
+
+    if (!token) {
+      return res.status(401).json({ error: "Please login first." });
+    }
+
+    const decoded = jwt.verify(token, JWT_SECRET);
+    const result = await pool.query(
+      "SELECT id,full_name,email,role FROM ag_users WHERE id=$1",
+      [decoded.id]
+    );
+
+    if (!result.rowCount) {
+      return res.status(401).json({ error: "Account not found." });
+    }
+
+    req.user = result.rows[0];
     next();
-  } catch {
-    res.status(401).json({ error: "Please login again." });
+  } catch (err) {
+    return res.status(401).json({ error: "Session expired. Please login again." });
   }
 }
 
 function adminOnly(req, res, next) {
   if (req.user.role !== "admin") {
-    return res.status(403).json({ error: "Admin access required." });
+    return res.status(403).json({ error: "Admin only." });
   }
   next();
 }
 
-async function hasPaid(userId) {
-  const result = await pool.query(
-    "SELECT id FROM ag_payments WHERE user_id=$1 AND status='approved' LIMIT 1",
-    [userId]
-  );
-  return result.rowCount > 0;
-}
+async function paidOnly(req, res, next) {
+  if (req.user.role === "admin") return next();
 
-function paidOnly(req, res, next) {
-  hasPaid(req.user.id)
-    .then(ok => {
-      if (!ok) {
-        return res.status(403).json({
-          error: "Payment approval required before using Page Builder."
-        });
-      }
-      next();
-    })
-    .catch(() => {
-      res.status(500).json({ error: "Payment verification failed." });
-    });
-}
-
-async function initDB() {
-  await pool.query(`
-    CREATE TABLE IF NOT EXISTS ag_users (
-      id SERIAL PRIMARY KEY,
-      name TEXT NOT NULL,
-      email TEXT UNIQUE NOT NULL,
-      password_hash TEXT NOT NULL,
-      role TEXT NOT NULL DEFAULT 'user',
-      created_at TIMESTAMPTZ DEFAULT NOW()
+  try {
+    const result = await pool.query(
+      "SELECT id FROM ag_payments WHERE user_id=$1 AND status='approved' LIMIT 1",
+      [req.user.id]
     );
 
-    CREATE TABLE IF NOT EXISTS ag_pages (
-      id SERIAL PRIMARY KEY,
-      user_id INTEGER NOT NULL REFERENCES ag_users(id) ON DELETE CASCADE,
-      title TEXT NOT NULL,
-      slug TEXT UNIQUE NOT NULL,
-      headline TEXT DEFAULT '',
-      description TEXT DEFAULT '',
-      image_url TEXT DEFAULT '',
-      button_text TEXT DEFAULT 'Join Now',
-      button_url TEXT DEFAULT '',
-      pixel_id TEXT DEFAULT '',
-      published BOOLEAN DEFAULT FALSE,
-      created_at TIMESTAMPTZ DEFAULT NOW(),
-      updated_at TIMESTAMPTZ DEFAULT NOW()
-    );
-
-    CREATE TABLE IF NOT EXISTS ag_payments (
-      id SERIAL PRIMARY KEY,
-      user_id INTEGER NOT NULL REFERENCES ag_users(id) ON DELETE CASCADE,
-      plan TEXT NOT NULL,
-      amount INTEGER NOT NULL,
-      utr TEXT NOT NULL,
-      screenshot_url TEXT DEFAULT '',
-      status TEXT NOT NULL DEFAULT 'pending',
-      admin_note TEXT DEFAULT '',
-      created_at TIMESTAMPTZ DEFAULT NOW(),
-      approved_at TIMESTAMPTZ
-    );
-
-    CREATE INDEX IF NOT EXISTS ag_payments_user_status_idx
-    ON ag_payments(user_id, status);
-  `);
-
-  await pool.query(`
-    ALTER TABLE ag_pages ADD COLUMN IF NOT EXISTS headline TEXT DEFAULT '';
-    ALTER TABLE ag_pages ADD COLUMN IF NOT EXISTS description TEXT DEFAULT '';
-    ALTER TABLE ag_pages ADD COLUMN IF NOT EXISTS image_url TEXT DEFAULT '';
-    ALTER TABLE ag_pages ADD COLUMN IF NOT EXISTS button_text TEXT DEFAULT 'Join Now';
-    ALTER TABLE ag_pages ADD COLUMN IF NOT EXISTS button_url TEXT DEFAULT '';
-    ALTER TABLE ag_pages ADD COLUMN IF NOT EXISTS pixel_id TEXT DEFAULT '';
-    ALTER TABLE ag_pages ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW();
-
-    ALTER TABLE ag_payments ADD COLUMN IF NOT EXISTS screenshot_url TEXT DEFAULT '';
-    ALTER TABLE ag_payments ADD COLUMN IF NOT EXISTS admin_note TEXT DEFAULT '';
-    ALTER TABLE ag_payments ADD COLUMN IF NOT EXISTS approved_at TIMESTAMPTZ;
-  `);
-
-  if (ADMIN_EMAIL && ADMIN_PASSWORD) {
-    const existing = await pool.query(
-      "SELECT id FROM ag_users WHERE email=$1",
-      [ADMIN_EMAIL]
-    );
-
-    if (!existing.rowCount) {
-      const hash = await bcrypt.hash(ADMIN_PASSWORD, 12);
-
-      await pool.query(
-        `INSERT INTO ag_users(name,email,password_hash,role)
-         VALUES($1,$2,$3,'admin')`,
-        ["Administrator", ADMIN_EMAIL, hash]
-      );
-    } else {
-      await pool.query(
-        "UPDATE ag_users SET role='admin' WHERE email=$1",
-        [ADMIN_EMAIL]
-      );
+    if (!result.rowCount) {
+      return res.status(403).json({
+        error: "Payment approval is required before using the Page Builder."
+      });
     }
+
+    next();
+  } catch (err) {
+    next(err);
+  }
+}
+
+function makeSlug() {
+  return crypto.randomBytes(6).toString("hex");
+}
+
+function cleanText(value, max = 5000) {
+  return String(value ?? "").trim().slice(0, max);
+}
+
+function validHttpUrl(value, allowBlank = true) {
+  if (!value && allowBlank) return true;
+  try {
+    const u = new URL(value);
+    return u.protocol === "https:" || u.protocol === "http:";
+  } catch {
+    return false;
   }
 }
 
 app.get("/api/config", (req, res) => {
-  res.json({ upiId: UPI_ID, plans: PLANS });
+  res.json({ upiId: UPI_ID, plans });
 });
 
-app.post("/api/auth/register", async (req, res) => {
+app.post("/api/register", async (req, res, next) => {
   try {
-    const name = String(req.body.name || "").trim().slice(0, 80);
-    const email = emailOf(req.body.email);
+    const fullName = cleanText(req.body.fullName, 120);
+    const email = cleanText(req.body.email, 200).toLowerCase();
     const password = String(req.body.password || "");
 
-    if (
-      !name ||
-      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) ||
-      password.length < 8
-    ) {
+    if (!fullName || !email.includes("@") || password.length < 8) {
       return res.status(400).json({
-        error: "Enter name, valid email and password of at least 8 characters."
+        error: "Name, valid email and password (minimum 8 characters) are required."
       });
     }
 
     const hash = await bcrypt.hash(password, 12);
-
     const result = await pool.query(
-      `INSERT INTO ag_users(name,email,password_hash,role)
-       VALUES($1,$2,$3,'user')
-       RETURNING id,name,email,role`,
-      [name, email, hash]
+      "INSERT INTO ag_users(full_name,email,password_hash,role) VALUES($1,$2,$3,'user') RETURNING id,full_name,email,role",
+      [fullName, email, hash]
     );
 
-    res.json({
-      token: signToken(result.rows[0]),
-      user: result.rows[0]
-    });
-  } catch (error) {
-    res.status(400).json({
-      error: error.code === "23505"
-        ? "Email already registered."
-        : "Registration failed."
-    });
+    const user = result.rows[0];
+    res.json({ token: signToken(user), user });
+  } catch (err) {
+    if (err.code === "23505") {
+      return res.status(409).json({
+        error: "This email is already registered. Please login."
+      });
+    }
+    next(err);
   }
 });
 
-app.post("/api/auth/login", async (req, res) => {
+app.post("/api/login", async (req, res, next) => {
   try {
+    const email = cleanText(req.body.email, 200).toLowerCase();
+    const password = String(req.body.password || "");
+
     const result = await pool.query(
-      "SELECT * FROM ag_users WHERE email=$1",
-      [emailOf(req.body.email)]
+      "SELECT * FROM ag_users WHERE LOWER(email)=LOWER($1)",
+      [email]
     );
 
     if (
       !result.rowCount ||
-      !(await bcrypt.compare(
-        String(req.body.password || ""),
-        result.rows[0].password_hash
-      ))
+      !(await bcrypt.compare(password, result.rows[0].password_hash))
     ) {
-      return res.status(401).json({
-        error: "Invalid email or password."
-      });
+      return res.status(401).json({ error: "Incorrect email or password." });
     }
 
     const user = result.rows[0];
-
     res.json({
       token: signToken(user),
       user: {
         id: user.id,
-        name: user.name,
+        full_name: user.full_name,
         email: user.email,
         role: user.role
       }
     });
-  } catch {
-    res.status(500).json({ error: "Login failed." });
+  } catch (err) {
+    next(err);
   }
 });
 
-app.get("/api/me", auth, async (req, res) => {
-  const result = await pool.query(
-    "SELECT id,name,email,role FROM ag_users WHERE id=$1",
-    [req.user.id]
-  );
-
-  if (!result.rowCount) {
-    return res.status(404).json({ error: "Account not found." });
-  }
-
-  res.json({
-    user: result.rows[0],
-    paid: await hasPaid(req.user.id)
-  });
-});
-
-app.get("/api/payments", auth, async (req, res) => {
-  const result = await pool.query(
-    `SELECT id,plan,amount,utr,screenshot_url,status,
-     admin_note,created_at,approved_at
-     FROM ag_payments WHERE user_id=$1 ORDER BY id DESC`,
-    [req.user.id]
-  );
-
-  res.json(result.rows);
-});
-
-app.post("/api/payments", auth, async (req, res) => {
+app.get("/api/me", auth, async (req, res, next) => {
   try {
-    const plan = String(req.body.plan || "");
-    const utr = String(req.body.utr || "").trim().slice(0, 100);
-    const screenshot = String(req.body.screenshot_url || "").trim().slice(0, 1000);
+    const paid = req.user.role === "admin" ||
+      (await pool.query(
+        "SELECT id FROM ag_payments WHERE user_id=$1 AND status='approved' LIMIT 1",
+        [req.user.id]
+      )).rowCount > 0;
 
-    if (!PLANS[plan]) {
-      return res.status(400).json({ error: "Select a valid plan." });
-    }
+    res.json({ user: req.user, paid });
+  } catch (err) {
+    next(err);
+  }
+});
 
-    if (utr.length < 6) {
-      return res.status(400).json({ error: "Enter your UTR number." });
-    }
+app.get("/api/payments", auth, async (req, res, next) => {
+  try {
+    const result = await pool.query(
+      "SELECT id,plan,amount,utr,screenshot_url,status,created_at,reviewed_at FROM ag_payments WHERE user_id=$1 ORDER BY created_at DESC",
+      [req.user.id]
+    );
+    res.json(result.rows);
+  } catch (err) {
+    next(err);
+  }
+});
 
-    if (screenshot && !/^https:\/\/\S+$/i.test(screenshot)) {
+app.post("/api/payments", auth, async (req, res, next) => {
+  try {
+    if (req.user.role === "admin") {
       return res.status(400).json({
-        error: "Screenshot link must be a valid HTTPS URL."
+        error: "Admin account does not need payment approval."
+      });
+    }
+
+    const planKey = cleanText(req.body.plan, 30).toLowerCase();
+    const plan = plans[planKey];
+    const utr = cleanText(req.body.utr, 100);
+    const screenshotUrl = cleanText(req.body.screenshotUrl, 1000);
+
+    if (!plan) {
+      return res.status(400).json({ error: "Please select a valid plan." });
+    }
+    if (utr.length < 6) {
+      return res.status(400).json({
+        error: "Please enter your UTR / transaction reference."
+      });
+    }
+    if (!validHttpUrl(screenshotUrl)) {
+      return res.status(400).json({
+        error: "Screenshot URL must be a valid http/https link."
       });
     }
 
     const pending = await pool.query(
-      "SELECT id FROM ag_payments WHERE user_id=$1 AND status='pending'",
+      "SELECT id FROM ag_payments WHERE user_id=$1 AND status='pending' LIMIT 1",
       [req.user.id]
     );
 
     if (pending.rowCount) {
       return res.status(409).json({
-        error: "Your previous payment is still waiting for approval."
+        error: "You already have a payment waiting for admin review."
       });
     }
 
-    const selected = PLANS[plan];
-
     const result = await pool.query(
-      `INSERT INTO ag_payments(user_id,plan,amount,utr,screenshot_url)
-       VALUES($1,$2,$3,$4,$5) RETURNING id,status`,
-      [req.user.id, plan, selected.amount, utr, screenshot]
+      "INSERT INTO ag_payments(user_id,plan,amount,utr,screenshot_url,status) VALUES($1,$2,$3,$4,$5,'pending') RETURNING id",
+      [req.user.id, planKey, plan.amount, utr, screenshotUrl]
     );
 
     res.json({
-      message: "Payment request submitted. Wait for admin approval.",
-      payment: result.rows[0]
+      message: "Payment submitted. Admin will verify it.",
+      id: result.rows[0].id
     });
-  } catch {
-    res.status(500).json({ error: "Could not submit payment." });
+  } catch (err) {
+    next(err);
   }
 });
 
-app.get("/api/pages", auth, paidOnly, async (req, res) => {
-  const result = await pool.query(
-    "SELECT * FROM ag_pages WHERE user_id=$1 ORDER BY id DESC",
-    [req.user.id]
-  );
-  res.json(result.rows);
+app.get("/api/pages", auth, paidOnly, async (req, res, next) => {
+  try {
+    const result = req.user.role === "admin"
+      ? await pool.query("SELECT * FROM ag_pages ORDER BY created_at DESC")
+      : await pool.query(
+          "SELECT * FROM ag_pages WHERE user_id=$1 ORDER BY created_at DESC",
+          [req.user.id]
+        );
+
+    res.json(result.rows);
+  } catch (err) {
+    next(err);
+  }
 });
 
-app.post("/api/pages", auth, paidOnly, async (req, res) => {
+app.post("/api/pages", auth, paidOnly, async (req, res, next) => {
   try {
-    const b = req.body || {};
-    const title = String(b.title || "").trim().slice(0, 100);
+    const title = cleanText(req.body.title, 160);
+    const headline = cleanText(req.body.headline, 250);
+    const description = cleanText(req.body.description, 5000);
+    const imageUrl = cleanText(req.body.imageUrl, 1000);
+    const buttonText = cleanText(req.body.buttonText, 80) || "Learn More";
+    const buttonUrl = cleanText(req.body.buttonUrl, 1000) || "#";
+    const pixelId = cleanText(req.body.pixelId, 40);
 
-    if (!title) {
-      return res.status(400).json({ error: "Page title is required." });
-    }
-
-    if (!validPixel(b.pixel_id)) {
+    if (!title || !headline) {
       return res.status(400).json({
-        error: "Meta Pixel ID must contain 5–25 digits."
+        error: "Page title and headline are required."
       });
     }
 
-    const base = slugify(title);
-    let slug = base;
-    let number = 2;
-
-    while (
-      (await pool.query("SELECT id FROM ag_pages WHERE slug=$1", [slug])).rowCount
-    ) {
-      slug = base + "-" + number++;
+    if (!validHttpUrl(imageUrl) ||
+        (!validHttpUrl(buttonUrl, false) && buttonUrl !== "#")) {
+      return res.status(400).json({
+        error: "Image and button links must be valid http/https URLs."
+      });
     }
 
     const result = await pool.query(
       `INSERT INTO ag_pages
-       (user_id,title,slug,headline,description,image_url,
-        button_text,button_url,pixel_id)
+       (user_id,title,headline,description,image_url,button_text,button_url,pixel_id,slug)
        VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING *`,
       [
-        req.user.id,
-        title,
-        slug,
-        String(b.headline || "").slice(0, 180),
-        String(b.description || "").slice(0, 2000),
-        String(b.image_url || "").slice(0, 1000),
-        String(b.button_text || "Join Now").slice(0, 50),
-        String(b.button_url || "").slice(0, 1000),
-        String(b.pixel_id || "").trim()
+        req.user.id, title, headline, description, imageUrl,
+        buttonText, buttonUrl, pixelId, makeSlug()
       ]
     );
 
     res.json(result.rows[0]);
-  } catch {
-    res.status(500).json({ error: "Could not create page." });
+  } catch (err) {
+    next(err);
   }
 });
 
-app.put("/api/pages/:id", auth, paidOnly, async (req, res) => {
+app.put("/api/pages/:id", auth, paidOnly, async (req, res, next) => {
   try {
-    const b = req.body || {};
+    const title = cleanText(req.body.title, 160);
+    const headline = cleanText(req.body.headline, 250);
+    const description = cleanText(req.body.description, 5000);
+    const imageUrl = cleanText(req.body.imageUrl, 1000);
+    const buttonText = cleanText(req.body.buttonText, 80) || "Learn More";
+    const buttonUrl = cleanText(req.body.buttonUrl, 1000) || "#";
+    const pixelId = cleanText(req.body.pixelId, 40);
 
-    if (!validPixel(b.pixel_id)) {
+    if (!title || !headline) {
       return res.status(400).json({
-        error: "Meta Pixel ID must contain 5–25 digits."
+        error: "Page title and headline are required."
       });
     }
 
-    const result = await pool.query(
-      `UPDATE ag_pages SET
-       title=$1,headline=$2,description=$3,image_url=$4,
-       button_text=$5,button_url=$6,pixel_id=$7,updated_at=NOW()
-       WHERE id=$8 AND user_id=$9 RETURNING *`,
-      [
-        String(b.title || "").trim().slice(0, 100),
-        String(b.headline || "").slice(0, 180),
-        String(b.description || "").slice(0, 2000),
-        String(b.image_url || "").slice(0, 1000),
-        String(b.button_text || "Join Now").slice(0, 50),
-        String(b.button_url || "").slice(0, 1000),
-        String(b.pixel_id || "").trim(),
-        req.params.id,
-        req.user.id
-      ]
-    );
+    if (!validHttpUrl(imageUrl) ||
+        (!validHttpUrl(buttonUrl, false) && buttonUrl !== "#")) {
+      return res.status(400).json({
+        error: "Image and button links must be valid http/https URLs."
+      });
+    }
+
+    const values = [
+      title, headline, description, imageUrl,
+      buttonText, buttonUrl, pixelId, req.params.id
+    ];
+
+    const result = req.user.role === "admin"
+      ? await pool.query(
+          `UPDATE ag_pages SET title=$1,headline=$2,description=$3,
+           image_url=$4,button_text=$5,button_url=$6,pixel_id=$7,
+           updated_at=NOW() WHERE id=$8 RETURNING *`,
+          values
+        )
+      : await pool.query(
+          `UPDATE ag_pages SET title=$1,headline=$2,description=$3,
+           image_url=$4,button_text=$5,button_url=$6,pixel_id=$7,
+           updated_at=NOW() WHERE id=$8 AND user_id=$9 RETURNING *`,
+          [...values, req.user.id]
+        );
 
     if (!result.rowCount) {
       return res.status(404).json({ error: "Page not found." });
     }
 
     res.json(result.rows[0]);
-  } catch {
-    res.status(500).json({ error: "Could not update page." });
+  } catch (err) {
+    next(err);
   }
 });
 
-app.post("/api/pages/:id/publish", auth, paidOnly, async (req, res) => {
-  const result = await pool.query(
-    `UPDATE ag_pages SET published=NOT published,updated_at=NOW()
-     WHERE id=$1 AND user_id=$2 RETURNING *`,
-    [req.params.id, req.user.id]
-  );
+app.post("/api/pages/:id/publish", auth, paidOnly, async (req, res, next) => {
+  try {
+    const published = Boolean(req.body.published);
 
-  if (!result.rowCount) {
-    return res.status(404).json({ error: "Page not found." });
+    const result = req.user.role === "admin"
+      ? await pool.query(
+          "UPDATE ag_pages SET is_published=$1,updated_at=NOW() WHERE id=$2 RETURNING *",
+          [published, req.params.id]
+        )
+      : await pool.query(
+          "UPDATE ag_pages SET is_published=$1,updated_at=NOW() WHERE id=$2 AND user_id=$3 RETURNING *",
+          [published, req.params.id, req.user.id]
+        );
+
+    if (!result.rowCount) {
+      return res.status(404).json({ error: "Page not found." });
+    }
+
+    res.json(result.rows[0]);
+  } catch (err) {
+    next(err);
   }
-
-  res.json(result.rows[0]);
 });
 
-app.delete("/api/pages/:id", auth, paidOnly, async (req, res) => {
-  const result = await pool.query(
-    "DELETE FROM ag_pages WHERE id=$1 AND user_id=$2",
-    [req.params.id, req.user.id]
-  );
+app.delete("/api/pages/:id", auth, paidOnly, async (req, res, next) => {
+  try {
+    const result = req.user.role === "admin"
+      ? await pool.query(
+          "DELETE FROM ag_pages WHERE id=$1 RETURNING id",
+          [req.params.id]
+        )
+      : await pool.query(
+          "DELETE FROM ag_pages WHERE id=$1 AND user_id=$2 RETURNING id",
+          [req.params.id, req.user.id]
+        );
 
-  if (!result.rowCount) {
-    return res.status(404).json({ error: "Page not found." });
+    if (!result.rowCount) {
+      return res.status(404).json({ error: "Page not found." });
+    }
+
+    res.json({ message: "Page deleted." });
+  } catch (err) {
+    next(err);
   }
-
-  res.json({ message: "Page deleted." });
 });
 
-app.get("/api/admin/stats", auth, adminOnly, async (req, res) => {
-  const [users, pages, pending, approved] = await Promise.all([
-    pool.query("SELECT COUNT(*)::int count FROM ag_users"),
-    pool.query("SELECT COUNT(*)::int count FROM ag_pages"),
-    pool.query("SELECT COUNT(*)::int count FROM ag_payments WHERE status='pending'"),
-    pool.query("SELECT COALESCE(SUM(amount),0)::int total FROM ag_payments WHERE status='approved'")
-  ]);
+app.get("/api/admin/stats", auth, adminOnly, async (req, res, next) => {
+  try {
+    const [users, payments, pages] = await Promise.all([
+      pool.query("SELECT COUNT(*)::int AS count FROM ag_users"),
+      pool.query("SELECT COUNT(*)::int AS count FROM ag_payments WHERE status='pending'"),
+      pool.query("SELECT COUNT(*)::int AS count FROM ag_pages")
+    ]);
 
-  res.json({
-    users: users.rows[0].count,
-    pages: pages.rows[0].count,
-    pending: pending.rows[0].count,
-    approvedAmount: approved.rows[0].total
-  });
+    res.json({
+      users: users.rows[0].count,
+      pendingPayments: payments.rows[0].count,
+      pages: pages.rows[0].count
+    });
+  } catch (err) {
+    next(err);
+  }
 });
 
-app.get("/api/admin/payments", auth, adminOnly, async (req, res) => {
-  const result = await pool.query(
-    `SELECT p.*,u.name,u.email
-     FROM ag_payments p
-     JOIN ag_users u ON u.id=p.user_id
-     ORDER BY CASE WHEN p.status='pending' THEN 0 ELSE 1 END,p.id DESC`
-  );
+app.get("/api/admin/payments", auth, adminOnly, async (req, res, next) => {
+  try {
+    const result = await pool.query(
+      `SELECT p.id,p.plan,p.amount,p.utr,p.screenshot_url,p.status,
+       p.created_at,u.full_name,u.email
+       FROM ag_payments p LEFT JOIN ag_users u ON u.id=p.user_id
+       ORDER BY p.created_at DESC LIMIT 200`
+    );
 
-  res.json(result.rows);
+    res.json(result.rows);
+  } catch (err) {
+    next(err);
+  }
 });
 
-app.post("/api/admin/payments/:id/status", auth, adminOnly, async (req, res) => {
-  const status = String(req.body.status || "");
+app.post("/api/admin/payments/:id/status", auth, adminOnly, async (req, res, next) => {
+  try {
+    const status = cleanText(req.body.status, 20);
 
-  if (!["approved", "rejected"].includes(status)) {
-    return res.status(400).json({ error: "Invalid payment status." });
+    if (!["approved", "rejected"].includes(status)) {
+      return res.status(400).json({ error: "Invalid payment status." });
+    }
+
+    const result = await pool.query(
+      "UPDATE ag_payments SET status=$1,reviewed_at=NOW() WHERE id=$2 RETURNING id,status",
+      [status, req.params.id]
+    );
+
+    if (!result.rowCount) {
+      return res.status(404).json({ error: "Payment not found." });
+    }
+
+    res.json(result.rows[0]);
+  } catch (err) {
+    next(err);
   }
-
-  const result = await pool.query(
-    `UPDATE ag_payments
-     SET status=$1,admin_note=$2,
-     approved_at=CASE WHEN $1='approved' THEN NOW() ELSE NULL END
-     WHERE id=$3 RETURNING *`,
-    [status, String(req.body.admin_note || "").slice(0, 500), req.params.id]
-  );
-
-  if (!result.rowCount) {
-    return res.status(404).json({ error: "Payment not found." });
-  }
-
-  res.json(result.rows[0]);
 });
 
-app.get("/p/:slug", async (req, res) => {
-  const result = await pool.query(
-    "SELECT * FROM ag_pages WHERE slug=$1 AND published=true",
-    [req.params.slug]
-  );
-
-  if (!result.rowCount) {
-    return res.status(404).send("Landing page not found.");
-  }
-
-  const page = result.rows[0];
-
-  const esc = value => String(value || "").replace(/[&<>"']/g, c => ({
+function escapeHtml(value) {
+  return String(value ?? "").replace(/[&<>"']/g, char => ({
     "&": "&amp;",
     "<": "&lt;",
     ">": "&gt;",
     '"': "&quot;",
     "'": "&#39;"
-  }[c]));
+  }[char]));
+}
 
-  const pixel = /^\d{5,25}$/.test(page.pixel_id || "")
-    ? `<script>
-      !function(f,b,e,v,n,t,s){
-        if(f.fbq)return;n=f.fbq=function(){
-        n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};
-        if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
-        n.queue=[];t=b.createElement(e);t.async=!0;
-        t.src=v;s=b.getElementsByTagName(e)[0];
-        s.parentNode.insertBefore(t,s)
-      }(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');
-      fbq('init','${page.pixel_id}');
-      fbq('track','PageView');
-    </script>
-    <noscript><img height="1" width="1" style="display:none"
-    src="https://www.facebook.com/tr?id=${page.pixel_id}&ev=PageView&noscript=1"/></noscript>`
-    : "";
+app.get("/p/:slug", async (req, res, next) => {
+  try {
+    const result = await pool.query(
+      "SELECT * FROM ag_pages WHERE slug=$1 AND is_published=TRUE",
+      [req.params.slug]
+    );
 
-  res.send(`<!doctype html>
+    if (!result.rowCount) {
+      return res.status(404).send("Page not found or not published.");
+    }
+
+    const p = result.rows[0];
+    const pixel = /^\d+$/.test(p.pixel_id || "") ? p.pixel_id : "";
+
+    const image = p.image_url
+      ? `<img class="hero-img" src="${escapeHtml(p.image_url)}" alt="">`
+      : "";
+
+    const button = p.button_url && p.button_url !== "#"
+      ? `<a class="cta" href="${escapeHtml(p.button_url)}" target="_blank" rel="noopener">${escapeHtml(p.button_text)}</a>`
+      : "";
+
+    res.type("html").send(`<!doctype html>
 <html>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>${esc(page.title)}</title>
-${pixel}
+<title>${escapeHtml(p.title)}</title>
+${pixel ? `<script>
+!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){
+n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];
+t=b.createElement(e);t.async=!0;t.src=v;
+s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}
+(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');
+fbq('init','${pixel}');fbq('track','PageView');
+</script>
+<noscript><img height="1" width="1" style="display:none"
+src="https://www.facebook.com/tr?id=${pixel}&ev=PageView&noscript=1"/></noscript>` : ""}
 <style>
 *{box-sizing:border-box}
-body{margin:0;background:#081226;color:#fff;font-family:Arial,sans-serif}
-.wrap{max-width:680px;margin:35px auto;padding:24px;text-align:center}
-.panel{background:#111e36;border:1px solid #263958;border-radius:18px;padding:24px}
-h1{color:#45df91}
-p{line-height:1.6;color:#d5deed}
-.hero{width:100%;max-height:360px;object-fit:cover;border-radius:14px;margin:16px 0}
-.cta{display:inline-block;background:#08a66a;color:#fff;padding:15px 28px;border-radius:10px;text-decoration:none;font-weight:bold;margin-top:18px}
+body{margin:0;background:#0b1224;color:#fff;font-family:Arial,sans-serif}
+.wrap{max-width:760px;margin:40px auto;padding:28px;text-align:center}
+.hero-img{max-width:100%;max-height:380px;object-fit:cover;border-radius:18px;margin:20px 0}
+h1{font-size:clamp(30px,6vw,48px)}
+p{font-size:19px;line-height:1.6;color:#cbd5e1}
+.cta{display:inline-block;background:#0891b2;color:white;padding:15px 28px;border-radius:10px;text-decoration:none;font-weight:bold;margin-top:16px}
 </style>
 </head>
 <body>
 <main class="wrap">
-<section class="panel">
-<h1>${esc(page.headline || page.title)}</h1>
-${page.image_url ? `<img class="hero" src="${esc(page.image_url)}" alt="">` : ""}
-<p>${esc(page.description)}</p>
-${page.button_url ? `<a class="cta" href="${esc(page.button_url)}" target="_blank" rel="noopener">${esc(page.button_text || "Join Now")}</a>` : ""}
-</section>
+<h1>${escapeHtml(p.headline)}</h1>
+${image}
+<p>${escapeHtml(p.description).replace(/\n/g, "<br>")}</p>
+${button}
 </main>
 </body>
 </html>`);
+  } catch (err) {
+    next(err);
+  }
 });
+
+app.use(express.static(path.join(__dirname, "public")));
 
 app.get("*", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "index.html"));
-});
-
-initDB()
-  .then(() => {
-    app.listen(PORT, () => console.log("ADS GROWTH running on " + PORT));
-  })
-  .catch(error => {
-    console.error("Database startup failed:", error.message);
-    process.exit(1);
-  });
-  
+  res.sendFile(path.join(__dirname, "public", "index
