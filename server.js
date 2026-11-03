@@ -14,14 +14,22 @@ const ADMIN = String(process.env.ADMIN_EMAIL || "").toLowerCase();
 const ADMIN_PASS = process.env.ADMIN_PASSWORD || "";
 const UPI = process.env.UPI_ID || "your-upi-id@bank";
 
-if (!process.env.DATABASE_URL || !SECRET || SECRET.length < 32 || !ADMIN || ADMIN_PASS.length < 10) {
+if (
+  !process.env.DATABASE_URL ||
+  !SECRET ||
+  SECRET.length < 32 ||
+  !ADMIN ||
+  ADMIN_PASS.length < 10
+) {
   console.error("Set DATABASE_URL, JWT_SECRET, ADMIN_EMAIL and ADMIN_PASSWORD");
   process.exit(1);
 }
 
 const db = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: process.env.DATABASE_SSL === "false" ? false : { rejectUnauthorized: false }
+  ssl: process.env.DATABASE_SSL === "false"
+    ? false
+    : { rejectUnauthorized: false }
 });
 
 app.use(helmet({ contentSecurityPolicy: false }));
@@ -56,6 +64,7 @@ async function init() {
       button_text TEXT DEFAULT 'Get Started',
       button_url TEXT DEFAULT '#',
       image_url TEXT DEFAULT '',
+      image_width INT NOT NULL DEFAULT 100,
       pixel_id TEXT DEFAULT '',
       bg_color TEXT DEFAULT '#0b1224',
       text_color TEXT DEFAULT '#ffffff',
@@ -65,7 +74,11 @@ async function init() {
       created_at TIMESTAMPTZ DEFAULT NOW()
     );
 
-    ALTER TABLE ag_pages ADD COLUMN IF NOT EXISTS design_template TEXT NOT NULL DEFAULT 'classic';
+    ALTER TABLE ag_pages
+    ADD COLUMN IF NOT EXISTS design_template TEXT NOT NULL DEFAULT 'classic';
+
+    ALTER TABLE ag_pages
+    ADD COLUMN IF NOT EXISTS image_width INT NOT NULL DEFAULT 100;
 
     CREATE TABLE IF NOT EXISTS ag_payments (
       id BIGSERIAL PRIMARY KEY,
@@ -88,10 +101,12 @@ async function init() {
       created_at TIMESTAMPTZ DEFAULT NOW()
     );
 
-    CREATE INDEX IF NOT EXISTS ag_click_idx ON ag_click_events(created_at);
+    CREATE INDEX IF NOT EXISTS ag_click_idx
+    ON ag_click_events(created_at);
   `);
 
   const hash = await bcrypt.hash(ADMIN_PASS, 12);
+
   await db.query(
     `INSERT INTO ag_users(name,email,password_hash,role)
      VALUES('Admin',$1,$2,'admin')
@@ -108,15 +123,24 @@ function validColor(value) {
   return /^#[0-9a-fA-F]{6}$/.test(value || "");
 }
 
+function imageWidth(value) {
+  const n = Number(value);
+  if (!Number.isFinite(n)) return 100;
+  return Math.max(20, Math.min(100, Math.round(n)));
+}
+
 function makeSlug(value) {
-  return clean(value, 60).toLowerCase()
+  return clean(value, 60)
+    .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-|-$/g, "") || "page";
 }
 
 function auth(req, res, next) {
   try {
-    const token = (req.headers.authorization || "").replace(/^Bearer /, "");
+    const token = (req.headers.authorization || "")
+      .replace(/^Bearer /, "");
+
     req.user = jwt.verify(token, SECRET);
     next();
   } catch {
@@ -140,20 +164,29 @@ async function paid(req, res, next) {
   );
 
   if (!result.rowCount) {
-    return res.status(403).json({ error: "Payment approval required" });
+    return res.status(403).json({
+      error: "Payment approval required"
+    });
   }
+
   next();
 }
 
 function makeToken(user) {
   return jwt.sign(
-    { id: user.id, email: user.email, role: user.role },
+    {
+      id: user.id,
+      email: user.email,
+      role: user.role
+    },
     SECRET,
     { expiresIn: "7d" }
   );
 }
 
-app.get("/health", (req, res) => res.json({ ok: true }));
+app.get("/health", (req, res) => {
+  res.json({ ok: true });
+});
 
 app.get("/api/config", (req, res) => {
   res.json({
@@ -163,21 +196,31 @@ app.get("/api/config", (req, res) => {
   });
 });
 
+/* REGISTER */
+
 app.post("/api/register", async (req, res) => {
   try {
     const name = clean(req.body.name, 100);
     const email = clean(req.body.email, 254).toLowerCase();
     const password = String(req.body.password || "");
 
-    if (!name || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) ||
-        password.length < 8 || password.length > 72) {
-      return res.status(400).json({ error: "Enter valid name, email and password" });
+    if (
+      !name ||
+      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) ||
+      password.length < 8 ||
+      password.length > 72
+    ) {
+      return res.status(400).json({
+        error: "Enter valid name, email and password"
+      });
     }
 
     const hash = await bcrypt.hash(password, 12);
+
     const result = await db.query(
       `INSERT INTO ag_users(name,email,password_hash)
-       VALUES($1,$2,$3) RETURNING id,email,role`,
+       VALUES($1,$2,$3)
+       RETURNING id,email,role`,
       [name, email, hash]
     );
 
@@ -185,12 +228,17 @@ app.post("/api/register", async (req, res) => {
       token: makeToken(result.rows[0]),
       user: result.rows[0]
     });
+
   } catch (error) {
     res.status(error.code === "23505" ? 409 : 500).json({
-      error: error.code === "23505" ? "Email already registered" : "Registration failed"
+      error: error.code === "23505"
+        ? "Email already registered"
+        : "Registration failed"
     });
   }
 });
+
+/* LOGIN */
 
 app.post("/api/login", async (req, res) => {
   const result = await db.query(
@@ -198,31 +246,49 @@ app.post("/api/login", async (req, res) => {
     [clean(req.body.email, 254).toLowerCase()]
   );
 
-  if (!result.rowCount ||
-      !await bcrypt.compare(String(req.body.password || ""), result.rows[0].password_hash)) {
-    return res.status(401).json({ error: "Incorrect login" });
+  if (
+    !result.rowCount ||
+    !await bcrypt.compare(
+      String(req.body.password || ""),
+      result.rows[0].password_hash
+    )
+  ) {
+    return res.status(401).json({
+      error: "Incorrect login"
+    });
   }
 
   const user = result.rows[0];
+
   res.json({
     token: makeToken(user),
-    user: { id: user.id, email: user.email, role: user.role }
+    user: {
+      id: user.id,
+      email: user.email,
+      role: user.role
+    }
   });
 });
+
+/* USER DETAILS */
 
 app.get("/api/me", auth, async (req, res) => {
   const result = await db.query(
     "SELECT id,email,role,created_at FROM ag_users WHERE id=$1",
     [req.user.id]
   );
+
   res.json({ user: result.rows[0] });
 });
+
+/* USER PAYMENTS */
 
 app.get("/api/payments/mine", auth, async (req, res) => {
   const result = await db.query(
     "SELECT * FROM ag_payments WHERE user_id=$1 ORDER BY id DESC",
     [req.user.id]
   );
+
   res.json({ payments: result.rows });
 });
 
@@ -230,35 +296,59 @@ app.post("/api/payments", auth, async (req, res) => {
   const plan = plans.find(p => p.id === req.body.planId);
   const utr = clean(req.body.utr, 80);
 
-  if (!plan || !/^[A-Za-z0-9-]{8,80}$/.test(utr)) {
-    return res.status(400).json({ error: "Choose plan and enter valid UTR" });
+  if (
+    !plan ||
+    !/^[A-Za-z0-9-]{8,80}$/.test(utr)
+  ) {
+    return res.status(400).json({
+      error: "Choose plan and enter valid UTR"
+    });
   }
 
   try {
     const result = await db.query(
       `INSERT INTO ag_payments(user_id,plan_id,amount,utr)
-       VALUES($1,$2,$3,$4) RETURNING id,status`,
+       VALUES($1,$2,$3,$4)
+       RETURNING id,status`,
       [req.user.id, plan.id, plan.amount, utr]
     );
-    res.status(201).json({ payment: result.rows[0], message: "Payment submitted for verification" });
+
+    res.status(201).json({
+      payment: result.rows[0],
+      message: "Payment submitted for verification"
+    });
+
   } catch {
-    res.status(409).json({ error: "UTR already used or payment could not be saved" });
+    res.status(409).json({
+      error: "UTR already used or payment could not be saved"
+    });
   }
 });
+
+/* ADMIN STATS */
 
 app.get("/api/admin/stats", auth, admin, async (req, res) => {
   const users = await db.query(
     "SELECT COUNT(*)::int total FROM ag_users WHERE role='client'"
   );
+
   const clicks = await db.query(
-    `SELECT COUNT(*) FILTER(WHERE event_type='click' AND NOT suspicious)::int valid_clicks,
+    `SELECT
+     COUNT(*) FILTER(
+       WHERE event_type='click' AND NOT suspicious
+     )::int valid_clicks,
      COUNT(DISTINCT visitor_hash)::int unique_visitors,
-     COUNT(*) FILTER(WHERE suspicious)::int suspicious_events
+     COUNT(*) FILTER(
+       WHERE suspicious
+     )::int suspicious_events
      FROM ag_click_events`
   );
+
   const payments = await db.query(
-    `SELECT COUNT(*) FILTER(WHERE status='pending')::int pending,
-     COUNT(*) FILTER(WHERE status='approved')::int approved FROM ag_payments`
+    `SELECT
+     COUNT(*) FILTER(WHERE status='pending')::int pending,
+     COUNT(*) FILTER(WHERE status='approved')::int approved
+     FROM ag_payments`
   );
 
   res.json({
@@ -268,77 +358,124 @@ app.get("/api/admin/stats", auth, admin, async (req, res) => {
   });
 });
 
+/* ADMIN PAYMENTS */
+
 app.get("/api/admin/payments", auth, admin, async (req, res) => {
   const result = await db.query(
-    `SELECT p.*,u.email FROM ag_payments p
-     JOIN ag_users u ON u.id=p.user_id ORDER BY p.id DESC LIMIT 200`
+    `SELECT p.*,u.email
+     FROM ag_payments p
+     JOIN ag_users u ON u.id=p.user_id
+     ORDER BY p.id DESC LIMIT 200`
   );
+
   res.json({ payments: result.rows });
 });
 
 app.post("/api/admin/payments/:id/review", auth, admin, async (req, res) => {
   if (!["approved", "rejected"].includes(req.body.status)) {
-    return res.status(400).json({ error: "Invalid status" });
+    return res.status(400).json({
+      error: "Invalid status"
+    });
   }
 
   const result = await db.query(
-    "UPDATE ag_payments SET status=$1,reviewed_at=NOW() WHERE id=$2 RETURNING id,status",
+    `UPDATE ag_payments
+     SET status=$1,reviewed_at=NOW()
+     WHERE id=$2
+     RETURNING id,status`,
     [req.body.status, req.params.id]
   );
 
-  if (!result.rowCount) return res.status(404).json({ error: "Not found" });
+  if (!result.rowCount) {
+    return res.status(404).json({ error: "Not found" });
+  }
+
   res.json({ payment: result.rows[0] });
 });
 
+/* ADMIN CLICKS */
+
 app.get("/api/admin/clicks", auth, admin, async (req, res) => {
   const result = await db.query(
-    `SELECT e.*,p.slug FROM ag_click_events e
-     LEFT JOIN ag_pages p ON p.id=e.page_id ORDER BY e.id DESC LIMIT 200`
+    `SELECT e.*,p.slug
+     FROM ag_click_events e
+     LEFT JOIN ag_pages p ON p.id=e.page_id
+     ORDER BY e.id DESC LIMIT 200`
   );
+
   res.json({ events: result.rows });
 });
+
+/* GET USER PAGES */
 
 app.get("/api/pages", auth, paid, async (req, res) => {
   const result = await db.query(
     "SELECT * FROM ag_pages WHERE user_id=$1 ORDER BY id DESC",
     [req.user.id]
   );
+
   res.json({ pages: result.rows });
 });
 
+/* CREATE PAGE */
+
 app.post("/api/pages", auth, paid, async (req, res) => {
   const b = req.body;
+
   const colors = [
     b.bgColor || "#0b1224",
     b.textColor || "#ffffff",
     b.buttonColor || "#16a34a"
   ];
 
-  if (!clean(b.title, 100) || !clean(b.headline, 180) || !colors.every(validColor)) {
-    return res.status(400).json({ error: "Title, headline and valid colors required" });
+  if (
+    !clean(b.title, 100) ||
+    !clean(b.headline, 180) ||
+    !colors.every(validColor)
+  ) {
+    return res.status(400).json({
+      error: "Title, headline and valid colors required"
+    });
   }
+
+  const width = imageWidth(b.imageWidth);
 
   const result = await db.query(
     `INSERT INTO ag_pages
-     (user_id,title,slug,headline,description,button_text,button_url,image_url,
-      pixel_id,bg_color,text_color,button_color,design_template)
-     VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13) RETURNING *`,
+     (
+       user_id,title,slug,headline,description,
+       button_text,button_url,image_url,image_width,
+       pixel_id,bg_color,text_color,button_color,
+       design_template
+     )
+     VALUES(
+       $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14
+     )
+     RETURNING *`,
     [
-      req.user.id, clean(b.title, 100),
+      req.user.id,
+      clean(b.title, 100),
       makeSlug(b.title) + "-" + crypto.randomBytes(3).toString("hex"),
-      clean(b.headline, 180), clean(b.description, 2000),
+      clean(b.headline, 180),
+      clean(b.description, 2000),
       clean(b.buttonText, 60) || "Get Started",
       clean(b.buttonUrl, 1000) || "#",
-      clean(b.imageUrl, 1000), clean(b.pixelId, 20),
-      ...colors, clean(b.designTemplate, 30) || "classic"
+      clean(b.imageUrl, 1000),
+      width,
+      clean(b.pixelId, 20),
+      ...colors,
+      clean(b.designTemplate, 30) || "classic"
     ]
   );
 
   res.status(201).json({ page: result.rows[0] });
 });
 
+/* EDIT PAGE */
+
 app.put("/api/pages/:id", auth, paid, async (req, res) => {
   const b = req.body;
+
   const colors = [
     b.bgColor || "#0b1224",
     b.textColor || "#ffffff",
@@ -346,35 +483,68 @@ app.put("/api/pages/:id", auth, paid, async (req, res) => {
   ];
 
   if (!colors.every(validColor)) {
-    return res.status(400).json({ error: "Invalid color" });
+    return res.status(400).json({
+      error: "Invalid color"
+    });
   }
 
   const result = await db.query(
-    `UPDATE ag_pages SET title=$1,headline=$2,description=$3,
-     button_text=$4,button_url=$5,image_url=$6,pixel_id=$7,
-     bg_color=$8,text_color=$9,button_color=$10,design_template=$11
-     WHERE id=$12 AND user_id=$13 RETURNING *`,
+    `UPDATE ag_pages SET
+       title=$1,
+       headline=$2,
+       description=$3,
+       button_text=$4,
+       button_url=$5,
+       image_url=$6,
+       image_width=$7,
+       pixel_id=$8,
+       bg_color=$9,
+       text_color=$10,
+       button_color=$11,
+       design_template=$12
+     WHERE id=$13 AND user_id=$14
+     RETURNING *`,
     [
-      clean(b.title, 100), clean(b.headline, 180),
-      clean(b.description, 2000), clean(b.buttonText, 60),
-      clean(b.buttonUrl, 1000), clean(b.imageUrl, 1000),
-      clean(b.pixelId, 20), ...colors,
+      clean(b.title, 100),
+      clean(b.headline, 180),
+      clean(b.description, 2000),
+      clean(b.buttonText, 60),
+      clean(b.buttonUrl, 1000),
+      clean(b.imageUrl, 1000),
+      imageWidth(b.imageWidth),
+      clean(b.pixelId, 20),
+      ...colors,
       clean(b.designTemplate, 30) || "classic",
-      req.params.id, req.user.id
+      req.params.id,
+      req.user.id
     ]
   );
 
-  if (!result.rowCount) return res.status(404).json({ error: "Page not found" });
+  if (!result.rowCount) {
+    return res.status(404).json({
+      error: "Page not found"
+    });
+  }
+
   res.json({ page: result.rows[0] });
 });
 
+/* PUBLISH / UNPUBLISH */
+
 app.post("/api/pages/:id/publish", auth, paid, async (req, res) => {
   const result = await db.query(
-    "UPDATE ag_pages SET published=NOT published WHERE id=$1 AND user_id=$2 RETURNING slug,published",
+    `UPDATE ag_pages
+     SET published=NOT published
+     WHERE id=$1 AND user_id=$2
+     RETURNING slug,published`,
     [req.params.id, req.user.id]
   );
 
-  if (!result.rowCount) return res.status(404).json({ error: "Page not found" });
+  if (!result.rowCount) {
+    return res.status(404).json({
+      error: "Page not found"
+    });
+  }
 
   res.json({
     page: result.rows[0],
@@ -382,13 +552,18 @@ app.post("/api/pages/:id/publish", auth, paid, async (req, res) => {
   });
 });
 
+/* DELETE PAGE */
+
 app.delete("/api/pages/:id", auth, paid, async (req, res) => {
   await db.query(
     "DELETE FROM ag_pages WHERE id=$1 AND user_id=$2",
     [req.params.id, req.user.id]
   );
+
   res.json({ deleted: true });
 });
+
+/* TRACKING */
 
 app.post("/api/track/:slug", async (req, res) => {
   try {
@@ -397,19 +572,33 @@ app.post("/api/track/:slug", async (req, res) => {
       [req.params.slug]
     );
 
-    if (!page.rowCount) return res.status(404).json({ error: "Page not found" });
+    if (!page.rowCount) {
+      return res.status(404).json({
+        error: "Page not found"
+      });
+    }
 
     const visitor = clean(req.body.visitorId, 100);
-    if (visitor.length < 10) return res.status(400).json({ error: "Invalid visitor" });
+
+    if (visitor.length < 10) {
+      return res.status(400).json({
+        error: "Invalid visitor"
+      });
+    }
 
     const hash = crypto.createHash("sha256")
-      .update(visitor + "|" + req.ip + "|" + SECRET).digest("hex");
+      .update(visitor + "|" + req.ip + "|" + SECRET)
+      .digest("hex");
 
-    const type = req.body.eventType === "click" ? "click" : "pageview";
+    const type = req.body.eventType === "click"
+      ? "click"
+      : "pageview";
 
     const count = await db.query(
-      `SELECT COUNT(*)::int n FROM ag_click_events
-       WHERE page_id=$1 AND visitor_hash=$2
+      `SELECT COUNT(*)::int n
+       FROM ag_click_events
+       WHERE page_id=$1
+       AND visitor_hash=$2
        AND created_at>NOW()-INTERVAL '1 minute'`,
       [page.rows[0].id, hash]
     );
@@ -417,16 +606,31 @@ app.post("/api/track/:slug", async (req, res) => {
     const suspicious = count.rows[0].n >= 15;
 
     await db.query(
-      `INSERT INTO ag_click_events(page_id,visitor_hash,event_type,suspicious,reason)
+      `INSERT INTO ag_click_events
+       (page_id,visitor_hash,event_type,suspicious,reason)
        VALUES($1,$2,$3,$4,$5)`,
-      [page.rows[0].id, hash, type, suspicious, suspicious ? "High event frequency" : null]
+      [
+        page.rows[0].id,
+        hash,
+        type,
+        suspicious,
+        suspicious ? "High event frequency" : null
+      ]
     );
 
-    res.json({ recorded: !suspicious, flagged: suspicious });
+    res.json({
+      recorded: !suspicious,
+      flagged: suspicious
+    });
+
   } catch {
-    res.status(500).json({ error: "Tracking failed" });
+    res.status(500).json({
+      error: "Tracking failed"
+    });
   }
 });
+
+/* PUBLISHED LANDING PAGE */
 
 app.get("/p/:slug", async (req, res) => {
   const result = await db.query(
@@ -434,78 +638,236 @@ app.get("/p/:slug", async (req, res) => {
     [req.params.slug]
   );
 
-  if (!result.rowCount) return res.status(404).send("Page not found");
+  if (!result.rowCount) {
+    return res.status(404).send("Page not found");
+  }
 
   const p = result.rows[0];
 
   const esc = value => String(value || "").replace(/[&<>"']/g, c => ({
-    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#39;"
   }[c]));
 
   const safeUrl = value =>
     /^https?:\/\//i.test(value || "") ? esc(value) : "#";
 
-  const design = ["classic", "neon", "gold", "green", "white", "red", "purple"]
-    .includes(p.design_template) ? p.design_template : "classic";
+  const design = [
+    "classic",
+    "neon",
+    "gold",
+    "green",
+    "white",
+    "red",
+    "purple"
+  ].includes(p.design_template)
+    ? p.design_template
+    : "classic";
+
+  const width = imageWidth(p.image_width);
 
   const pixel = /^\d{5,20}$/.test(p.pixel_id || "") ? `
     <script>
     !function(f,b,e,v,n,t,s){
-      if(f.fbq)return;n=f.fbq=function(){n.callMethod?
-      n.callMethod.apply(n,arguments):n.queue.push(arguments)};
-      if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
-      n.queue=[];t=b.createElement(e);t.async=!0;
-      t.src=v;s=b.getElementsByTagName(e)[0];
+      if(f.fbq)return;
+      n=f.fbq=function(){
+        n.callMethod?
+        n.callMethod.apply(n,arguments):
+        n.queue.push(arguments)
+      };
+      if(!f._fbq)f._fbq=n;
+      n.push=n;
+      n.loaded=!0;
+      n.version='2.0';
+      n.queue=[];
+      t=b.createElement(e);
+      t.async=!0;
+      t.src=v;
+      s=b.getElementsByTagName(e)[0];
       s.parentNode.insertBefore(t,s)
-    }(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');
-    fbq('init','${esc(p.pixel_id)}');fbq('track','PageView');
-    </script>` : "";
+    }(window,document,'script',
+    'https://connect.facebook.net/en_US/fbevents.js');
+    fbq('init','${esc(p.pixel_id)}');
+    fbq('track','PageView');
+    </script>
+  ` : "";
 
   res.send(`<!doctype html>
-  <html><head>
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>${esc(p.title)}</title>
-  ${pixel}
-  <style>
-  body{margin:0;background:${p.bg_color};color:${p.text_color};font-family:Arial}
-  .box{max-width:760px;margin:50px auto;padding:30px;text-align:center;background:#ffffff0d;border-radius:20px;border:1px solid #ffffff22}
-  h1{font-size:clamp(30px,7vw,52px)}
-  p{line-height:1.7}
-  img{max-width:100%;max-height:350px}
-  .btn{display:inline-block;padding:15px 28px;border-radius:10px;background:${p.button_color};color:white;text-decoration:none;font-weight:bold}
-  .design-neon{background:radial-gradient(circle at top,#153c70,#050b19);border:1px solid #00caff;box-shadow:0 0 28px #00aaff55}
-  .design-gold{background:linear-gradient(145deg,#17120a,#30220d);border:1px solid #d6ad55}
-  .design-green{background:linear-gradient(145deg,#062c20,#071b18);border:1px solid #28d69a}
-  .design-white{background:#f7f9fc;color:#172033;border:1px solid #dce3ee}
-  .design-white p{color:#45546b}
-  .design-red{background:linear-gradient(145deg,#310b14,#17070c);border:1px solid #ff4c65}
-  .design-purple{background:linear-gradient(145deg,#241044,#0d0920);border:1px solid #b77aff}
-  </style></head>
+  <html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>${esc(p.title)}</title>
+    ${pixel}
+
+    <style>
+      *{box-sizing:border-box}
+
+      body{
+        margin:0;
+        padding:20px;
+        background:${p.bg_color};
+        color:${p.text_color};
+        font-family:Arial,sans-serif;
+        min-height:100vh;
+        display:flex;
+        justify-content:center;
+        align-items:center;
+      }
+
+      .box{
+        width:100%;
+        max-width:760px;
+        margin:30px auto;
+        padding:30px 20px;
+        text-align:center;
+        background:#ffffff0d;
+        border-radius:20px;
+        border:1px solid #ffffff22;
+      }
+
+      .page-title{
+        font-size:clamp(22px,5vw,34px);
+        margin:10px 0 25px;
+        overflow-wrap:anywhere;
+      }
+
+      h1{
+        font-size:clamp(28px,7vw,52px);
+        overflow-wrap:anywhere;
+      }
+
+      p{
+        line-height:1.7;
+      }
+
+      .page-photo{
+        display:block;
+        width:${width}%;
+        max-width:100%;
+        height:auto;
+        margin:20px auto;
+        border-radius:12px;
+        object-fit:contain;
+      }
+
+      .btn{
+        display:inline-block;
+        padding:15px 28px;
+        border-radius:10px;
+        background:${p.button_color};
+        color:white;
+        text-decoration:none;
+        font-weight:bold;
+        margin-top:15px;
+      }
+
+      .design-neon{
+        background:radial-gradient(circle at top,#153c70,#050b19);
+        border:1px solid #00caff;
+        box-shadow:0 0 28px #00aaff55;
+      }
+
+      .design-gold{
+        background:linear-gradient(145deg,#17120a,#30220d);
+        border:1px solid #d6ad55;
+      }
+
+      .design-green{
+        background:linear-gradient(145deg,#062c20,#071b18);
+        border:1px solid #28d69a;
+      }
+
+      .design-white{
+        background:#f7f9fc;
+        color:#172033;
+        border:1px solid #dce3ee;
+      }
+
+      .design-white p{
+        color:#45546b;
+      }
+
+      .design-red{
+        background:linear-gradient(145deg,#310b14,#17070c);
+        border:1px solid #ff4c65;
+      }
+
+      .design-purple{
+        background:linear-gradient(145deg,#241044,#0d0920);
+        border:1px solid #b77aff;
+      }
+
+      @media(max-width:480px){
+        body{padding:10px}
+        .box{padding:25px 14px}
+      }
+    </style>
+  </head>
+
   <body>
-  <main class="box design-${design}">
-  <h1>${esc(p.headline)}</h1>
-  <p>${esc(p.description)}</p>
-  ${p.image_url ? `<img src="${safeUrl(p.image_url)}" alt="">` : ""}
-  <p><a class="btn" href="${safeUrl(p.button_url)}">${esc(p.button_text)}</a></p>
-  </main>
-  <script>
-  let v=localStorage.getItem("ag_vid");
-  if(!v){
-    v="v_"+(crypto.randomUUID?crypto.randomUUID():Math.random().toString(36).slice(2)+Date.now());
-    localStorage.setItem("ag_vid",v);
-  }
-  const send=t=>fetch("/api/track/${encodeURIComponent(p.slug)}",{
-    method:"POST",headers:{"Content-Type":"application/json"},
-    body:JSON.stringify({visitorId:v,eventType:t})
-  }).catch(()=>{});
-  send("pageview");
-  document.querySelector(".btn").addEventListener("click",()=>send("click"));
-  </script></body></html>`);
+    <main class="box design-${design}">
+
+      <h2 class="page-title">${esc(p.title)}</h2>
+
+      <h1>${esc(p.headline)}</h1>
+
+      <p>${esc(p.description)}</p>
+
+      ${p.image_url
+        ? `<img class="page-photo" src="${safeUrl(p.image_url)}" alt="">`
+        : ""
+      }
+
+      <p>
+        <a class="btn" href="${safeUrl(p.button_url)}">
+          ${esc(p.button_text)}
+        </a>
+      </p>
+
+    </main>
+
+    <script>
+      let v=localStorage.getItem("ag_vid");
+
+      if(!v){
+        v="v_"+(
+          crypto.randomUUID
+          ? crypto.randomUUID()
+          : Math.random().toString(36).slice(2)+Date.now()
+        );
+
+        localStorage.setItem("ag_vid",v);
+      }
+
+      const send=t=>fetch(
+        "/api/track/${encodeURIComponent(p.slug)}",
+        {
+          method:"POST",
+          headers:{"Content-Type":"application/json"},
+          body:JSON.stringify({
+            visitorId:v,
+            eventType:t
+          })
+        }
+      ).catch(()=>{});
+
+      send("pageview");
+
+      document.querySelector(".btn").addEventListener(
+        "click",
+        ()=>send("click")
+      );
+    </script>
+  </body>
+  </html>`);
 });
 
+/* START SERVER */
+
 init().then(() => {
-  app.listen(PORT, () => console.log("ADS GROWTH AGENCY running on " + PORT));
-}).catch(error => {
-  console.error(error);
-  process.exit(1);
-});
+  app.listen(PORT, () => {
+    console.log("
