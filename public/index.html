@@ -4,118 +4,219 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>ADS GROWTH AGENCY</title>
+
 <style>
 *{box-sizing:border-box}
-body{margin:0;background:linear-gradient(135deg,#071126,#111b38);color:white;font-family:Arial}
-header{padding:18px 5%;border-bottom:1px solid #ffffff22}
-.logo{font-size:23px;font-weight:bold;color:#7cf7b3}
-main{max-width:1000px;margin:24px auto;padding:14px}
-.card{background:#111d38;border:1px solid #ffffff22;border-radius:16px;padding:20px;margin:14px 0}
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px}
-input,textarea,select{width:100%;padding:12px;margin:7px 0 13px;border-radius:8px;border:1px solid #52617c;background:#091329;color:white}
-button{padding:12px 16px;border:0;border-radius:9px;background:#13b86b;font-weight:bold;margin:4px;cursor:pointer}
+body{
+ margin:0;
+ background:linear-gradient(135deg,#071126,#111b38);
+ color:white;
+ font-family:Arial,sans-serif
+}
+header{
+ padding:18px 5%;
+ border-bottom:1px solid #ffffff22
+}
+.logo{
+ font-size:23px;
+ font-weight:bold;
+ color:#7cf7b3
+}
+main{
+ max-width:1000px;
+ margin:24px auto;
+ padding:14px
+}
+.card{
+ background:#111d38;
+ border:1px solid #ffffff22;
+ border-radius:16px;
+ padding:20px;
+ margin:14px 0
+}
+.grid{
+ display:grid;
+ grid-template-columns:repeat(auto-fit,minmax(210px,1fr));
+ gap:12px
+}
+input,textarea,select{
+ width:100%;
+ padding:12px;
+ margin:7px 0 13px;
+ border-radius:8px;
+ border:1px solid #52617c;
+ background:#091329;
+ color:white
+}
+button{
+ padding:12px 16px;
+ border:0;
+ border-radius:9px;
+ background:#13b86b;
+ font-weight:bold;
+ margin:4px;
+ cursor:pointer
+}
 .secondary{background:#304365;color:white}
 .danger{background:#e45d65;color:white}
 .hidden{display:none}
 .muted{color:#aab8d2}
-.price,.stat{font-size:27px;color:#7cf7b3;font-weight:bold}
-.item{padding:12px;border-bottom:1px solid #ffffff22}
-label{display:block;color:#c8d4e8;font-size:14px}
+.price,.stat{
+ font-size:27px;
+ color:#7cf7b3;
+ font-weight:bold
+}
+.item{
+ padding:12px;
+ border-bottom:1px solid #ffffff22
+}
+label{
+ display:block;
+ color:#c8d4e8;
+ font-size:14px
+}
 a{color:#8bdcff}
 </style>
 </head>
+
 <body>
-<header><div class="logo">ADS GROWTH AGENCY 📈</div></header>
+<header>
+ <div class="logo">ADS GROWTH AGENCY 📈</div>
+</header>
+
 <main>
 
 <section id="auth" class="grid">
-<div class="card">
-<h2>Login</h2>
-<input id="le" placeholder="Email">
-<input id="lp" type="password" placeholder="Password">
-<button onclick="login()">Login</button>
-</div>
-<div class="card">
-<h2>Create Account</h2>
-<input id="re" placeholder="Email">
-<input id="rp" type="password" placeholder="Password (8+ characters)">
-<button onclick="register()">Register</button>
-</div>
+ <div class="card">
+  <h2>Login</h2>
+  <input id="le" placeholder="Email">
+  <input id="lp" type="password" placeholder="Password">
+  <button onclick="login()">Login</button>
+ </div>
+
+ <div class="card">
+  <h2>Create Account</h2>
+  <input id="re" placeholder="Email">
+  <input id="rp" type="password" placeholder="Password (8+ characters)">
+  <button onclick="register()">Register</button>
+ </div>
 </section>
 
 <section id="app" class="hidden">
+
 <div class="card">
-<button class="secondary" onclick="logout()">Logout</button>
-<span id="account"></span>
-<h1>Dashboard</h1>
+ <button class="secondary" onclick="logout()">Logout</button>
+ <span id="account"></span>
+ <h1>Dashboard</h1>
 </div>
 
 <section id="plans" class="card">
-<h2>Plans</h2>
-<div id="planCards" class="grid"></div>
-<p>UPI ID: <b id="upi"></b></p>
-<select id="plan"></select>
-<input id="utr" placeholder="UPI UTR / reference number">
-<button onclick="pay()">Submit Payment</button>
-<p id="paymsg"></p>
-<div id="myPay"></div>
+ <h2>Choose Your Plan</h2>
+ <div id="planCards" class="grid"></div>
+
+ <div class="card">
+  <h3>Scan & Pay</h3>
+  <p class="muted">अपने UPI scanner से चुने हुए प्लान की राशि भेजें।</p>
+
+  <img
+   src="/scanner.png"
+   alt="Payment QR Scanner"
+   style="display:block;width:min(260px,100%);margin:12px auto;background:white;padding:10px;border-radius:12px"
+   onerror="this.style.display='none'"
+  >
+
+  <p class="muted">
+   QR image को public/scanner.png नाम से रखना होगा।
+  </p>
+
+  <p>UPI ID: <b id="upi"></b></p>
+ </div>
+
+ <label>Select Plan</label>
+ <select id="plan"></select>
+
+ <label>UPI UTR / Reference Number</label>
+ <input id="utr" placeholder="Enter UTR number">
+
+ <button onclick="pay()">Submit Payment</button>
+ <p id="paymsg"></p>
+ <div id="myPay"></div>
 </section>
 
 <section id="builder" class="card hidden">
-<h2>Landing Page Builder</h2>
-<input type="hidden" id="pid">
+ <h2>Landing Page Builder</h2>
 
-<div class="grid">
-<div><label>Page title</label><input id="title"></div>
-<div><label>Headline</label><input id="headline"></div>
-<div><label>Button text</label><input id="bt" value="Get Started"></div>
-<div><label>Button URL</label><input id="bu" placeholder="https://..."></div>
-<div><label>Image URL</label><input id="img"></div>
+ <input type="hidden" id="pid">
 
-<div>
-<label>Photo Width (%)</label>
-<input id="imgWidth" type="number" min="10" max="100" value="100">
-</div>
+ <div class="grid">
+  <div>
+   <label>Page Title</label>
+   <input id="title">
+  </div>
 
-<div>
-<label>Photo Height (px)</label>
-<input id="imgHeight" type="number" min="80" max="1200" value="350">
-</div>
+  <div>
+   <label>Headline</label>
+   <input id="headline">
+  </div>
 
-<div><label>Meta Pixel ID</label><input id="pixel"></div>
-<div><label>Background</label><input id="bg" type="color" value="#0b1224"></div>
-<div><label>Text</label><input id="tc" type="color" value="#ffffff"></div>
-<div><label>Button</label><input id="bc" type="color" value="#16a34a"></div>
-</div>
+  <div>
+   <label>Button Text</label>
+   <input id="bt" value="Get Started">
+  </div>
 
-<label>Description</label>
-<textarea id="desc"></textarea>
+  <div>
+   <label>Button URL</label>
+   <input id="bu" placeholder="https://...">
+  </div>
 
-<div class="muted">
-Photo size presets:
-<button type="button" class="secondary" onclick="photoPreset(35,140)">Small</button>
-<button type="button" class="secondary" onclick="photoPreset(65,240)">Medium</button>
-<button type="button" class="secondary" onclick="photoPreset(100,350)">Large</button>
-</div>
+  <div>
+   <label>Image URL</label>
+   <input id="img">
+  </div>
 
-<div id="photoPreview" class="muted"></div>
+  <div>
+   <label>Meta Pixel ID</label>
+   <input id="pixel">
+  </div>
 
-<button onclick="save()">Save Page</button>
-<button class="secondary" onclick="clearForm()">New</button>
-<p id="pmsg"></p>
+  <div>
+   <label>Background Colour</label>
+   <input id="bg" type="color" value="#0b1224">
+  </div>
 
-<h3>My Pages</h3>
-<div id="pages"></div>
+  <div>
+   <label>Text Colour</label>
+   <input id="tc" type="color" value="#ffffff">
+  </div>
+
+  <div>
+   <label>Button Colour</label>
+   <input id="bc" type="color" value="#16a34a">
+  </div>
+ </div>
+
+ <label>Description</label>
+ <textarea id="desc"></textarea>
+
+ <button onclick="save()">Save Page</button>
+ <button class="secondary" onclick="clearForm()">New</button>
+
+ <p id="pmsg"></p>
+ <h3>My Pages</h3>
+ <div id="pages"></div>
 </section>
 
 <section id="admin" class="card hidden">
-<h2>Admin Dashboard</h2>
-<div id="stats" class="grid"></div>
-<h3>Payment Requests</h3>
-<div id="payments"></div>
-<h3>Click Activity</h3>
-<div id="events"></div>
+ <h2>Admin Dashboard</h2>
+ <div id="stats" class="grid"></div>
+
+ <h3>Payment Requests</h3>
+ <div id="payments"></div>
+
+ <h3>Click Activity</h3>
+ <div id="events"></div>
 </section>
+
 </section>
 </main>
 
@@ -124,278 +225,254 @@ let token=localStorage.getItem("ag_token"),me=null;
 const $=x=>document.getElementById(x);
 
 const api=async(p,o={})=>{
-let r=await fetch("/api"+p,{
-...o,
-headers:{
-"Content-Type":"application/json",
-...(token?{Authorization:"Bearer "+token}:{}),
-...(o.headers||{})
-}
-});
-let d=await r.json();
-if(!r.ok)throw Error(d.error||"Error");
-return d;
+ let r=await fetch("/api"+p,{
+  ...o,
+  headers:{
+   "Content-Type":"application/json",
+   ...(token?{Authorization:"Bearer "+token}:{}),
+   ...(o.headers||{})
+  }
+ });
+ let d=await r.json();
+ if(!r.ok)throw Error(d.error||"Error");
+ return d;
 };
 
 function visible(){
-$("auth").classList.toggle("hidden",!!token);
-$("app").classList.toggle("hidden",!token);
+ $("auth").classList.toggle("hidden",!!token);
+ $("app").classList.toggle("hidden",!token);
 }
 
 async function register(){
-try{
-let d=await api("/register",{
-method:"POST",
-body:JSON.stringify({
-email:$("re").value,
-password:$("rp").value
-})
-});
-token=d.token;
-localStorage.setItem("ag_token",token);
-await start();
-}catch(e){alert(e.message)}
+ try{
+  let d=await api("/register",{
+   method:"POST",
+   body:JSON.stringify({
+    email:$("re").value,
+    password:$("rp").value
+   })
+  });
+  token=d.token;
+  localStorage.setItem("ag_token",token);
+  await start();
+ }catch(e){alert(e.message)}
 }
 
 async function login(){
-try{
-let d=await api("/login",{
-method:"POST",
-body:JSON.stringify({
-email:$("le").value,
-password:$("lp").value
-})
-});
-token=d.token;
-localStorage.setItem("ag_token",token);
-await start();
-}catch(e){alert(e.message)}
+ try{
+  let d=await api("/login",{
+   method:"POST",
+   body:JSON.stringify({
+    email:$("le").value,
+    password:$("lp").value
+   })
+  });
+  token=d.token;
+  localStorage.setItem("ag_token",token);
+  await start();
+ }catch(e){alert(e.message)}
 }
 
 function logout(){
-localStorage.removeItem("ag_token");
-location.reload();
+ localStorage.removeItem("ag_token");
+ location.reload();
 }
 
 async function start(){
-try{
-visible();
-me=(await api("/me")).user;
-$("account").textContent=me.email;
+ try{
+  visible();
+  me=(await api("/me")).user;
+  $("account").textContent=me.email;
 
-let c=await api("/config");
-$("upi").textContent=c.upiId;
+  let c=await api("/config");
+  $("upi").textContent=c.upiId;
 
-$("planCards").innerHTML=c.plans.map(p=>
-`<div class="card">
-<h3>${p.name}</h3>
-<div class="price">₹${p.amount}</div>
-${p.description}
-</div>`).join("");
+  $("planCards").innerHTML=c.plans.map(p=>`
+   <div class="card">
+    <h3>${p.name}</h3>
+    <div class="price">₹${p.amount}</div>
+    ${p.description}
+   </div>
+  `).join("");
 
-$("plan").innerHTML=c.plans.map(p=>
-`<option value="${p.id}">${p.name} ₹${p.amount}</option>`
-).join("");
+  $("plan").innerHTML=c.plans.map(p=>`
+   <option value="${p.id}">${p.name} ₹${p.amount}</option>
+  `).join("");
 
-await loadPay();
+  await loadPay();
 
-if(me.role==="admin"){
-$("plans").classList.add("hidden");
-$("builder").classList.remove("hidden");
-$("admin").classList.remove("hidden");
-await loadAdmin();
-}else{
-let ok=(await api("/payments/mine")).payments.some(p=>p.status==="approved");
-$("plans").classList.toggle("hidden",ok);
-$("builder").classList.toggle("hidden",!ok);
-if(ok)await pages();
-}
-}catch(e){logout()}
+  if(me.role==="admin"){
+   $("plans").classList.add("hidden");
+   $("builder").classList.remove("hidden");
+   $("admin").classList.remove("hidden");
+   await loadAdmin();
+  }else{
+   let ok=(await api("/payments/mine")).payments.some(p=>p.status==="approved");
+   $("plans").classList.toggle("hidden",ok);
+   $("builder").classList.toggle("hidden",!ok);
+   if(ok)await pages();
+  }
+ }catch(e){
+  logout();
+ }
 }
 
 async function pay(){
-try{
-let d=await api("/payments",{
-method:"POST",
-body:JSON.stringify({
-planId:$("plan").value,
-utr:$("utr").value
-})
-});
-$("paymsg").textContent=d.message;
-await loadPay();
-}catch(e){
-$("paymsg").textContent=e.message;
-}
+ try{
+  let d=await api("/payments",{
+   method:"POST",
+   body:JSON.stringify({
+    planId:$("plan").value,
+    utr:$("utr").value
+   })
+  });
+  $("paymsg").textContent=d.message;
+  await loadPay();
+ }catch(e){
+  $("paymsg").textContent=e.message;
+ }
 }
 
 async function loadPay(){
-let d=await api("/payments/mine");
-$("myPay").innerHTML=d.payments.map(p=>
-`<div class="item">₹${p.amount} | ${p.plan_id} | ${p.status}</div>`
-).join("");
+ let d=await api("/payments/mine");
+ $("myPay").innerHTML=d.payments.map(p=>`
+  <div class="item">
+   ₹${p.amount} | ${p.plan_id} | ${p.status}
+  </div>
+ `).join("");
 }
-
-function photoPreset(w,h){
-$("imgWidth").value=w;
-$("imgHeight").value=h;
-photoPreview();
-}
-
-function photoPreview(){
-let u=$("img").value;
-let w=Math.max(10,Math.min(100,Number($("imgWidth").value)||100));
-let h=Math.max(80,Math.min(1200,Number($("imgHeight").value)||350));
-
-$("photoPreview").innerHTML=u?
-`<p>Photo preview</p>
-<img src="${esc(u)}"
-style="display:block;width:${w}%;height:${h}px;max-width:100%;object-fit:contain;margin:10px auto">`
-:"";
-}
-
-["img","imgWidth","imgHeight"].forEach(id=>
-$(id).addEventListener("input",photoPreview)
-);
 
 function clearForm(){
-["pid","title","headline","desc","bt","bu","img","pixel"].forEach(x=>$(x).value="");
-$("imgWidth").value=100;
-$("imgHeight").value=350;
-$("bt").value="Get Started";
-photoPreview();
+ ["pid","title","headline","desc","bt","bu","img","pixel"].forEach(x=>$(x).value="");
+ $("bt").value="Get Started";
 }
 
 async function save(){
-try{
-let b={
-title:$("title").value,
-headline:$("headline").value,
-description:$("desc").value,
-buttonText:$("bt").value,
-buttonUrl:$("bu").value,
-imageUrl:$("img").value,
-imageWidth:$("imgWidth").value,
-imageHeight:$("imgHeight").value,
-pixelId:$("pixel").value,
-bgColor:$("bg").value,
-textColor:$("tc").value,
-buttonColor:$("bc").value
-};
+ try{
+  let b={
+   title:$("title").value,
+   headline:$("headline").value,
+   description:$("desc").value,
+   buttonText:$("bt").value,
+   buttonUrl:$("bu").value,
+   imageUrl:$("img").value,
+   pixelId:$("pixel").value,
+   bgColor:$("bg").value,
+   textColor:$("tc").value,
+   buttonColor:$("bc").value
+  };
 
-let id=$("pid").value;
-let d=await api("/pages"+(id?"/"+id:""),{
-method:id?"PUT":"POST",
-body:JSON.stringify(b)
-});
+  let id=$("pid").value;
+  let d=await api("/pages"+(id?"/"+id:""),{
+   method:id?"PUT":"POST",
+   body:JSON.stringify(b)
+  });
 
-$("pid").value=d.page.id;
-$("pmsg").textContent="Saved";
-await pages();
-}catch(e){
-$("pmsg").textContent=e.message;
-}
-}
-
-async function pages(){
-let d=await api("/pages");
-$("pages").innerHTML=d.pages.map(p=>
-`<div class="item">
-<b>${esc(p.title)}</b> — ${p.published?"Published":"Draft"}<br>
-${p.published?`<a href="/p/${encodeURIComponent(p.slug)}" target="_blank">Open Page</a>`:""}
-<br>
-<button class="secondary" onclick="edit(${p.id})">Edit</button>
-<button onclick="pub(${p.id})">${p.published?"Unpublish":"Publish"}</button>
-<button class="danger" onclick="del(${p.id})">Delete</button>
-</div>`
-).join("");
+  $("pid").value=d.page.id;
+  $("pmsg").textContent="Saved";
+  await pages();
+ }catch(e){
+  $("pmsg").textContent=e.message;
+ }
 }
 
 function esc(s){
-return String(s||"").replace(/[&<>"']/g,c=>({
-"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
-}[c]));
+ return String(s||"").replace(/[&<>"']/g,c=>({
+  "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+ }[c]));
+}
+
+async function pages(){
+ let d=await api("/pages");
+ $("pages").innerHTML=d.pages.map(p=>`
+  <div class="item">
+   <b>${esc(p.title)}</b> — ${p.published?"Published":"Draft"}<br>
+   ${p.published?`<a href="/p/${encodeURIComponent(p.slug)}" target="_blank">Open Page</a>`:""}
+   <br>
+   <button class="secondary" onclick="edit(${p.id})">Edit</button>
+   <button onclick="pub(${p.id})">${p.published?"Unpublish":"Publish"}</button>
+   <button class="danger" onclick="del(${p.id})">Delete</button>
+  </div>
+ `).join("");
 }
 
 async function edit(id){
-let p=(await api("/pages")).pages.find(x=>x.id===id);
-let m={
-pid:"id",title:"title",headline:"headline",
-desc:"description",bt:"button_text",bu:"button_url",
-img:"image_url",imgWidth:"image_width_percent",
-imgHeight:"image_height_px",pixel:"pixel_id",
-bg:"bg_color",tc:"text_color",bc:"button_color"
-};
-
-Object.entries(m).forEach(([a,b])=>
-$(a).value=p[b]??(a==="imgWidth"?100:a==="imgHeight"?350:"")
-);
-
-photoPreview();
+ let p=(await api("/pages")).pages.find(x=>x.id===id);
+ let m={
+  pid:"id",title:"title",headline:"headline",
+  desc:"description",bt:"button_text",bu:"button_url",
+  img:"image_url",pixel:"pixel_id",bg:"bg_color",
+  tc:"text_color",bc:"button_color"
+ };
+ Object.entries(m).forEach(([a,b])=>$(a).value=p[b]||"");
 }
 
 async function pub(id){
-try{
-let d=await api(`/pages/${id}/publish`,{method:"POST"});
-await pages();
-if(d.page.published)alert("Published URL: "+d.url);
-}catch(e){alert(e.message)}
+ try{
+  let d=await api(`/pages/${id}/publish`,{method:"POST"});
+  await pages();
+  if(d.page.published)alert("Published URL: "+d.url);
+ }catch(e){alert(e.message)}
 }
 
 async function del(id){
-if(confirm("Delete this page?")){
-await api("/pages/"+id,{method:"DELETE"});
-await pages();
-}
+ if(confirm("Delete this page?")){
+  await api("/pages/"+id,{method:"DELETE"});
+  await pages();
+ }
 }
 
 async function loadAdmin(){
-let d=await api("/admin/stats");
+ let d=await api("/admin/stats");
 
-$("stats").innerHTML=[
-["Registered Clients",d.clients.total],
-["Last 30 days",d.clients.last30],
-["Valid Clicks",d.clicks.valid_clicks],
-["Unique Visitors",d.clicks.unique_visitors],
-["Suspicious Events",d.clicks.suspicious_events],
-["Pending Payments",d.payments.pending],
-["Approved Payments",d.payments.approved]
-].map(x=>
-`<div class="card">
-<div class="muted">${x[0]}</div>
-<div class="stat">${x[1]}</div>
-</div>`
-).join("");
+ $("stats").innerHTML=[
+  ["Registered Clients",d.clients.total],
+  ["Last 30 days",d.clients.last30],
+  ["Valid Clicks",d.clicks.valid_clicks],
+  ["Unique Visitors",d.clicks.unique_visitors],
+  ["Suspicious Events",d.clicks.suspicious_events],
+  ["Pending Payments",d.payments.pending],
+  ["Approved Payments",d.payments.approved]
+ ].map(x=>`
+  <div class="card">
+   <div class="muted">${x[0]}</div>
+   <div class="stat">${x[1]}</div>
+  </div>
+ `).join("");
 
-let p=await api("/admin/payments");
+ let p=await api("/admin/payments");
 
-$("payments").innerHTML=p.payments.map(x=>
-`<div class="item">
-${esc(x.email)} | ₹${x.amount} | ${esc(x.utr)} | ${x.status}
-${x.status==="pending"?
-`<button onclick="review(${x.id},'approved')">Approve</button>
-<button class="danger" onclick="review(${x.id},'rejected')">Reject</button>`:""}
-</div>`
-).join("");
+ $("payments").innerHTML=p.payments.map(x=>`
+  <div class="item">
+   ${esc(x.email)} | ₹${x.amount} | ${esc(x.utr)} | ${x.status}
+   ${x.status==="pending"?`
+    <button onclick="review(${x.id},'approved')">Approve</button>
+    <button class="danger" onclick="review(${x.id},'rejected')">Reject</button>
+   `:""}
+  </div>
+ `).join("");
 
-let c=await api("/admin/clicks");
-$("events").innerHTML=c.events.map(x=>
-`<div class="item">
-${x.event_type} | ${x.suspicious?"SUSPICIOUS":"Recorded"} | ${esc(x.reason||"")}
-</div>`
-).join("");
+ let c=await api("/admin/clicks");
+
+ $("events").innerHTML=c.events.map(x=>`
+  <div class="item">
+   ${x.event_type} |
+   ${x.suspicious?"SUSPICIOUS":"Recorded"} |
+   ${esc(x.reason||"")}
+  </div>
+ `).join("");
 }
 
 async function review(id,status){
-await api(`/admin/payments/${id}/review`,{
-method:"POST",
-body:JSON.stringify({status})
-});
-await loadAdmin();
+ await api(`/admin/payments/${id}/review`,{
+  method:"POST",
+  body:JSON.stringify({status})
+ });
+ await loadAdmin();
 }
 
 visible();
 if(token)start();
 </script>
 </body>
- </html>
+  </html>
