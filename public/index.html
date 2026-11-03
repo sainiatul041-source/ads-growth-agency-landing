@@ -1,613 +1,236 @@
-<!DOCTYPE html>
-<html lang="hi">
+<!doctype html>
+<html>
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ADS GROWTH PAGES</title>
-
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ADS GROWTH AGENCY</title>
 <style>
+:root{color-scheme:dark}
+.plan-card{position:relative;border:1px solid #58f0b0;box-shadow:0 0 14px #16d98a55,inset 0 0 18px #16d98a12;transition:.2s}
+.plan-card:hover{transform:translateY(-4px);box-shadow:0 0 24px #16d98aaa}
+.plan-card .price{font-size:34px;text-shadow:0 0 12px #7cf7b3}
+.plan-card.featured{border:2px solid #ffd76a;box-shadow:0 0 22px #ffd76a77}
+.plan-card .tag{color:#ffd76a;font-weight:bold;letter-spacing:1px}
+.pay-title{color:#7cf7b3;text-shadow:0 0 12px #13b86b}
 *{box-sizing:border-box}
-body{
- margin:0;color:#fff;font-family:Arial,sans-serif;
- background:radial-gradient(circle at top left,#123e4b,transparent 40%),
- linear-gradient(135deg,#07101e,#101a38,#17132c);
-}
-header{
- padding:18px 5%;display:flex;justify-content:space-between;
- align-items:center;background:#07101eee;
- border-bottom:2px solid #25d9c4;
-}
-.logo{font-size:25px;font-weight:bold}
-.logo span{color:#24d8c1}
-main{max-width:1000px;margin:25px auto;padding:14px}
-.card{
- background:#111d38;border:1px solid #34415e;
- border-radius:20px;padding:22px;margin:14px 0;
-}
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px}
-input,textarea,select{
- width:100%;padding:14px;margin:8px 0 15px;
- border-radius:12px;border:1px solid #52617c;
- background:#091329;color:white;font-size:16px;
-}
-textarea{min-height:100px}
-label{display:block;color:#c8d4e8}
-button{
- padding:13px 18px;border:0;border-radius:10px;
- background:#13b86b;color:#071426;font-weight:bold;
- cursor:pointer;margin:4px;font-size:15px;
-}
+body{margin:0;background:linear-gradient(135deg,#071126,#111b38);color:white;font-family:Arial}
+header{padding:18px 5%;border-bottom:1px solid #ffffff22}
+.logo{font-size:23px;font-weight:bold;color:#7cf7b3}
+main{max-width:1000px;margin:24px auto;padding:14px}
+.card{background:#111d38;border:1px solid #ffffff22;border-radius:16px;padding:20px;margin:14px 0}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px}
+input,textarea,select{width:100%;padding:12px;margin:7px 0 13px;border-radius:8px;border:1px solid #52617c;background:#091329;color:white}
+button{padding:12px 16px;border:0;border-radius:9px;background:#13b86b;font-weight:bold;margin:4px;cursor:pointer}
 .secondary{background:#304365;color:white}
 .danger{background:#e45d65;color:white}
-.hidden{display:none!important}
+.hidden{display:none}
 .muted{color:#aab8d2}
+.price,.stat{font-size:27px;color:#7cf7b3;font-weight:bold}
+.item{padding:12px;border-bottom:1px solid #ffffff22}
+label{display:block;color:#c8d4e8;font-size:14px}
 a{color:#8bdcff}
-.price,.stat{font-size:30px;color:#7cf7b3;font-weight:bold}
-.item{padding:13px;border-bottom:1px solid #ffffff22}
-.plan-card{
- border:1px solid #58f0b0;
- box-shadow:0 0 15px #16d98a55;
- transition:.2s;
-}
-.plan-card:hover{transform:translateY(-4px)}
-.plan-card.featured{border:2px solid #ffd76a;box-shadow:0 0 22px #ffd76a77}
-.tag{color:#ffd76a;font-weight:bold}
-.pay-title{color:#7cf7b3;text-shadow:0 0 12px #13b86b}
-.qr-box{
- background:white;border-radius:16px;padding:12px;
- width:290px;max-width:100%;min-height:290px;
- margin:15px auto;display:flex;align-items:center;
- justify-content:center;
-}
-.qr-box img{width:100%;height:auto;display:block}
-.upi-id{font-size:18px;color:#7cf7b3;word-break:break-all}
-.home-btn{
- background:#242044;color:white;border:1px solid #7958b8;
- border-radius:30px;padding:12px 25px;
-}
-#auth{max-width:760px;margin:45px auto;padding:0 10px}
-#auth .card{
- background:linear-gradient(145deg,#141e3c,#0b142b);
- border:2px solid #a34ecb;border-radius:32px;padding:30px;
-}
-#auth h2{
- font-size:34px;
- background:linear-gradient(90deg,#fff,#7cf7d5,#82aaff);
- -webkit-background-clip:text;color:transparent;
-}
-#auth input:not([type=checkbox]){
- background:#080f21;border:1px solid #34466c;
- border-radius:15px;padding:17px;
-}
-#auth button:not(.secondary){
- width:100%;padding:18px;border-radius:16px;
- background:linear-gradient(100deg,#a8c9ff,#10e5b3,#17aee9);
- font-size:19px;color:#081426;
-}
-.chip{
- display:inline-block;padding:10px 15px;border-radius:25px;
- background:#28244c;border:1px solid #7852b4;
- color:#83f3d2;font-size:12px;font-weight:bold;
-}
-#authError{display:none;background:#3b2038;color:#ffb6cc;padding:14px;border-radius:12px}
-.range-value{color:#7cf7b3;font-weight:bold}
-@media(max-width:600px){
- #auth{margin:25px auto}
- #auth .card{padding:23px 18px}
- #auth h2{font-size:29px}
- .logo{font-size:20px}
-}
 </style>
 </head>
-
 <body>
-
-<header>
- <div class="logo">ADS GROWTH <span>Pages</span></div>
- <button class="home-btn" onclick="goHome()">Home</button>
-</header>
-
+<header><div class="logo">ADS GROWTH AGENCY 📈</div></header>
 <main>
-
-<section id="auth">
-
- <div class="card" id="registerCard">
-  <span class="chip">YOUR WORKSPACE STARTS HERE</span>
-  <h2>Create your account.</h2>
-  <p class="muted">Sign up to start managing your landing page projects.</p>
-  <p style="color:#83f3d2">⚡ Fast setup　📈 Meta Pixel ready　🔒 Secure login</p>
-
-  <div id="authError"></div>
-
-  <label>Full name</label>
-  <input id="rn" placeholder="Your full name">
-
-  <label>Email address</label>
-  <input id="re" type="email" placeholder="Enter email address">
-
-  <label>Password</label>
-  <input id="rp" type="password" placeholder="Password (8+ characters)">
-
-  <label style="display:flex;gap:10px;align-items:center">
-   <input type="checkbox" id="agree" style="width:auto">
-   I agree to the Terms of Service.
-  </label>
-
-  <button onclick="register()">Create account →</button>
-  <p style="text-align:center">Already have an account?
-   <a href="#" onclick="showLogin();return false">Log in</a>
-  </p>
- </div>
-
- <div class="card hidden" id="loginCard">
-  <span class="chip">WELCOME BACK</span>
-  <h2>Login to your account.</h2>
-  <label>Email address</label>
-  <input id="le" type="email" placeholder="Email">
-  <label>Password</label>
-  <input id="lp" type="password" placeholder="Password">
-  <button onclick="login()">Log in →</button>
-  <p style="text-align:center">New here?
-   <a href="#" onclick="showRegister();return false">Create account</a>
-  </p>
- </div>
-
+<section id="auth" class="grid">
+<div class="card">
+<h2>Login</h2>
+<input id="le" placeholder="Email">
+<input id="lp" type="password" placeholder="Password">
+<button onclick="login()">Login</button>
+</div>
+<div class="card">
+<h2>Create Account</h2>
+<input id="rn" placeholder="Full Name">
+<input id="re" placeholder="Email">
+<input id="rp" type="password" placeholder="Password (8+ characters)">
+<button onclick="register()">Register</button>
+</div>
 </section>
-
 <section id="app" class="hidden">
-
- <div class="card">
-  <button class="secondary" onclick="logout()">Logout</button>
-  <span id="account"></span>
-  <h1>Dashboard</h1>
- </div>
-
- <section id="plans" class="card">
-  <h2>Our Plans</h2>
-  <div id="planCards" class="grid"></div>
-
-  <div class="card" style="text-align:center">
-   <h2 class="pay-title">✨ SCAN & PAY ✨</h2>
-   <p class="muted">अपने UPI ऐप से QR स्कैन करके पेमेंट करें।</p>
-
-   <div class="qr-box" id="qrBox">
-    <p style="color:#333">पहले प्लान चुनें</p>
-   </div>
-
-   <p class="muted">Selected Payment Amount</p>
-   <h2 id="qrAmount" style="color:#7cf7b3">₹999</h2>
-
-   <p>UPI ID</p>
-   <div class="upi-id" id="upi">sainiatul041@okhdfcbank</div>
-   <button onclick="copyUPI()">Copy UPI ID</button>
-   <br>
-   <a id="upiLink" href="#">Open UPI App</a>
-
-   <p class="muted">भुगतान से पहले UPI ऐप में नाम और रकम जाँच लें।</p>
-  </div>
-
-  <label>Select Plan</label>
-  <select id="plan" onchange="updateQR()"></select>
-
-  <label>UPI UTR / Reference Number</label>
-  <input id="utr" placeholder="Payment के बाद UTR डालें">
-
-  <button onclick="pay()">Submit Payment</button>
-  <p id="paymsg"></p>
-  <div id="myPay"></div>
- </section>
-
- <section id="builder" class="card hidden">
-  <h2>Landing Page Builder</h2>
-  <input type="hidden" id="pid">
-
-  <div class="grid">
-   <div>
-    <label>Page title</label>
-    <input id="title" placeholder="Enter your page title">
-   </div>
-   <div><label>Headline</label><input id="headline"></div>
-   <div><label>Button text</label><input id="bt" value="Get Started"></div>
-   <div><label>Button URL</label><input id="bu"></div>
-   <div><label>Image URL</label><input id="img" placeholder="Paste image URL"></div>
-   <div><label>Meta Pixel ID</label><input id="pixel"></div>
-   <div><label>Background</label><input id="bg" type="color" value="#0b1224"></div>
-   <div><label>Text</label><input id="tc" type="color" value="#ffffff"></div>
-   <div><label>Button</label><input id="bc" type="color" value="#16a34a"></div>
-  </div>
-
-  <label>Image Size: <span id="imageWidthValue" class="range-value">100%</span></label>
-  <input id="imageWidth" type="range" min="20" max="100" value="100"
-         oninput="showImageWidth()">
-
-  <label>Description</label>
-  <textarea id="desc"></textarea>
-
-  <button onclick="save()">Save Page</button>
-  <button class="secondary" onclick="clearForm()">New</button>
-
-  <p id="pmsg"></p>
-  <h3>My Pages</h3>
-  <div id="pages"></div>
- </section>
-
- <section id="admin" class="card hidden">
-  <h2>Admin Dashboard</h2>
-  <div id="stats" class="grid"></div>
-  <h3>Payment Requests</h3>
-  <div id="payments"></div>
-  <h3>Click Activity</h3>
-  <div id="events"></div>
- </section>
-
+<div class="card">
+<button class="secondary" onclick="logout()">Logout</button>
+<span id="account"></span>
+<h1>Dashboard</h1>
+</div>
+<section id="plans" class="card">
+<h2>Plans</h2>
+<div id="planCards" class="grid"></div>
+<div class="card">
+<h3 class="pay-title">✨ Scan & Pay ✨</h3>
+<p class="muted">अपने UPI scanner से चुने हुए प्लान की राशि भेजें।</p>
+<img src="/scanner.png" alt="Payment QR Scanner" style="display:block;width:min(260px,100%);margin:12px auto;background:white;padding:10px;border-radius:12px" onerror="this.style.display='none'">
+<p class="muted">अपना असली QR scanner image <b>public/scanner.png</b> नाम से upload करें।</p>
+<p>UPI ID: <b id="upi"></b></p>
+</div>
+<select id="plan"></select>
+<input id="utr" placeholder="UPI UTR / reference number">
+<button onclick="pay()">Submit Payment</button>
+<p id="paymsg"></p>
+<div id="myPay"></div>
+</section>
+<section id="builder" class="card hidden">
+<h2>Landing Page Builder</h2>
+<input type="hidden" id="pid">
+<div class="grid">
+<div><label>Page title</label><input id="title"></div>
+<div><label>Headline</label><input id="headline"></div>
+<div><label>Button text</label><input id="bt" value="Get Started"></div>
+<div><label>Button URL</label><input id="bu" placeholder="https://..."></div>
+<div><label>Image URL</label><input id="img"></div>
+<div><label>Meta Pixel ID</label><input id="pixel"></div>
+<div>
+<label>Landing Page Design</label>
+<select id="design">
+<option value="classic">Classic</option>
+<option value="neon">Blue Neon</option>
+<option value="gold">Black & Gold</option>
+<option value="green">Green Premium</option>
+<option value="white">White Modern</option>
+<option value="red">Red Gaming</option>
+<option value="purple">Purple Glow</option>
+</select>
+</div>
+<div><label>Background</label><input id="bg" type="color" value="#0b1224"></div>
+<div><label>Text</label><input id="tc" type="color" value="#ffffff"></div>
+<div><label>Button</label><input id="bc" type="color" value="#16a34a"></div>
+</div>
+<label>Description</label>
+<textarea id="desc"></textarea>
+<button onclick="save()">Save Page</button>
+<button class="secondary" onclick="clearForm()">New</button>
+<p id="pmsg"></p>
+<h3>My Pages</h3>
+<div id="pages"></div>
+</section>
+<section id="admin" class="card hidden">
+<h2>Admin Dashboard</h2>
+<div id="stats" class="grid"></div>
+<h3>Payment Requests</h3>
+<div id="payments"></div>
+<h3>Click Activity</h3>
+<div id="events"></div>
+</section>
 </section>
 </main>
-
 <script>
 let token=localStorage.getItem("ag_token"),me=null;
-const UPI_ID="sainiatul041@okhdfcbank";
-const PAYEE="ADS GROWTH AGENCY";
-let planData=[];
-
-const $=id=>document.getElementById(id);
-
-const api=async(path,options={})=>{
- const response=await fetch("/api"+path,{
-  ...options,
-  headers:{
-   "Content-Type":"application/json",
-   ...(token?{Authorization:"Bearer "+token}:{}),
-   ...(options.headers||{})
-  }
- });
-
- const raw=await response.text();
- let data={};
-
- if(raw.trim()){
-  try{data=JSON.parse(raw)}
-  catch(e){throw Error("Server का जवाब सही JSON नहीं है (HTTP "+response.status+")")}
- }
-
- if(!response.ok)throw Error(data.error||"Server Error HTTP "+response.status);
- if(!raw.trim())throw Error("Server ने खाली जवाब दिया (HTTP "+response.status+")");
-
- return data;
+const $=x=>document.getElementById(x);
+const api=async(p,o={})=>{
+let r=await fetch("/api"+p,{...o,headers:{"Content-Type":"application/json",...(token?{Authorization:"Bearer "+token}:{}),...(o.headers||{})}});
+let d=await r.json();
+if(!r.ok)throw Error(d.error||"Error");
+return d
 };
-
-function showLogin(){
- $("registerCard").classList.add("hidden");
- $("loginCard").classList.remove("hidden");
- $("authError").style.display="none";
-}
-function showRegister(){
- $("loginCard").classList.add("hidden");
- $("registerCard").classList.remove("hidden");
-}
-function goHome(){
- if(token){
-  $("auth").classList.add("hidden");
-  $("app").classList.remove("hidden");
- }else{
-  showRegister();
- }
-}
 function visible(){
- $("auth").classList.toggle("hidden",!!token);
- $("app").classList.toggle("hidden",!token);
- if(!token)showRegister();
+$("auth").classList.toggle("hidden",!!token);
+$("app").classList.toggle("hidden",!token)
 }
-
 async function register(){
- try{
-  if(!$("rn").value.trim()||!$("re").value.trim()||!$("rp").value)
-   throw Error("सभी जानकारी भरें।");
-  if($("rp").value.length<8)
-   throw Error("Password कम से कम 8 characters का रखें।");
-  if(!$("agree").checked)
-   throw Error("पहले Terms से सहमति दें।");
-
-  const data=await api("/register",{
-   method:"POST",
-   body:JSON.stringify({
-    name:$("rn").value.trim(),
-    email:$("re").value.trim(),
-    password:$("rp").value
-   })
-  });
-
-  if(!data.token)throw Error("Registration token नहीं मिला।");
-  token=data.token;
-  localStorage.setItem("ag_token",token);
-  await start();
-
- }catch(error){
-  $("authError").style.display="block";
-  $("authError").textContent=error.message;
- }
+try{
+let d=await api("/register",{method:"POST",body:JSON.stringify({name:$("rn").value,email:$("re").value,password:$("rp").value})});
+token=d.token;
+localStorage.setItem("ag_token",token);
+await start()
+}catch(e){alert(e.message)}
 }
-
 async function login(){
- try{
-  const data=await api("/login",{
-   method:"POST",
-   body:JSON.stringify({
-    email:$("le").value.trim(),
-    password:$("lp").value
-   })
-  });
-  if(!data.token)throw Error("Login token नहीं मिला।");
-  token=data.token;
-  localStorage.setItem("ag_token",token);
-  await start();
- }catch(error){alert(error.message)}
+try{
+let d=await api("/login",{method:"POST",body:JSON.stringify({email:$("le").value,password:$("lp").value})});
+token=d.token;
+localStorage.setItem("ag_token",token);
+await start()
+}catch(e){alert(e.message)}
 }
-
-function logout(){
- localStorage.removeItem("ag_token");
- location.reload();
-}
-
-/* PAYMENT QR */
-function updateQR(){
- const selected=planData.find(p=>String(p.id)===String($("plan").value));
- if(!selected)return;
-
- const amount=Number(selected.amount);
- $("qrAmount").textContent="₹"+amount;
-
- const upiURI="upi://pay?pa="+encodeURIComponent(UPI_ID)+
- "&pn="+encodeURIComponent(PAYEE)+
- "&am="+encodeURIComponent(amount.toFixed(2))+
- "&cu=INR&tn="+encodeURIComponent("ADS GROWTH "+selected.name);
-
- const qrURL="https://api.qrserver.com/v1/create-qr-code/?size=280x280&margin=10&data="+encodeURIComponent(upiURI);
-
- $("qrBox").innerHTML="";
- const image=document.createElement("img");
- image.alt="UPI Payment QR";
- image.src=qrURL;
- image.onerror=()=>{
-  $("qrBox").innerHTML='<p style="color:#333">QR लोड नहीं हुआ। इंटरनेट चेक करें या Open UPI App दबाएँ।</p>';
- };
- $("qrBox").appendChild(image);
- $("upiLink").href=upiURI;
-}
-
-async function copyUPI(){
- try{
-  await navigator.clipboard.writeText(UPI_ID);
-  alert("UPI ID copied");
- }catch(e){
-  prompt("Copy UPI ID:",UPI_ID);
- }
-}
-
-function showImageWidth(){
- $("imageWidthValue").textContent=$("imageWidth").value+"%";
-}
-
+function logout(){localStorage.removeItem("ag_token");location.reload()}
 async function start(){
- try{
-  visible();
-  me=(await api("/me")).user;
-  $("account").textContent=me.email;
-
-  const config=await api("/config");
-  planData=config.plans||[];
-  $("upi").textContent=config.upiId||UPI_ID;
-
-  $("planCards").innerHTML=planData.map((p,i)=>`
-   <div class="card plan-card ${i===1?"featured":""}">
-    <div class="tag">${i===1?"⭐ MOST POPULAR":"✦ SELECT PLAN"}</div>
-    <h3>${esc(p.name)}</h3>
-    <div class="price">₹${Number(p.amount)}</div>
-    <p>${esc(p.description)}</p>
-    <button onclick="selectPlan('${esc(p.id)}')">Choose This Plan</button>
-   </div>
-  `).join("");
-
-  $("plan").innerHTML=planData.map(p=>
-   `<option value="${esc(p.id)}">${esc(p.name)} ₹${Number(p.amount)}</option>`
-  ).join("");
-
-  updateQR();
-  await loadPay();
-
-  if(me.role==="admin"){
-   $("plans").classList.add("hidden");
-   $("builder").classList.remove("hidden");
-   $("admin").classList.remove("hidden");
-   await loadAdmin();
-  }else{
-   const approved=(await api("/payments/mine")).payments.some(p=>p.status==="approved");
-   $("plans").classList.toggle("hidden",approved);
-   $("builder").classList.toggle("hidden",!approved);
-   if(approved)await pages();
-  }
-
- }catch(error){alert("Dashboard error: "+error.message)}
+try{
+visible();
+me=(await api("/me")).user;
+$("account").textContent=me.email;
+let c=await api("/config");
+$("upi").textContent=c.upiId;
+$("planCards").innerHTML=c.plans.map((p,i)=>`<div class="card plan-card ${i===1?"featured":""}"><div class="tag">${i===1?"⭐ MOST POPULAR":"✦ SELECT PLAN"}</div><h3>${p.name}</h3><div class="price">₹${p.amount}</div><p>${p.description}</p><button onclick="$('plan').value='${p.id}';$('plan').scrollIntoView({behavior:'smooth'})">Choose This Plan</button></div>`).join("");
+$("plan").innerHTML=c.plans.map(p=>`<option value="${p.id}">${p.name} ₹${p.amount}</option>`).join("");
+await loadPay();
+if(me.role==="admin"){
+$("plans").classList.add("hidden");
+$("builder").classList.remove("hidden");
+$("admin").classList.remove("hidden");
+await loadAdmin()
+}else{
+let ok=(await api("/payments/mine")).payments.some(p=>p.status==="approved");
+$("plans").classList.toggle("hidden",ok);
+$("builder").classList.toggle("hidden",!ok);
+if(ok)await pages()
 }
-
-function selectPlan(id){
- $("plan").value=id;
- updateQR();
- $("qrBox").scrollIntoView({behavior:"smooth",block:"center"});
+}catch(e){logout()}
 }
-
 async function pay(){
- try{
-  if(!$("utr").value.trim())throw Error("UTR Number भरें।");
-  const data=await api("/payments",{
-   method:"POST",
-   body:JSON.stringify({
-    planId:$("plan").value,
-    utr:$("utr").value.trim()
-   })
-  });
-  $("paymsg").textContent=data.message||"Payment request submitted. Verification pending.";
-  await loadPay();
- }catch(error){$("paymsg").textContent=error.message}
+try{
+let d=await api("/payments",{method:"POST",body:JSON.stringify({planId:$("plan").value,utr:$("utr").value})});
+$("paymsg").textContent=d.message;
+await loadPay()
+}catch(e){$("paymsg").textContent=e.message}
 }
-
 async function loadPay(){
- const data=await api("/payments/mine");
- $("myPay").innerHTML=(data.payments||[]).map(p=>
-  `<div class="item">₹${esc(p.amount)} | ${esc(p.plan_id)} | ${esc(p.status)}</div>`
- ).join("");
+let d=await api("/payments/mine");
+$("myPay").innerHTML=d.payments.map(p=>`<div class="item">₹${p.amount} | ${p.plan_id} | ${p.status}</div>`).join("")
 }
-
-/* PAGE BUILDER */
 function clearForm(){
- ["pid","title","headline","desc","bu","img","pixel"].forEach(id=>$(id).value="");
- $("bt").value="Get Started";
- $("bg").value="#0b1224";
- $("tc").value="#ffffff";
- $("bc").value="#16a34a";
- $("imageWidth").value=100;
- showImageWidth();
- $("pmsg").textContent="";
+["pid","title","headline","desc","bt","bu","img","pixel"].forEach(x=>$(x).value="");
+$("bt").value="Get Started";
+$("design").value="classic"
 }
-
 async function save(){
- try{
-  const body={
-   title:$("title").value.trim(),
-   headline:$("headline").value,
-   description:$("desc").value,
-   buttonText:$("bt").value,
-   buttonUrl:$("bu").value,
-   imageUrl:$("img").value,
-   pixelId:$("pixel").value,
-   bgColor:$("bg").value,
-   textColor:$("tc").value,
-   buttonColor:$("bc").value,
-   imageWidth:Number($("imageWidth").value)
-  };
-
-  if(!body.title)throw Error("Page title भरें।");
-  if(!body.headline.trim())throw Error("Headline भरें।");
-
-  const id=$("pid").value;
-  const data=await api("/pages"+(id?"/"+id:""),{
-   method:id?"PUT":"POST",
-   body:JSON.stringify(body)
-  });
-
-  if(data.page&&data.page.id)$("pid").value=data.page.id;
-  $("pmsg").textContent="Page saved successfully.";
-  await pages();
-
- }catch(error){$("pmsg").textContent=error.message}
+try{
+let b={title:$("title").value,headline:$("headline").value,description:$("desc").value,buttonText:$("bt").value,buttonUrl:$("bu").value,imageUrl:$("img").value,pixelId:$("pixel").value,designTemplate:$("design").value,bgColor:$("bg").value,textColor:$("tc").value,buttonColor:$("bc").value};
+let id=$("pid").value;
+let d=await api("/pages"+(id?"/"+id:""),{method:id?"PUT":"POST",body:JSON.stringify(b)});
+$("pid").value=d.page.id;
+$("pmsg").textContent="Saved";
+await pages()
+}catch(e){$("pmsg").textContent=e.message}
 }
-
-function esc(value){
- return String(value??"").replace(/[&<>"']/g,c=>({
-  "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
- }[c]));
-}
-
 async function pages(){
- const data=await api("/pages");
- $("pages").innerHTML=(data.pages||[]).map(p=>`
-  <div class="item">
-   <b>${esc(p.title)}</b> — ${p.published?"Published":"Draft"}<br>
-   ${p.published?`<a href="/p/${encodeURIComponent(p.slug)}" target="_blank">Open Page</a>`:""}
-   <br>
-   <button class="secondary" onclick="edit(${Number(p.id)})">Edit</button>
-   <button onclick="pub(${Number(p.id)})">${p.published?"Unpublish":"Publish"}</button>
-   <button class="danger" onclick="del(${Number(p.id)})">Delete</button>
-  </div>
- `).join("");
+let d=await api("/pages");
+$("pages").innerHTML=d.pages.map(p=>`<div class="item"><b>${esc(p.title)}</b> — ${p.published?"Published":"Draft"}<br>${p.published?`<a href="/p/${encodeURIComponent(p.slug)}" target="_blank">Open Page</a>`:""}<br><button class="secondary" onclick="edit(${p.id})">Edit</button><button onclick="pub(${p.id})">${p.published?"Unpublish":"Publish"}</button><button class="danger" onclick="del(${p.id})">Delete</button></div>`).join("")
 }
-
+function esc(s){
+return String(s||"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))
+}
 async function edit(id){
- const data=await api("/pages");
- const p=data.pages.find(x=>Number(x.id)===id);
- if(!p)return;
-
- const fields={
-  pid:"id",title:"title",headline:"headline",
-  desc:"description",bt:"button_text",
-  bu:"button_url",img:"image_url",pixel:"pixel_id",
-  bg:"bg_color",tc:"text_color",bc:"button_color"
- };
-
- Object.entries(fields).forEach(([a,b])=>$(a).value=p[b]??"");
-
- $("imageWidth").value=Number(p.image_width||100);
- showImageWidth();
- $("pmsg").textContent="Editing: "+(p.title||"Untitled page");
- $("builder").scrollIntoView({behavior:"smooth"});
+let p=(await api("/pages")).pages.find(x=>x.id===id);
+let m={pid:"id",title:"title",headline:"headline",desc:"description",bt:"button_text",bu:"button_url",img:"image_url",pixel:"pixel_id",bg:"bg_color",tc:"text_color",bc:"button_color",design:"design_template"};
+Object.entries(m).forEach(([a,b])=>$(a).value=p[b]||"")
 }
-
 async function pub(id){
- try{
-  const data=await api(`/pages/${id}/publish`,{method:"POST"});
-  await pages();
-  if(data.page?.published)alert("Published URL: "+data.url);
- }catch(error){alert(error.message)}
+try{
+let d=await api(`/pages/${id}/publish`,{method:"POST"});
+await pages();
+if(d.page.published)alert("Published URL: "+d.url)
+}catch(e){alert(e.message)}
 }
-
 async function del(id){
- if(confirm("Delete this page?")){
-  try{
-   await api("/pages/"+id,{method:"DELETE"});
-   await pages();
-  }catch(error){alert(error.message)}
- }
+if(confirm("Delete this page?")){
+await api("/pages/"+id,{method:"DELETE"});
+await pages()
 }
-
-/* ADMIN */
+}
 async function loadAdmin(){
- const data=await api("/admin/stats");
-
- $("stats").innerHTML=[
-  ["Registered Clients",data.clients.total],
-  ["Last 30 days",data.clients.last30],
-  ["Valid Clicks",data.clicks.valid_clicks],
-  ["Unique Visitors",data.clicks.unique_visitors],
-  ["Suspicious Events",data.clicks.suspicious_events],
-  ["Pending Payments",data.payments.pending],
-  ["Approved Payments",data.payments.approved]
- ].map(x=>`
-  <div class="card">
-   <div class="muted">${x[0]}</div>
-   <div class="stat">${esc(x[1])}</div>
-  </div>
- `).join("");
-
- const paymentData=await api("/admin/payments");
- $("payments").innerHTML=(paymentData.payments||[]).map(p=>`
-  <div class="item">
-   ${esc(p.email)} | ₹${esc(p.amount)} | ${esc(p.utr)} | ${esc(p.status)}
-   ${p.status==="pending"?`
-    <button onclick="review(${Number(p.id)},'approved')">Approve</button>
-    <button class="danger" onclick="review(${Number(p.id)},'rejected')">Reject</button>
-   `:""}
-  </div>
- `).join("");
-
- const clickData=await api("/admin/clicks");
- $("events").innerHTML=(clickData.events||[]).map(e=>`
-  <div class="item">
-   ${esc(e.event_type)} |
-   ${e.suspicious?"SUSPICIOUS":"Recorded"} |
-   ${esc(e.reason||"")}
-  </div>
- `).join("");
+let d=await api("/admin/stats");
+$("stats").innerHTML=[["Registered Clients",d.clients.total],["Last 30 days",d.clients.last30],["Valid Clicks",d.clicks.valid_clicks],["Unique Visitors",d.clicks.unique_visitors],["Suspicious Events",d.clicks.suspicious_events],["Pending Payments",d.payments.pending],["Approved Payments",d.payments.approved]].map(x=>`<div class="card"><div class="muted">${x[0]}</div><div class="stat">${x[1]}</div></div>`).join("");
+let p=await api("/admin/payments");
+$("payments").innerHTML=p.payments.map(x=>`<div class="item">${esc(x.email)} | ₹${x.amount} | ${esc(x.utr)} | ${x.status}${x.status==="pending"?` <button onclick="review(${x.id},'approved')">Approve</button><button class="danger" onclick="review(${x.id},'rejected')">Reject</button>`:""}</div>`).join("");
+let c=await api("/admin/clicks");
+$("events").innerHTML=c.events.map(x=>`<div class="item">${x.event_type} | ${x.suspicious?"SUSPICIOUS":"Recorded"} | ${esc(x.reason||"")}</div>`).join("")
 }
-
 async function review(id,status){
- try{
-  await api(`/admin/payments/${id}/review`,{
-   method:"POST",
-   body:JSON.stringify({status})
-  });
-  await loadAdmin();
- }catch(error){alert(error.message)}
+await api(`/admin/payments/${id}/review`,{method:"POST",body:JSON.stringify({status})});
+await loadAdmin()
 }
-
 visible();
 if(token)start();
 </script>
