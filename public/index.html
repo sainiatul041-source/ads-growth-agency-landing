@@ -90,6 +90,7 @@ a{color:#8bdcff}
  color:#83f3d2;font-size:12px;font-weight:bold;
 }
 #authError{display:none;background:#3b2038;color:#ffb6cc;padding:14px;border-radius:12px}
+.range-value{color:#7cf7b3;font-weight:bold}
 @media(max-width:600px){
  #auth{margin:25px auto}
  #auth .card{padding:23px 18px}
@@ -108,7 +109,6 @@ a{color:#8bdcff}
 
 <main>
 
-<!-- LOGIN / REGISTER -->
 <section id="auth">
 
  <div class="card" id="registerCard">
@@ -154,7 +154,6 @@ a{color:#8bdcff}
 
 </section>
 
-<!-- DASHBOARD -->
 <section id="app" class="hidden">
 
  <div class="card">
@@ -163,7 +162,6 @@ a{color:#8bdcff}
   <h1>Dashboard</h1>
  </div>
 
- <!-- PLANS AND PAYMENT -->
  <section id="plans" class="card">
   <h2>Our Plans</h2>
   <div id="planCards" class="grid"></div>
@@ -199,22 +197,28 @@ a{color:#8bdcff}
   <div id="myPay"></div>
  </section>
 
- <!-- PAGE BUILDER -->
  <section id="builder" class="card hidden">
   <h2>Landing Page Builder</h2>
   <input type="hidden" id="pid">
 
   <div class="grid">
-   <div><label>Page title</label><input id="title"></div>
+   <div>
+    <label>Page title</label>
+    <input id="title" placeholder="Enter your page title">
+   </div>
    <div><label>Headline</label><input id="headline"></div>
    <div><label>Button text</label><input id="bt" value="Get Started"></div>
    <div><label>Button URL</label><input id="bu"></div>
-   <div><label>Image URL</label><input id="img"></div>
+   <div><label>Image URL</label><input id="img" placeholder="Paste image URL"></div>
    <div><label>Meta Pixel ID</label><input id="pixel"></div>
    <div><label>Background</label><input id="bg" type="color" value="#0b1224"></div>
    <div><label>Text</label><input id="tc" type="color" value="#ffffff"></div>
    <div><label>Button</label><input id="bc" type="color" value="#16a34a"></div>
   </div>
+
+  <label>Image Size: <span id="imageWidthValue" class="range-value">100%</span></label>
+  <input id="imageWidth" type="range" min="20" max="100" value="100"
+         oninput="showImageWidth()">
 
   <label>Description</label>
   <textarea id="desc"></textarea>
@@ -227,7 +231,6 @@ a{color:#8bdcff}
   <div id="pages"></div>
  </section>
 
- <!-- ADMIN -->
  <section id="admin" class="card hidden">
   <h2>Admin Dashboard</h2>
   <div id="stats" class="grid"></div>
@@ -248,7 +251,6 @@ let planData=[];
 
 const $=id=>document.getElementById(id);
 
-/* API RESPONSE HANDLING */
 const api=async(path,options={})=>{
  const response=await fetch("/api"+path,{
   ...options,
@@ -296,15 +298,12 @@ function visible(){
  if(!token)showRegister();
 }
 
-/* REGISTER */
 async function register(){
  try{
   if(!$("rn").value.trim()||!$("re").value.trim()||!$("rp").value)
    throw Error("सभी जानकारी भरें।");
-
   if($("rp").value.length<8)
    throw Error("Password कम से कम 8 characters का रखें।");
-
   if(!$("agree").checked)
    throw Error("पहले Terms से सहमति दें।");
 
@@ -318,7 +317,6 @@ async function register(){
   });
 
   if(!data.token)throw Error("Registration token नहीं मिला।");
-
   token=data.token;
   localStorage.setItem("ag_token",token);
   await start();
@@ -329,7 +327,6 @@ async function register(){
  }
 }
 
-/* LOGIN */
 async function login(){
  try{
   const data=await api("/login",{
@@ -339,16 +336,11 @@ async function login(){
     password:$("lp").value
    })
   });
-
   if(!data.token)throw Error("Login token नहीं मिला।");
-
   token=data.token;
   localStorage.setItem("ag_token",token);
   await start();
-
- }catch(error){
-  alert(error.message);
- }
+ }catch(error){alert(error.message)}
 }
 
 function logout(){
@@ -391,7 +383,10 @@ async function copyUPI(){
  }
 }
 
-/* DASHBOARD START */
+function showImageWidth(){
+ $("imageWidthValue").textContent=$("imageWidth").value+"%";
+}
+
 async function start(){
  try{
   visible();
@@ -431,9 +426,7 @@ async function start(){
    if(approved)await pages();
   }
 
- }catch(error){
-  alert("Dashboard error: "+error.message);
- }
+ }catch(error){alert("Dashboard error: "+error.message)}
 }
 
 function selectPlan(id){
@@ -442,11 +435,9 @@ function selectPlan(id){
  $("qrBox").scrollIntoView({behavior:"smooth",block:"center"});
 }
 
-/* PAYMENT SUBMISSION */
 async function pay(){
  try{
   if(!$("utr").value.trim())throw Error("UTR Number भरें।");
-
   const data=await api("/payments",{
    method:"POST",
    body:JSON.stringify({
@@ -454,13 +445,9 @@ async function pay(){
     utr:$("utr").value.trim()
    })
   });
-
   $("paymsg").textContent=data.message||"Payment request submitted. Verification pending.";
   await loadPay();
-
- }catch(error){
-  $("paymsg").textContent=error.message;
- }
+ }catch(error){$("paymsg").textContent=error.message}
 }
 
 async function loadPay(){
@@ -474,13 +461,18 @@ async function loadPay(){
 function clearForm(){
  ["pid","title","headline","desc","bu","img","pixel"].forEach(id=>$(id).value="");
  $("bt").value="Get Started";
+ $("bg").value="#0b1224";
+ $("tc").value="#ffffff";
+ $("bc").value="#16a34a";
+ $("imageWidth").value=100;
+ showImageWidth();
  $("pmsg").textContent="";
 }
 
 async function save(){
  try{
   const body={
-   title:$("title").value,
+   title:$("title").value.trim(),
    headline:$("headline").value,
    description:$("desc").value,
    buttonText:$("bt").value,
@@ -489,11 +481,12 @@ async function save(){
    pixelId:$("pixel").value,
    bgColor:$("bg").value,
    textColor:$("tc").value,
-   buttonColor:$("bc").value
+   buttonColor:$("bc").value,
+   imageWidth:Number($("imageWidth").value)
   };
 
-  if(!body.title.trim()||!body.headline.trim())
-   throw Error("Page title और Headline भरें।");
+  if(!body.title)throw Error("Page title भरें।");
+  if(!body.headline.trim())throw Error("Headline भरें।");
 
   const id=$("pid").value;
   const data=await api("/pages"+(id?"/"+id:""),{
@@ -502,13 +495,10 @@ async function save(){
   });
 
   if(data.page&&data.page.id)$("pid").value=data.page.id;
-
   $("pmsg").textContent="Page saved successfully.";
   await pages();
 
- }catch(error){
-  $("pmsg").textContent=error.message;
- }
+ }catch(error){$("pmsg").textContent=error.message}
 }
 
 function esc(value){
@@ -543,7 +533,12 @@ async function edit(id){
   bg:"bg_color",tc:"text_color",bc:"button_color"
  };
 
- Object.entries(fields).forEach(([a,b])=>$(a).value=p[b]||"");
+ Object.entries(fields).forEach(([a,b])=>$(a).value=p[b]??"");
+
+ $("imageWidth").value=Number(p.image_width||100);
+ showImageWidth();
+ $("pmsg").textContent="Editing: "+(p.title||"Untitled page");
+ $("builder").scrollIntoView({behavior:"smooth"});
 }
 
 async function pub(id){
@@ -617,4 +612,4 @@ visible();
 if(token)start();
 </script>
 </body>
-   </html>
+ </html>
