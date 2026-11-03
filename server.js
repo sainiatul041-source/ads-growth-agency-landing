@@ -65,9 +65,15 @@ async function init(){
  bg_color TEXT DEFAULT '#0b1224',
  text_color TEXT DEFAULT '#ffffff',
  button_color TEXT DEFAULT '#16a34a',
+ image_width INT NOT NULL DEFAULT 100,
  published BOOLEAN DEFAULT FALSE,
  created_at TIMESTAMPTZ DEFAULT NOW()
  );
+
+ ALTER TABLE ag_pages ADD COLUMN IF NOT EXISTS bg_color TEXT DEFAULT '#0b1224';
+ ALTER TABLE ag_pages ADD COLUMN IF NOT EXISTS text_color TEXT DEFAULT '#ffffff';
+ ALTER TABLE ag_pages ADD COLUMN IF NOT EXISTS button_color TEXT DEFAULT '#16a34a';
+ ALTER TABLE ag_pages ADD COLUMN IF NOT EXISTS image_width INT NOT NULL DEFAULT 100;
 
  CREATE TABLE IF NOT EXISTS ag_click_events(
  id BIGSERIAL PRIMARY KEY,
@@ -92,6 +98,10 @@ async function init(){
 
 const clean=(v,n=500)=>String(v??"").trim().slice(0,n);
 const color=v=>/^#[0-9a-fA-F]{6}$/.test(v||"");
+const imageWidth=v=>{
+ const n=Number(v??100);
+ return Number.isFinite(n)?Math.max(20,Math.min(100,Math.round(n))):100;
+};
 const slug=v=>clean(v,60).toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"")||"page";
 
 function auth(q,s,n){
@@ -159,20 +169,25 @@ app.post("/api/register",async(q,s)=>{
 });
 
 app.post("/api/login",async(q,s)=>{
- let r=await db.query(
-  "SELECT * FROM ag_users WHERE email=$1",
-  [clean(q.body.email,254).toLowerCase()]
- );
+ try{
+  let r=await db.query(
+   "SELECT * FROM ag_users WHERE email=$1",
+   [clean(q.body.email,254).toLowerCase()]
+  );
 
- if(!r.rowCount||!await bcrypt.compare(String(q.body.password||""),r.rows[0].password_hash))
-  return s.status(401).json({error:"Incorrect login"});
+  if(!r.rowCount||!await bcrypt.compare(String(q.body.password||""),r.rows[0].password_hash))
+   return s.status(401).json({error:"Incorrect login"});
 
- let u=r.rows[0];
+  let u=r.rows[0];
 
- s.json({
-  token:token(u),
-  user:{id:u.id,email:u.email,role:u.role}
- });
+  s.json({
+   token:token(u),
+   user:{id:u.id,email:u.email,role:u.role}
+  });
+ }catch(e){
+  console.error("Login error:",e);
+  s.status(500).json({error:"Login failed"});
+ }
 });
 
 app.get("/api/me",auth,async(q,s)=>{
@@ -208,6 +223,7 @@ app.post("/api/payments",auth,async(q,s)=>{
    message:"Submitted. Admin will verify payment."
   });
  }catch(e){
+  console.error("Payment error:",e);
   s.status(409).json({error:"UTR already used or payment could not be saved"});
  }
 });
@@ -263,65 +279,77 @@ app.get("/api/pages",auth,paid,async(q,s)=>{
 });
 
 app.post("/api/pages",auth,paid,async(q,s)=>{
- let b=q.body;
- let cs=[b.bgColor||"#0b1224",b.textColor||"#ffffff",b.buttonColor||"#16a34a"];
+ try{
+  let b=q.body;
+  let cs=[b.bgColor||"#0b1224",b.textColor||"#ffffff",b.buttonColor||"#16a34a"];
 
- if(!clean(b.title,100)||!clean(b.headline,180)||!cs.every(color))
-  return s.status(400).json({error:"Title, headline and valid colors required"});
+  if(!clean(b.title,100)||!clean(b.headline,180)||!cs.every(color))
+   return s.status(400).json({error:"Title, headline and valid colors required"});
 
- let r=await db.query(`
- INSERT INTO ag_pages(
- user_id,title,slug,headline,description,button_text,button_url,
- image_url,pixel_id,bg_color,text_color,button_color
- )
- VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)
- RETURNING *
- `,[
-  q.user.id,
-  clean(b.title,100),
-  slug(b.title)+"-"+crypto.randomBytes(3).toString("hex"),
-  clean(b.headline,180),
-  clean(b.description,2000),
-  clean(b.buttonText,60)||"Get Started",
-  clean(b.buttonUrl,1000)||"#",
-  clean(b.imageUrl,1000),
-  clean(b.pixelId,20),
-  ...cs
- ]);
+  let r=await db.query(`
+   INSERT INTO ag_pages(
+    user_id,title,slug,headline,description,button_text,button_url,
+    image_url,pixel_id,bg_color,text_color,button_color,image_width
+   )
+   VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)
+   RETURNING *
+  `,[
+   q.user.id,
+   clean(b.title,100),
+   slug(b.title)+"-"+crypto.randomBytes(3).toString("hex"),
+   clean(b.headline,180),
+   clean(b.description,2000),
+   clean(b.buttonText,60)||"Get Started",
+   clean(b.buttonUrl,1000)||"#",
+   clean(b.imageUrl,1000),
+   clean(b.pixelId,20),
+   ...cs,
+   imageWidth(b.imageWidth)
+  ]);
 
- s.status(201).json({page:r.rows[0]});
+  s.status(201).json({page:r.rows[0]});
+ }catch(e){
+  console.error("Create page error:",e);
+  s.status(500).json({error:"Page could not be saved"});
+ }
 });
 
 app.put("/api/pages/:id",auth,paid,async(q,s)=>{
- let b=q.body;
- let cs=[b.bgColor||"#0b1224",b.textColor||"#ffffff",b.buttonColor||"#16a34a"];
+ try{
+  let b=q.body;
+  let cs=[b.bgColor||"#0b1224",b.textColor||"#ffffff",b.buttonColor||"#16a34a"];
 
- if(!cs.every(color))
-  return s.status(400).json({error:"Invalid color"});
+  if(!clean(b.title,100)||!clean(b.headline,180)||!cs.every(color))
+   return s.status(400).json({error:"Title, headline and valid colors required"});
 
- let r=await db.query(`
- UPDATE ag_pages SET
- title=$1,headline=$2,description=$3,button_text=$4,
- button_url=$5,image_url=$6,pixel_id=$7,bg_color=$8,
- text_color=$9,button_color=$10
- WHERE id=$11 AND user_id=$12
- RETURNING *
- `,[
-  clean(b.title,100),
-  clean(b.headline,180),
-  clean(b.description,2000),
-  clean(b.buttonText,60),
-  clean(b.buttonUrl,1000),
-  clean(b.imageUrl,1000),
-  clean(b.pixelId,20),
-  ...cs,
-  q.params.id,
-  q.user.id
- ]);
+  let r=await db.query(`
+   UPDATE ag_pages SET
+    title=$1,headline=$2,description=$3,button_text=$4,
+    button_url=$5,image_url=$6,pixel_id=$7,bg_color=$8,
+    text_color=$9,button_color=$10,image_width=$11
+   WHERE id=$12 AND user_id=$13
+   RETURNING *
+  `,[
+   clean(b.title,100),
+   clean(b.headline,180),
+   clean(b.description,2000),
+   clean(b.buttonText,60)||"Get Started",
+   clean(b.buttonUrl,1000)||"#",
+   clean(b.imageUrl,1000),
+   clean(b.pixelId,20),
+   ...cs,
+   imageWidth(b.imageWidth),
+   q.params.id,
+   q.user.id
+  ]);
 
- if(!r.rowCount)return s.status(404).json({error:"Page not found"});
+  if(!r.rowCount)return s.status(404).json({error:"Page not found"});
 
- s.json({page:r.rows[0]});
+  s.json({page:r.rows[0]});
+ }catch(e){
+  console.error("Update page error:",e);
+  s.status(500).json({error:"Page could not be updated"});
+ }
 });
 
 app.post("/api/pages/:id/publish",auth,paid,async(q,s)=>{
@@ -356,11 +384,9 @@ app.post("/api/track/:slug",async(q,s)=>{
   if(!p.rowCount)return s.status(404).json({error:"Page not found"});
 
   let v=clean(q.body.visitorId,100);
-
   if(v.length<10)return s.status(400).json({error:"Invalid visitor"});
 
   let ip=String(q.ip||"");
-
   let hash=crypto.createHash("sha256")
    .update(v+"|"+ip+"|"+SECRET)
    .digest("hex");
@@ -381,81 +407,123 @@ app.post("/api/track/:slug",async(q,s)=>{
 
   s.json({recorded:!bad,flagged:bad});
  }catch(e){
+  console.error("Tracking error:",e);
   s.status(500).json({error:"Tracking failed"});
  }
 });
 
 app.get("/p/:slug",async(q,s)=>{
- let r=await db.query(
-  "SELECT * FROM ag_pages WHERE slug=$1 AND published=true",
-  [q.params.slug]
- );
+ try{
+  let r=await db.query(
+   "SELECT * FROM ag_pages WHERE slug=$1 AND published=true",
+   [q.params.slug]
+  );
 
- if(!r.rowCount)return s.status(404).send("Page not found");
+  if(!r.rowCount)return s.status(404).send("Page not found");
 
- let p=r.rows[0];
+  let p=r.rows[0];
 
- let esc=x=>String(x||"").replace(/[&<>"']/g,c=>({
-  "&":"&amp;",
-  "<":"&lt;",
-  ">":"&gt;",
-  '"':"&quot;",
-  "'":"&#39;"
- }[c]));
+  let esc=x=>String(x??"").replace(/[&<>"']/g,c=>({
+   "&":"&amp;",
+   "<":"&lt;",
+   ">":"&gt;",
+   '"':"&quot;",
+   "'":"&#39;"
+  }[c]));
 
- let url=x=>/^https?:\/\//i.test(x||"")?esc(x):"#";
+  let safeUrl=x=>/^https?:\/\//i.test(x||"")?esc(x):"#";
 
- let px=/^\d{5,20}$/.test(p.pixel_id||"")?
- `<script>
- !function(f,b,e,v,n,t,s){
- if(f.fbq)return;
- n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};
- if(!f._fbq)f._fbq=n;
- n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];
- t=b.createElement(e);t.async=!0;t.src=v;
- s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)
- }(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');
- fbq('init','${p.pixel_id}');fbq('track','PageView');
- </script>`:"";
+  let px=/^\d{5,20}$/.test(p.pixel_id||"")?
+  `<script>
+  !function(f,b,e,v,n,t,s){
+   if(f.fbq)return;
+   n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+   if(!f._fbq)f._fbq=n;
+   n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];
+   t=b.createElement(e);t.async=!0;t.src=v;
+   s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)
+  }(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');
+  fbq('init','${esc(p.pixel_id)}');fbq('track','PageView');
+  </script>`:"";
 
- s.send(`<!doctype html>
- <html>
- <head>
- <meta name="viewport" content="width=device-width,initial-scale=1">
- <title>${esc(p.title)}</title>
- ${px}
- <style>
- body{margin:0;background:${p.bg_color};color:${p.text_color};font-family:Arial}
- .box{max-width:760px;margin:50px auto;padding:30px;text-align:center;background:#ffffff0d;border-radius:20px}
- h1{font-size:clamp(30px,7vw,52px)}
- p{line-height:1.7}
- img{max-width:100%;max-height:350px}
- .btn{display:inline-block;padding:15px 28px;border-radius:10px;background:${p.button_color};color:white;text-decoration:none;font-weight:bold}
- </style>
- </head>
- <body>
- <main class="box">
- <h1>${esc(p.headline)}</h1>
- <p>${esc(p.description)}</p>
- ${p.image_url?`<img src="${url(p.image_url)}" alt="">`:""}
- <p><a class="btn" href="${url(p.button_url)}">${esc(p.button_text)}</a></p>
- </main>
- <script>
- let v=localStorage.getItem("ag_vid");
- if(!v){
- v="v_"+(crypto.randomUUID?crypto.randomUUID():Math.random().toString(36).slice(2)+Date.now());
- localStorage.setItem("ag_vid",v)
+  const width=imageWidth(p.image_width);
+
+  s.send(`<!doctype html>
+  <html lang="hi">
+  <head>
+   <meta charset="UTF-8">
+   <meta name="viewport" content="width=device-width,initial-scale=1">
+   <title>${esc(p.title)}</title>
+   ${px}
+   <style>
+    *{box-sizing:border-box}
+    body{
+     margin:0;background:${esc(p.bg_color)};
+     color:${esc(p.text_color)};
+     font-family:Arial,sans-serif;
+    }
+    .page-title{
+     text-align:center;padding:16px 12px;
+     font-size:17px;font-weight:bold;
+     border-bottom:1px solid #ffffff22;
+     overflow-wrap:anywhere;
+    }
+    .box{
+     max-width:760px;margin:35px auto;padding:30px;
+     text-align:center;background:#ffffff0d;
+     border-radius:20px;
+    }
+    h1{font-size:clamp(30px,7vw,52px)}
+    p{line-height:1.7}
+    .page-image{
+     display:block;
+     width:${width}%;
+     max-width:100%;
+     height:auto;
+     max-height:500px;
+     object-fit:contain;
+     margin:20px auto;
+     border-radius:12px;
+    }
+    .btn{
+     display:inline-block;padding:15px 28px;
+     border-radius:10px;
+     background:${esc(p.button_color)};
+     color:white;text-decoration:none;font-weight:bold;
+    }
+    @media(max-width:600px){
+     .box{margin:15px;padding:20px 14px}
+    }
+   </style>
+  </head>
+  <body>
+   <header class="page-title">${esc(p.title)}</header>
+   <main class="box">
+    <h1>${esc(p.headline)}</h1>
+    <p>${esc(p.description)}</p>
+    ${p.image_url?`<img class="page-image" src="${safeUrl(p.image_url)}" alt="${esc(p.title)}">`:""}
+    <p><a class="btn" href="${safeUrl(p.button_url)}">${esc(p.button_text)}</a></p>
+   </main>
+   <script>
+    let v=localStorage.getItem("ag_vid");
+    if(!v){
+     v="v_"+(crypto.randomUUID?crypto.randomUUID():Math.random().toString(36).slice(2)+Date.now());
+     localStorage.setItem("ag_vid",v);
+    }
+    const send=t=>fetch("/api/track/${encodeURIComponent(p.slug)}",{
+     method:"POST",
+     headers:{"Content-Type":"application/json"},
+     body:JSON.stringify({visitorId:v,eventType:t})
+    }).catch(()=>{});
+    send("pageview");
+    document.querySelector(".btn").addEventListener("click",()=>send("click"));
+   </script>
+  </body>
+  </html>`);
+ }catch(e){
+  console.error("Published page error:",e);
+  s.status(500).send("Page could not be opened");
  }
- const send=t=>fetch("/api/track/${encodeURIComponent(p.slug)}",{
- method:"POST",
- headers:{"Content-Type":"application/json"},
- body:JSON.stringify({visitorId:v,eventType:t})
- }).catch(()=>{});
- send("pageview");
- document.querySelector(".btn").addEventListener("click",()=>send("click"));
- </script>
- </body>
- </html>`);
 });
 
 init()
