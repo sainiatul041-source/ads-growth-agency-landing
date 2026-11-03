@@ -28,6 +28,9 @@ a{color:#8bdcff}
 .plan-card.featured{border:2px solid #ffd76a;box-shadow:0 0 22px #ffd76a77}
 .plan-card .tag{color:#ffd76a;font-weight:bold;letter-spacing:1px}
 .pay-title{color:#7cf7b3;text-shadow:0 0 12px #13b86b}
+.qr-box{background:white;border-radius:16px;padding:14px;width:290px;max-width:100%;margin:15px auto;min-height:290px;display:flex;align-items:center;justify-content:center}
+.qr-box img{width:100%;height:auto;display:block}
+.upi-id{font-size:18px;word-break:break-all;color:#7cf7b3}
 </style>
 </head>
 <body>
@@ -61,18 +64,34 @@ a{color:#8bdcff}
 <h2>Our Plans</h2>
 <div id="planCards" class="grid"></div>
 
-<div class="card">
-<h3 class="pay-title">✨ SCAN & PAY ✨</h3>
+<div class="card" style="text-align:center">
+<h2 class="pay-title">✨ SCAN & PAY ✨</h2>
 <p class="muted">अपने UPI ऐप से QR स्कैन करके पेमेंट करें।</p>
-<img src="/scanner.png" alt="Payment QR Scanner"
-style="display:block;width:min(260px,100%);margin:12px auto;background:white;padding:10px;border-radius:12px"
-onerror="this.style.display='none'">
-<p class="muted">अपना असली QR फोटो public/scanner.png नाम से अपलोड करें।</p>
-<p>UPI ID: <b id="upi"></b></p>
+
+<div class="qr-box" id="qrBox">
+<p style="color:#333">QR Loading...</p>
 </div>
 
-<select id="plan"></select>
-<input id="utr" placeholder="UPI UTR / Reference Number">
+<p style="color:#cbd5e1">Selected Payment Amount</p>
+<h2 id="qrAmount" style="color:#7cf7b3">₹999</h2>
+
+<p>UPI ID</p>
+<div class="upi-id" id="upi">sainiatul041@okhdfcbank</div>
+<button type="button" onclick="copyUPI()">Copy UPI ID</button>
+<br>
+<a id="upiLink" href="#" style="display:inline-block;margin-top:12px">Open UPI App</a>
+
+<p class="muted" style="font-size:12px">
+QR को स्कैन करके भुगतान करें। भुगतान करने से पहले UPI ऐप में प्राप्तकर्ता और रकम जाँच लें।
+</p>
+</div>
+
+<label>Select Plan</label>
+<select id="plan" onchange="updateQR()"></select>
+
+<label>UPI UTR / Reference Number</label>
+<input id="utr" placeholder="Payment करने के बाद UTR डालें">
+
 <button onclick="pay()">Submit Payment</button>
 <p id="paymsg"></p>
 <div id="myPay"></div>
@@ -114,7 +133,12 @@ onerror="this.style.display='none'">
 
 <script>
 let token=localStorage.getItem("ag_token"),me=null;
+const UPI_ID="sainiatul041@okhdfcbank";
+const PAYEE="ADS GROWTH AGENCY";
+let planData=[];
+
 const $=x=>document.getElementById(x);
+
 const api=async(p,o={})=>{
 let r=await fetch("/api"+p,{...o,headers:{
 "Content-Type":"application/json",
@@ -158,13 +182,46 @@ localStorage.removeItem("ag_token");
 location.reload();
 }
 
+function updateQR(){
+let selected=planData.find(p=>p.id===$("plan").value);
+if(!selected)return;
+
+let amount=Number(selected.amount);
+$("qrAmount").textContent="₹"+amount;
+
+let uri="upi://pay?pa="+encodeURIComponent(UPI_ID)
++"&pn="+encodeURIComponent(PAYEE)
++"&am="+encodeURIComponent(amount.toFixed(2))
++"&cu=INR"
++"&tn="+encodeURIComponent("ADS GROWTH "+selected.name);
+
+let imageURL="https://api.qrserver.com/v1/create-qr-code/?size=280x280&margin=10&data="+encodeURIComponent(uri);
+
+$("qrBox").innerHTML=
+'<img src="'+imageURL+'" alt="UPI Payment QR Code" onerror="this.parentElement.innerHTML=\'<p style=color:#333>QR लोड नहीं हुआ। इंटरनेट चेक करें या Open UPI App दबाएँ।</p>\'">';
+
+$("upiLink").href=uri;
+}
+
+async function copyUPI(){
+try{
+await navigator.clipboard.writeText(UPI_ID);
+alert("UPI ID copied: "+UPI_ID);
+}catch(e){
+prompt("Copy UPI ID:",UPI_ID);
+}
+}
+
 async function start(){
 try{
 visible();
 me=(await api("/me")).user;
 $("account").textContent=me.email;
+
 let c=await api("/config");
-$("upi").textContent=c.upiId;
+$("upi").textContent=UPI_ID;
+
+planData=c.plans;
 
 $("planCards").innerHTML=c.plans.map((p,i)=>`
 <div class="card plan-card ${i===1?"featured":""}">
@@ -172,13 +229,14 @@ $("planCards").innerHTML=c.plans.map((p,i)=>`
 <h3>${p.name}</h3>
 <div class="price">₹${p.amount}</div>
 <p>${p.description}</p>
-<button onclick="$('plan').value='${p.id}';$('plan').scrollIntoView({behavior:'smooth'})">Choose This Plan</button>
+<button onclick="$('plan').value='${p.id}';updateQR();$('plan').scrollIntoView({behavior:'smooth'})">Choose This Plan</button>
 </div>`).join("");
 
 $("plan").innerHTML=c.plans.map(p=>
 `<option value="${p.id}">${p.name} ₹${p.amount}</option>`
 ).join("");
 
+updateQR();
 await loadPay();
 
 if(me.role==="admin"){
@@ -192,7 +250,9 @@ $("plans").classList.toggle("hidden",ok);
 $("builder").classList.toggle("hidden",!ok);
 if(ok)await pages();
 }
-}catch(e){logout()}
+}catch(e){
+alert("Dashboard error: "+e.message);
+}
 }
 
 async function pay(){
