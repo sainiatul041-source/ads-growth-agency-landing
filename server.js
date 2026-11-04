@@ -585,8 +585,8 @@ app.get("/api/admin/stats", auth, adminOnly, async (req, res) => {
       pool.query("SELECT COUNT(*)::int AS total FROM ag_payments WHERE status='pending'"),
       pool.query("SELECT COUNT(*)::int AS total FROM ag_pages")
     ]);
-
-      clients: clients.rows[0].total,
+    res.json({
+     clients: clients.rows[0].total,
       validClicks: events.rows[0].valid_clicks,
       visits: events.rows[0].visits,
       pendingPayments: pending.rows[0].total,
