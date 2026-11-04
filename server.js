@@ -5,9 +5,10 @@ const jwt = require("jsonwebtoken");
 const helmet = require("helmet");
 const rateLimit = require("express-rate-limit");
 const path = require("path");
+const crypto = require("crypto");
+require("dotenv").config();
 
 const app = express();
-app.set("trust proxy", 1);
 
 const PORT = process.env.PORT || 10000;
 const DATABASE_URL = process.env.DATABASE_URL;
@@ -16,20 +17,28 @@ const ADMIN_EMAIL = process.env.ADMIN_EMAIL;
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
 const UPI_ID = process.env.UPI_ID || "sainiatul041@okhdfcbank";
 
-if (!DATABASE_URL || !JWT_SECRET || !ADMIN_EMAIL || !ADMIN_PASSWORD) {
-  console.error("Missing DATABASE_URL, JWT_SECRET, ADMIN_EMAIL or ADMIN_PASSWORD");
+if (!DATABASE_URL || !JWT_SECRET || JWT_SECRET.length < 32 ||
+    !ADMIN_EMAIL || !ADMIN_PASSWORD) {
+  console.error("Missing required environment variables.");
   process.exit(1);
 }
 
 const pool = new Pool({
   connectionString: DATABASE_URL,
-  ssl: process.env.DATABASE_SSL === "false"
+  ssl: process.env.DB_SSL === "false"
     ? false
     : { rejectUnauthorized: false }
 });
 
+const plans = [
+  { id: "starter", name: "Starter", amount: 999, pages: 1, description: "1 landing page • 30 days" },
+  { id: "growth", name: "Growth", amount: 1499, pages: 1, description: "1 landing page • 30 days" },
+  { id: "pro", name: "Pro", amount: 1999, pages: 2, description: "2 landing pages • 30 days" }
+];
+
 app.use(helmet({
-  contentSecurityPolicy: false
+  contentSecurityPolicy: false,
+  crossOriginResourcePolicy: { policy: "cross-origin" }
 }));
 app.use(express.json({ limit: "2mb" }));
 app.use(express.urlencoded({ extended: true }));
@@ -37,32 +46,85 @@ app.use(express.static(path.join(__dirname, "public")));
 
 app.use("/api", rateLimit({
   windowMs: 15 * 60 * 1000,
-  limit: 300,
-  standardHeaders: "draft-7",
-  legacyHeaders: false
+  limit: 300
 }));
 
-const plans = {
-  starter: { name: "Starter", price: 999, clicks: "All Click" },
-  growth: { name: "Growth", price: 1499, clicks: "50% Click" },
-  pro: { name: "Pro", price: 1999, clicks: "100% Click" }
-};
+async function initDB() {
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS ag_users (
+      id SERIAL PRIMARY KEY,
+      name TEXT NOT NULL,
+      email TEXT UNIQUE NOT NULL,
+      password TEXT NOT NULL,
+      role TEXT DEFAULT 'customer',
+      plan TEXT,
+      subscription_expires TIMESTAMPTZ,
+      created_at TIMESTAMPTZ DEFAULT NOW()
+    );
 
-function clean(value, max = 500) {
-  return String(value ?? "").trim().slice(0, max);
-}
+    CREATE TABLE IF NOT EXISTS ag_payments (
+      id SERIAL PRIMARY KEY,
+      user_id INTEGER REFERENCES ag_users(id) ON DELETE CASCADE,
+      plan_id TEXT NOT NULL,
+      amount INTEGER NOT NULL,
+      utr TEXT NOT NULL,
+      status TEXT DEFAULT 'pending',
+      created_at TIMESTAMPTZ DEFAULT NOW(),
+      reviewed_at TIMESTAMPTZ
+    );
 
-function validEmail(value) {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
-}
+    CREATE TABLE IF NOT EXISTS ag_pages (
+      id SERIAL PRIMARY KEY,
+      user_id INTEGER REFERENCES ag_users(id) ON DELETE CASCADE,
+      slug TEXT UNIQUE NOT NULL,
+      title TEXT NOT NULL,
+      headline TEXT,
+      description TEXT,
+      button_text TEXT DEFAULT 'Learn More',
+      button_url TEXT,
+      image_url TEXT,
+      pixel_id TEXT,
+      design_template TEXT DEFAULT 'classic',
+      image_width INTEGER DEFAULT 100,
+      bg_color TEXT DEFAULT '#0b1224',
+      text_color TEXT DEFAULT '#ffffff',
+      button_color TEXT DEFAULT '#16a34a',
+      published BOOLEAN DEFAULT FALSE,
+      created_at TIMESTAMPTZ DEFAULT NOW(),
+      updated_at TIMESTAMPTZ DEFAULT NOW()
+    );
 
-function validColor(value, fallback) {
-  return /^#[0-9a-fA-F]{6}$/.test(value || "") ? value : fallback;
-}
+    CREATE TABLE IF NOT EXISTS ag_click_events (
+      id SERIAL PRIMARY KEY,
+      page_id INTEGER REFERENCES ag_pages(id) ON DELETE CASCADE,
+      event_type TEXT,
+      visitor_id TEXT,
+      suspicious BOOLEAN DEFAULT FALSE,
+      reason TEXT,
+      created_at TIMESTAMPTZ DEFAULT NOW()
+    );
+  `);
 
-function validImageWidth(value) {
-  const n = Number(value);
-  return Number.isInteger(n) && n >= 20 && n <= 100 ? n : 100;
+  const admin = await pool.query(
+    "SELECT id FROM ag_users WHERE LOWER(email)=LOWER($1)",
+    [ADMIN_EMAIL]
+  );
+
+  if (admin.rowCount === 0) {
+    const hash = await bcrypt.hash(ADMIN_PASSWORD, 12);
+    await pool.query(
+      `INSERT INTO ag_users(name,email,password,role)
+       VALUES($1,$2,$3,'admin')`,
+      ["Administrator", ADMIN_EMAIL, hash]
+    );
+  } else {
+    await pool.query(
+      "UPDATE ag_users SET role='admin' WHERE LOWER(email)=LOWER($1)",
+      [ADMIN_EMAIL]
+    );
+  }
+
+  console.log("Database initialized");
 }
 
 function makeToken(user) {
@@ -73,285 +135,176 @@ function makeToken(user) {
   );
 }
 
-function auth(req, res, next) {
-  const header = req.headers.authorization || "";
-  const token = header.startsWith("Bearer ") ? header.slice(7) : "";
-
-  if (!token) return res.status(401).json({ error: "Please login first" });
-
+async function auth(req, res, next) {
   try {
-    req.user = jwt.verify(token, JWT_SECRET);
+    const header = req.headers.authorization || "";
+    const token = header.startsWith("Bearer ") ? header.slice(7) : "";
+    if (!token) return res.status(401).json({ error: "Please login" });
+
+    const decoded = jwt.verify(token, JWT_SECRET);
+    const result = await pool.query(
+      "SELECT id,name,email,role,plan,subscription_expires FROM ag_users WHERE id=$1",
+      [decoded.id]
+    );
+
+    if (!result.rowCount) {
+      return res.status(401).json({ error: "Account not found" });
+    }
+
+    req.user = result.rows[0];
     next();
-  } catch {
-    return res.status(401).json({ error: "Session expired. Login again." });
+  } catch (err) {
+    return res.status(401).json({ error: "Login expired. Please login again." });
   }
 }
 
 function adminOnly(req, res, next) {
-  if (req.user?.role !== "admin") {
+  if (req.user.role !== "admin") {
     return res.status(403).json({ error: "Admin access required" });
   }
   next();
 }
 
-async function initDB() {
-  await pool.query(`
-    CREATE TABLE IF NOT EXISTS ag_users (
-      id SERIAL PRIMARY KEY,
-      name TEXT NOT NULL,
-      email TEXT UNIQUE NOT NULL,
-      password TEXT NOT NULL,
-      role TEXT NOT NULL DEFAULT 'user',
-      created_at TIMESTAMPTZ DEFAULT NOW()
-    );
-
-    CREATE TABLE IF NOT EXISTS ag_pages (
-      id SERIAL PRIMARY KEY,
-      user_id INTEGER NOT NULL REFERENCES ag_users(id) ON DELETE CASCADE,
-      title TEXT NOT NULL DEFAULT 'My Landing Page',
-      slug TEXT UNIQUE NOT NULL,
-      headline TEXT DEFAULT '',
-      description TEXT DEFAULT '',
-      image_url TEXT DEFAULT '',
-      button_text TEXT DEFAULT 'Join Now',
-      button_url TEXT DEFAULT '',
-      bg_color TEXT DEFAULT '#0f172a',
-      text_color TEXT DEFAULT '#ffffff',
-      button_color TEXT DEFAULT '#0088cc',
-      design_template TEXT NOT NULL DEFAULT 'classic',
-      image_width INTEGER NOT NULL DEFAULT 100,
-      pixel_id TEXT DEFAULT '',
-      published BOOLEAN NOT NULL DEFAULT FALSE,
-      created_at TIMESTAMPTZ DEFAULT NOW(),
-      updated_at TIMESTAMPTZ DEFAULT NOW()
-    );
-
-    CREATE TABLE IF NOT EXISTS ag_payments (
-      id SERIAL PRIMARY KEY,
-      user_id INTEGER NOT NULL REFERENCES ag_users(id) ON DELETE CASCADE,
-      plan TEXT NOT NULL,
-      amount INTEGER NOT NULL,
-      utr TEXT NOT NULL,
-      status TEXT NOT NULL DEFAULT 'pending',
-      created_at TIMESTAMPTZ DEFAULT NOW(),
-      reviewed_at TIMESTAMPTZ
-    );
-
-    CREATE TABLE IF NOT EXISTS ag_click_events (
-      id SERIAL PRIMARY KEY,
-      page_id INTEGER NOT NULL REFERENCES ag_pages(id) ON DELETE CASCADE,
-      created_at TIMESTAMPTZ DEFAULT NOW()
-    );
-
-    CREATE INDEX IF NOT EXISTS ag_pages_user_idx ON ag_pages(user_id);
-    CREATE INDEX IF NOT EXISTS ag_click_page_idx ON ag_click_events(page_id);
-    CREATE INDEX IF NOT EXISTS ag_payment_user_idx ON ag_payments(user_id);
-  `);
-
-  // Safe additions for existing installations.
-  await pool.query(`
-    ALTER TABLE ag_pages
-    ADD COLUMN IF NOT EXISTS title TEXT NOT NULL DEFAULT 'My Landing Page';
-
-    ALTER TABLE ag_pages
-    ADD COLUMN IF NOT EXISTS design_template TEXT NOT NULL DEFAULT 'classic';
-
-    ALTER TABLE ag_pages
-    ADD COLUMN IF NOT EXISTS image_width INTEGER NOT NULL DEFAULT 100;
-
-    ALTER TABLE ag_pages
-    ADD COLUMN IF NOT EXISTS pixel_id TEXT DEFAULT '';
-
-    ALTER TABLE ag_pages
-    ADD COLUMN IF NOT EXISTS published BOOLEAN NOT NULL DEFAULT FALSE;
-  `);
-
-  const email = ADMIN_EMAIL.toLowerCase().trim();
-  const existing = await pool.query(
-    "SELECT id FROM ag_users WHERE email=$1",
-    [email]
-  );
-
-  if (!existing.rowCount) {
-    const hash = await bcrypt.hash(ADMIN_PASSWORD, 12);
-    await pool.query(
-      "INSERT INTO ag_users(name,email,password,role) VALUES($1,$2,$3,'admin')",
-      ["Administrator", email, hash]
-    );
-  } else {
-    await pool.query(
-      "UPDATE ag_users SET role='admin' WHERE email=$1",
-      [email]
-    );
-  }
-
-  console.log("Database ready");
+function activeSubscription(user) {
+  return user.role === "admin" ||
+    (user.subscription_expires &&
+     new Date(user.subscription_expires) > new Date());
 }
 
-// Health check
-app.get("/health", (req, res) => {
-  res.json({ ok: true, service: "ADS GROWTH AGENCY" });
+function pageLimit(user) {
+  if (user.role === "admin") return 999999;
+  if (!activeSubscription(user)) return 0;
+  const plan = plans.find(p => p.id === user.plan);
+  return plan ? plan.pages : 0;
+}
+
+function safeUrl(value) {
+  if (!value) return "";
+  try {
+    const u = new URL(value);
+    return ["http:", "https:"].includes(u.protocol) ? u.href : "";
+  } catch {
+    return "";
+  }
+}
+
+app.get("/health", async (req, res) => {
+  try {
+    await pool.query("SELECT 1");
+    res.json({ ok: true, database: "connected" });
+  } catch (err) {
+    res.status(500).json({ ok: false, error: "Database unavailable" });
+  }
 });
 
-// Plans
+app.get("/api/config", (req, res) => {
+  res.json({
+    upiId: UPI_ID,
+    plans
+  });
+});
+
 app.get("/api/plans", (req, res) => {
   res.json({ plans });
 });
 
-// Register
+app.get("/api/payment-info", (req, res) => {
+  res.json({ upiId: UPI_ID, payeeName: "ADS GROWTH AGENCY" });
+});
+
 app.post("/api/register", async (req, res) => {
   try {
-    const name = clean(req.body.name, 100);
-    const email = clean(req.body.email, 200).toLowerCase();
-    const password = String(req.body.password || "");
-
-    if (!name || !validEmail(email) || password.length < 6) {
-      return res.status(400).json({
-        error: "Enter valid name, email and password (minimum 6 characters)"
-      });
+    const { name, email, password } = req.body;
+    if (!name || !email || !password || password.length < 8) {
+      return res.status(400).json({ error: "Name, email and password of 8+ characters required" });
     }
 
     const hash = await bcrypt.hash(password, 12);
     const result = await pool.query(
       `INSERT INTO ag_users(name,email,password)
-       VALUES($1,$2,$3)
-       RETURNING id,name,email,role`,
-      [name, email, hash]
+       VALUES($1,LOWER($2),$3)
+       RETURNING id,name,email,role,plan`,
+      [name.trim(), email.trim(), hash]
     );
 
     const user = result.rows[0];
-    res.status(201).json({ token: makeToken(user), user });
+    res.json({ token: makeToken(user), user });
   } catch (err) {
-    if (err.code === "23505") {
-      return res.status(409).json({ error: "An account with that email already exists" });
-    }
-    console.error("Register:", err);
-    res.status(500).json({ error: "Registration failed" });
+    res.status(400).json({ error: "Email may already be registered" });
   }
 });
 
-// Login
 app.post("/api/login", async (req, res) => {
   try {
-    const email = clean(req.body.email, 200).toLowerCase();
-    const password = String(req.body.password || "");
-
+    const { email, password } = req.body;
     const result = await pool.query(
-      "SELECT * FROM ag_users WHERE email=$1",
-      [email]
+      "SELECT * FROM ag_users WHERE LOWER(email)=LOWER($1)",
+      [email || ""]
     );
 
-    const user = result.rows[0];
-    if (!user || !(await bcrypt.compare(password, user.password))) {
-      return res.status(401).json({ error: "Incorrect email or password" });
+    if (!result.rowCount ||
+        !(await bcrypt.compare(password || "", result.rows[0].password))) {
+      return res.status(401).json({ error: "Invalid email or password" });
     }
 
-    const safeUser = {
-      id: user.id,
-      name: user.name,
-      email: user.email,
-      role: user.role
-    };
-
-    res.json({ token: makeToken(safeUser), user: safeUser });
+    const user = result.rows[0];
+    res.json({
+      token: makeToken(user),
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role
+      }
+    });
   } catch (err) {
-    console.error("Login:", err);
     res.status(500).json({ error: "Login failed" });
   }
 });
 
-// Current user
-app.get("/api/me", auth, async (req, res) => {
-  const result = await pool.query(
-    "SELECT id,name,email,role,created_at FROM ag_users WHERE id=$1",
-    [req.user.id]
-  );
-  if (!result.rowCount) return res.status(404).json({ error: "User not found" });
-  res.json({ user: result.rows[0] });
+app.get("/api/me", auth, (req, res) => {
+  res.json({ user: req.user });
 });
 
-// Submit payment
 app.post("/api/payments", auth, async (req, res) => {
   try {
-    const planKey = clean(req.body.plan, 30).toLowerCase();
-    const utr = clean(req.body.utr, 100);
-    const plan = plans[planKey];
+    const { planId, utr } = req.body;
+    const plan = plans.find(p => p.id === planId);
 
     if (!plan) return res.status(400).json({ error: "Invalid plan" });
-    if (utr.length < 6) return res.status(400).json({ error: "Enter a valid UTR number" });
+    if (!utr || String(utr).trim().length < 6) {
+      return res.status(400).json({ error: "Enter a valid UTR number" });
+    }
 
-    const duplicate = await pool.query(
+    const existing = await pool.query(
       "SELECT id FROM ag_payments WHERE utr=$1",
-      [utr]
+      [String(utr).trim()]
     );
-    if (duplicate.rowCount) {
+    if (existing.rowCount) {
       return res.status(409).json({ error: "This UTR has already been submitted" });
     }
 
-    const result = await pool.query(
-      `INSERT INTO ag_payments(user_id,plan,amount,utr)
-       VALUES($1,$2,$3,$4)
-       RETURNING id,plan,amount,utr,status,created_at`,
-      [req.user.id, planKey, plan.price, utr]
+    await pool.query(
+      `INSERT INTO ag_payments(user_id,plan_id,amount,utr)
+       VALUES($1,$2,$3,$4)`,
+      [req.user.id, plan.id, plan.amount, String(utr).trim()]
     );
 
-    res.status(201).json({
-      message: "Payment submitted for verification",
-      payment: result.rows[0]
-    });
+    res.json({ message: "Payment request submitted. Admin will verify your UTR." });
   } catch (err) {
-    console.error("Payment:", err);
-    res.status(500).json({ error: "Payment submission failed" });
+    res.status(500).json({ error: "Could not submit payment request" });
   }
 });
 
-// User payment history
-app.get("/api/payments", auth, async (req, res) => {
+app.get("/api/payments/mine", auth, async (req, res) => {
   const result = await pool.query(
-    `SELECT id,plan,amount,utr,status,created_at,reviewed_at
+    `SELECT id,plan_id,amount,utr,status,created_at
      FROM ag_payments WHERE user_id=$1 ORDER BY id DESC`,
     [req.user.id]
   );
   res.json({ payments: result.rows });
 });
 
-// Create landing page
-app.post("/api/pages", auth, async (req, res) => {
-  try {
-    const title = clean(req.body.title || req.body.headline || "My Landing Page", 120);
-    const headline = clean(req.body.headline, 180);
-    const description = clean(req.body.description, 3000);
-    const imageUrl = clean(req.body.imageUrl || req.body.image_url, 1500);
-    const buttonText = clean(req.body.buttonText || req.body.button_text || "Join Now", 60);
-    const buttonUrl = clean(req.body.buttonUrl || req.body.button_url, 1500);
-    const bg = validColor(req.body.bgColor || req.body.bg_color, "#0f172a");
-    const text = validColor(req.body.textColor || req.body.text_color, "#ffffff");
-    const button = validColor(req.body.buttonColor || req.body.button_color, "#0088cc");
-    const design = clean(req.body.designTemplate || req.body.design_template || "classic", 30);
-    const width = validImageWidth(req.body.imageWidth ?? req.body.image_width);
-    const pixel = clean(req.body.pixelId || req.body.pixel_id, 30);
-
-    const slug = "page-" + Date.now().toString(36) + "-" +
-      Math.random().toString(36).slice(2, 8);
-
-    const result = await pool.query(
-      `INSERT INTO ag_pages
-       (user_id,title,slug,headline,description,image_url,button_text,button_url,
-        bg_color,text_color,button_color,design_template,image_width,pixel_id)
-       VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)
-       RETURNING *`,
-      [req.user.id,title,slug,headline,description,imageUrl,buttonText,buttonUrl,
-       bg,text,button,design,width,pixel]
-    );
-
-    res.status(201).json({ page: result.rows[0] });
-  } catch (err) {
-    console.error("Create page:", err);
-    res.status(500).json({ error: "Could not create page" });
-  }
-});
-
-// List user's pages
 app.get("/api/pages", auth, async (req, res) => {
   const result = await pool.query(
     "SELECT * FROM ag_pages WHERE user_id=$1 ORDER BY id DESC",
@@ -360,245 +313,252 @@ app.get("/api/pages", auth, async (req, res) => {
   res.json({ pages: result.rows });
 });
 
-// Edit page
+app.post("/api/pages", auth, async (req, res) => {
+  try {
+    const count = await pool.query(
+      "SELECT COUNT(*)::int AS total FROM ag_pages WHERE user_id=$1",
+      [req.user.id]
+    );
+
+    if (count.rows[0].total >= pageLimit(req.user)) {
+      return res.status(403).json({ error: "Please get an active plan before creating a page" });
+    }
+
+    const b = req.body;
+    if (!b.title || !b.title.trim()) {
+      return res.status(400).json({ error: "Page title is required" });
+    }
+
+    const slug = crypto.randomBytes(5).toString("hex");
+    const result = await pool.query(
+      `INSERT INTO ag_pages
+      (user_id,slug,title,headline,description,button_text,button_url,
+       image_url,pixel_id,design_template,image_width,bg_color,text_color,button_color)
+      VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)
+      RETURNING *`,
+      [
+        req.user.id, slug, b.title, b.headline || "", b.description || "",
+        b.buttonText || "Learn More", safeUrl(b.buttonUrl),
+        safeUrl(b.imageUrl), b.pixelId || "",
+        b.designTemplate || "classic",
+        Math.min(100, Math.max(20, Number(b.imageWidth) || 100)),
+        b.bgColor || "#0b1224", b.textColor || "#ffffff",
+        b.buttonColor || "#16a34a"
+      ]
+    );
+
+    res.json({ page: result.rows[0] });
+  } catch (err) {
+    res.status(500).json({ error: "Could not save page" });
+  }
+});
+
 app.put("/api/pages/:id", auth, async (req, res) => {
   try {
-    const id = Number(req.params.id);
-    if (!Number.isInteger(id)) return res.status(400).json({ error: "Invalid page ID" });
-
-    const title = clean(req.body.title || req.body.headline || "My Landing Page", 120);
-    const headline = clean(req.body.headline, 180);
-    const description = clean(req.body.description, 3000);
-    const imageUrl = clean(req.body.imageUrl || req.body.image_url, 1500);
-    const buttonText = clean(req.body.buttonText || req.body.button_text || "Join Now", 60);
-    const buttonUrl = clean(req.body.buttonUrl || req.body.button_url, 1500);
-    const bg = validColor(req.body.bgColor || req.body.bg_color, "#0f172a");
-    const text = validColor(req.body.textColor || req.body.text_color, "#ffffff");
-    const button = validColor(req.body.buttonColor || req.body.button_color, "#0088cc");
-    const design = clean(req.body.designTemplate || req.body.design_template || "classic", 30);
-    const width = validImageWidth(req.body.imageWidth ?? req.body.image_width);
-    const pixel = clean(req.body.pixelId || req.body.pixel_id, 30);
-
+    const b = req.body;
     const result = await pool.query(
       `UPDATE ag_pages SET
-       title=$1,headline=$2,description=$3,image_url=$4,button_text=$5,
-       button_url=$6,bg_color=$7,text_color=$8,button_color=$9,
-       design_template=$10,image_width=$11,pixel_id=$12,updated_at=NOW()
+       title=$1,headline=$2,description=$3,button_text=$4,button_url=$5,
+       image_url=$6,pixel_id=$7,design_template=$8,image_width=$9,
+       bg_color=$10,text_color=$11,button_color=$12,updated_at=NOW()
        WHERE id=$13 AND user_id=$14 RETURNING *`,
-      [title,headline,description,imageUrl,buttonText,buttonUrl,bg,text,
-       button,design,width,pixel,id,req.user.id]
+      [
+        b.title, b.headline || "", b.description || "",
+        b.buttonText || "Learn More", safeUrl(b.buttonUrl),
+        safeUrl(b.imageUrl), b.pixelId || "",
+        b.designTemplate || "classic",
+        Math.min(100, Math.max(20, Number(b.imageWidth) || 100)),
+        b.bgColor || "#0b1224", b.textColor || "#ffffff",
+        b.buttonColor || "#16a34a", req.params.id, req.user.id
+      ]
     );
 
     if (!result.rowCount) return res.status(404).json({ error: "Page not found" });
     res.json({ page: result.rows[0] });
   } catch (err) {
-    console.error("Edit page:", err);
     res.status(500).json({ error: "Could not update page" });
   }
 });
 
-// Delete page
+app.post("/api/pages/:id/publish", auth, async (req, res) => {
+  try {
+    const result = await pool.query(
+      `UPDATE ag_pages SET published=NOT published,updated_at=NOW()
+       WHERE id=$1 AND user_id=$2 RETURNING *`,
+      [req.params.id, req.user.id]
+    );
+    if (!result.rowCount) return res.status(404).json({ error: "Page not found" });
+
+    const page = result.rows[0];
+    res.json({
+      page,
+      url: page.published ? `/p/${page.slug}` : null
+    });
+  } catch (err) {
+    res.status(500).json({ error: "Could not publish page" });
+  }
+});
+
 app.delete("/api/pages/:id", auth, async (req, res) => {
   const result = await pool.query(
     "DELETE FROM ag_pages WHERE id=$1 AND user_id=$2 RETURNING id",
-    [Number(req.params.id), req.user.id]
+    [req.params.id, req.user.id]
   );
   if (!result.rowCount) return res.status(404).json({ error: "Page not found" });
-  res.json({ message: "Page deleted" });
+  res.json({ success: true });
 });
 
-// Publish / unpublish
-app.post("/api/pages/:id/publish", auth, async (req, res) => {
-  const published = req.body.published !== false;
-  const result = await pool.query(
-    `UPDATE ag_pages SET published=$1,updated_at=NOW()
-     WHERE id=$2 AND user_id=$3 RETURNING id,slug,published`,
-    [published,Number(req.params.id),req.user.id]
-  );
-  if (!result.rowCount) return res.status(404).json({ error: "Page not found" });
-
-  res.json({
-    page: result.rows[0],
-    url: `${req.protocol}://${req.get("host")}/p/${result.rows[0].slug}`
-  });
-});
-
-// Page click statistics
-app.get("/api/pages/:id/stats", auth, async (req, res) => {
-  const owner = await pool.query(
-    "SELECT id FROM ag_pages WHERE id=$1 AND user_id=$2",
-    [Number(req.params.id),req.user.id]
-  );
-  if (!owner.rowCount) return res.status(404).json({ error: "Page not found" });
-
-  const result = await pool.query(
-    `SELECT COUNT(*)::int AS total_clicks,
-     COUNT(*) FILTER (WHERE created_at >= NOW()-INTERVAL '30 days')::int AS last30
-     FROM ag_click_events WHERE page_id=$1`,
-    [Number(req.params.id)]
-  );
-  res.json({ stats: result.rows[0] });
-});
-
-// Admin overview
 app.get("/api/admin/stats", auth, adminOnly, async (req, res) => {
-  const [users,pages,payments,clicks] = await Promise.all([
-    pool.query("SELECT COUNT(*)::int AS total FROM ag_users WHERE role='user'"),
-    pool.query("SELECT COUNT(*)::int AS total FROM ag_pages"),
-    pool.query(`SELECT COUNT(*)::int AS total,
+  const [clients, clicks, payments] = await Promise.all([
+    pool.query("SELECT COUNT(*)::int AS total FROM ag_users WHERE role='customer'"),
+    pool.query(`SELECT
+      COUNT(*) FILTER(WHERE suspicious=false)::int AS valid_clicks,
+      COUNT(DISTINCT visitor_id)::int AS unique_visitors,
+      COUNT(*) FILTER(WHERE suspicious=true)::int AS suspicious_events
+      FROM ag_click_events`),
+    pool.query(`SELECT
       COUNT(*) FILTER(WHERE status='pending')::int AS pending,
-      COUNT(*) FILTER(WHERE status='approved')::int AS approved,
-      COALESCE(SUM(amount) FILTER(WHERE status='approved'),0)::int AS revenue
-      FROM ag_payments`),
-    pool.query("SELECT COUNT(*)::int AS total FROM ag_click_events")
+      COUNT(*) FILTER(WHERE status='approved')::int AS approved
+      FROM ag_payments`)
   ]);
 
   res.json({
-    clients: users.rows[0],
-    pages: pages.rows[0],
-    payments: payments.rows[0],
-    clicks: clicks.rows[0]
+    clients: clients.rows[0],
+    clicks: clicks.rows[0],
+    payments: payments.rows[0]
   });
 });
 
-// Admin: list payments
 app.get("/api/admin/payments", auth, adminOnly, async (req, res) => {
   const result = await pool.query(
-    `SELECT p.*,u.name,u.email
-     FROM ag_payments p JOIN ag_users u ON u.id=p.user_id
-     ORDER BY p.id DESC LIMIT 300`
+    `SELECT p.*,u.email FROM ag_payments p
+     JOIN ag_users u ON u.id=p.user_id ORDER BY p.id DESC`
   );
   res.json({ payments: result.rows });
 });
 
-// Admin: approve or reject payment
-app.put("/api/admin/payments/:id", auth, adminOnly, async (req, res) => {
-  const status = clean(req.body.status, 20).toLowerCase();
-  if (!["approved","rejected"].includes(status)) {
-    return res.status(400).json({ error: "Status must be approved or rejected" });
+app.post("/api/admin/payments/:id/review", auth, adminOnly, async (req, res) => {
+  const { status } = req.body;
+  if (!["approved", "rejected"].includes(status)) {
+    return res.status(400).json({ error: "Invalid payment status" });
   }
 
-  const result = await pool.query(
-    `UPDATE ag_payments SET status=$1,reviewed_at=NOW()
-     WHERE id=$2 AND status='pending' RETURNING *`,
-    [status,Number(req.params.id)]
-  );
-  if (!result.rowCount) return res.status(404).json({ error: "Pending payment not found" });
-  res.json({ payment: result.rows[0] });
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+
+    const result = await client.query(
+      "UPDATE ag_payments SET status=$1,reviewed_at=NOW() WHERE id=$2 AND status='pending' RETURNING *",
+      [status, req.params.id]
+    );
+
+    if (!result.rowCount) {
+      await client.query("ROLLBACK");
+      return res.status(404).json({ error: "Pending payment not found" });
+    }
+
+    const payment = result.rows[0];
+
+    if (status === "approved") {
+      await client.query(
+        `UPDATE ag_users SET plan=$1,
+         subscription_expires=GREATEST(COALESCE(subscription_expires,NOW()),NOW()) + INTERVAL '30 days'
+         WHERE id=$2`,
+        [payment.plan_id, payment.user_id]
+      );
+    }
+
+    await client.query("COMMIT");
+    res.json({ success: true, status });
+  } catch (err) {
+    await client.query("ROLLBACK");
+    res.status(500).json({ error: "Could not review payment" });
+  } finally {
+    client.release();
+  }
 });
 
-// Admin: list customers
-app.get("/api/admin/users", auth, adminOnly, async (req, res) => {
+app.get("/api/admin/clicks", auth, adminOnly, async (req, res) => {
   const result = await pool.query(
-    `SELECT u.id,u.name,u.email,u.created_at,
-     (SELECT COUNT(*)::int FROM ag_pages p WHERE p.user_id=u.id) AS pages
-     FROM ag_users u WHERE u.role='user' ORDER BY u.id DESC LIMIT 500`
+    `SELECT e.*,p.title FROM ag_click_events e
+     LEFT JOIN ag_pages p ON p.id=e.page_id
+     ORDER BY e.id DESC LIMIT 200`
   );
-  res.json({ users: result.rows });
+  res.json({ events: result.rows });
 });
 
-// Admin: list pages
-app.get("/api/admin/pages", auth, adminOnly, async (req, res) => {
-  const result = await pool.query(
-    `SELECT p.*,u.name AS user_name,u.email
-     FROM ag_pages p JOIN ag_users u ON u.id=p.user_id
-     ORDER BY p.id DESC LIMIT 500`
-  );
-  res.json({ pages: result.rows });
-});
-
-// Public landing page
 app.get("/p/:slug", async (req, res) => {
   try {
     const result = await pool.query(
-      "SELECT * FROM ag_pages WHERE slug=$1 AND published=TRUE",
-      [clean(req.params.slug, 100)]
+      "SELECT * FROM ag_pages WHERE slug=$1 AND published=true",
+      [req.params.slug]
     );
-
-    if (!result.rowCount) return res.status(404).send("Landing page not found");
+    if (!result.rowCount) return res.status(404).send("Page not found");
 
     const p = result.rows[0];
+    const visitor = req.headers["x-forwarded-for"] || req.ip;
 
-    // Track page view as a click event.
     await pool.query(
-      "INSERT INTO ag_click_events(page_id) VALUES($1)",
-      [p.id]
+      `INSERT INTO ag_click_events(page_id,event_type,visitor_id)
+       VALUES($1,'visit',$2)`,
+      [p.id, crypto.createHash("sha256").update(String(visitor)).digest("hex")]
     );
 
-    const esc = value => String(value ?? "").replace(/[&<>"']/g, c => ({
-      "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
-    }[c]));
-
-    const safeLink = value => {
-      try {
-        const u = new URL(value);
-        return ["http:","https:"].includes(u.protocol) ? esc(u.href) : "#";
-      } catch {
-        return "#";
-      }
-    };
-
-    const width = validImageWidth(p.image_width);
-    const image = p.image_url
-      ? `<img src="${safeLink(p.image_url)}" alt=""
-          style="display:block;width:${width}%;max-width:100%;max-height:350px;
-          object-fit:contain;margin:20px auto;border-radius:12px">`
-      : "";
-
-    const pixel = /^\d{5,20}$/.test(p.pixel_id || "")
-      ? `<script>
-          !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){
-          n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};
-          if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
-          n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;
-          s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}
-          (window,document,'script','https://connect.facebook.net/en_US/fbevents.js');
-          fbq('init','${esc(p.pixel_id)}');fbq('track','PageView');
-        </script>`
-      : "";
+    const pixel = /^\d+$/.test(p.pixel_id || "") ? `
+      <script>
+      !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){
+      n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+      if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+      n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;
+      s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}
+      (window,document,'script','https://connect.facebook.net/en_US/fbevents.js');
+      fbq('init','${p.pixel_id}');fbq('track','PageView');
+      </script>` : "";
 
     res.send(`<!doctype html>
-<html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>${esc(p.title)}</title>
-${pixel}
-<style>
-*{box-sizing:border-box}
-body{margin:0;padding:24px 14px;min-height:100vh;
-background:${validColor(p.bg_color,"#0f172a")};
-color:${validColor(p.text_color,"#ffffff")};
-font-family:Arial,sans-serif;display:flex;align-items:center;justify-content:center}
-main{width:100%;max-width:520px;text-align:center;padding:25px;
-border-radius:18px;background:rgba(255,255,255,.07)}
-h1{font-size:30px;line-height:1.25}
-p{font-size:17px;line-height:1.6;white-space:pre-wrap}
-a{display:inline-block;margin-top:18px;padding:14px 25px;
-border-radius:10px;text-decoration:none;font-weight:bold;
-background:${validColor(p.button_color,"#0088cc")};color:#fff}
-</style>
-</head>
-<body>
-<main>
-<h1>${esc(p.headline || p.title)}</h1>
-${image}
-<p>${esc(p.description)}</p>
-<a href="${safeLink(p.button_url)}" target="_blank" rel="noopener noreferrer">
-${esc(p.button_text || "Join Now")}
-</a>
-</main>
-</body>
-</html>`);
+    <html><head><meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>${escapeHTML(p.title)}</title>${pixel}
+    <style>
+    body{margin:0;padding:30px 16px;background:${p.bg_color};color:${p.text_color};font-family:Arial;text-align:center}
+    main{max-width:700px;margin:40px auto}
+    h1{font-size:34px}
+    p{line-height:1.7}
+    img{width:${p.image_width}%;max-width:100%;height:auto;border-radius:14px;margin:20px auto}
+    a{display:inline-block;padding:14px 24px;border-radius:9px;background:${p.button_color};color:white;text-decoration:none;font-weight:bold}
+    </style></head><body><main>
+    <h1>${escapeHTML(p.headline || p.title)}</h1>
+    <p>${escapeHTML(p.description || "")}</p>
+    ${p.image_url ? `<img src="${escapeHTML(p.image_url)}" alt="">` : ""}
+    ${p.button_url ? `<a href="${escapeHTML(p.button_url)}" target="_blank" rel="noopener">${escapeHTML(p.button_text)}</a>` : ""}
+    </main></body></html>`);
   } catch (err) {
     console.error("Public page:", err);
     res.status(500).send("Page could not be loaded");
   }
 });
 
-// UPI details
-app.get("/api/payment-info", (req, res) => {
-  res.json({ upiId: UPI_ID, payeeName: "ADS GROWTH AGENCY" });
+function escapeHTML(value) {
+  return String(value || "").replace(/[&<>"']/g, c => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;",
+    '"': "&quot;", "'": "&#39;"
+  }[c]));
+}
+
+app.use((req, res) => {
+  res.status(404).send("Page not found");
 });
 
-// 404 for AP
+async function startServer() {
+  try {
+    await initDB();
+    app.listen(PORT, "0.0.0.0", () => {
+      console.log("ADS GROWTH AGENCY running on port " + PORT);
+    });
+  } catch (err) {
+    console.error("Server startup failed:", err.message);
+    process.exit(1);
+  }
+}
+
+startServer();
+      
