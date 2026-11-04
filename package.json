@@ -1,7 +1,7 @@
 {
   "name": "ads-growth-agency-pro",
   "version": "1.0.0",
-  "description": "Landing Page Builder SaaS",
+  "description": "ADS GROWTH AGENCY PRO landing page builder",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
