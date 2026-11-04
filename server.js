@@ -660,3 +660,162 @@ app.get("/api/admin/stats", auth, adminOnly, async (req, res) => {
           COUNT(*) FILTER(WHERE event_type='click' AND suspicious=false)::int AS valid_clicks,
           COUNT(*) FILTER(WHERE event_type='visit')::int AS visits,
           COUNT(DISTINCT visitor_id):
+      FROM ag_click_events
+    `),
+    pool.query(
+      "SELECT COUNT(*)::int AS total FROM ag_payments WHERE status='pending'"
+    ),
+    pool.query(
+      "SELECT COUNT(*)::int AS total FROM ag_pages"
+    )
+  ]);
+
+  res.json({
+    clients: clients.rows[0],
+    events: events.rows[0],
+    payments: payments.rows[0],
+    pages: pages.rows[0]
+  });
+  } catch (err) {
+    console.error("Admin stats error:", err);
+    res.status(500).json({ error: "Could not load admin statistics" });
+  }
+});
+
+app.get("/api/admin/payments", auth, adminOnly, async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT p.*, u.email
+      FROM ag_payments p
+      JOIN ag_users u ON u.id = p.user_id
+      ORDER BY p.id DESC
+    `);
+    res.json({ payments: result.rows });
+  } catch (err) {
+    res.status(500).json({ error: "Could not load payments" });
+  }
+});
+
+app.post("/api/admin/payments/:id/review", auth, adminOnly, async (req, res) => {
+  const { status } = req.body;
+  if (!["approved", "rejected"].includes(status)) {
+    return res.status(400).json({ error: "Invalid status" });
+  }
+
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+
+    const result = await client.query(
+      `UPDATE ag_payments
+       SET status=$1, reviewed_at=NOW()
+       WHERE id=$2 AND status='pending'
+       RETURNING *`,
+      [status, req.params.id]
+    );
+
+    if (!result.rowCount) {
+      await client.query("ROLLBACK");
+      return res.status(404).json({ error: "Payment not found" });
+    }
+
+    if (status === "approved") {
+      const payment = result.rows[0];
+      await client.query(
+        `UPDATE ag_users SET plan=$1,
+         subscription_expires =
+         GREATEST(COALESCE(subscription_expires,NOW()),NOW()) + INTERVAL '30 days'
+         WHERE id=$2`,
+        [payment.plan_id, payment.user_id]
+      );
+    }
+
+    await client.query("COMMIT");
+    res.json({ success: true });
+  } catch (err) {
+    await client.query("ROLLBACK");
+    res.status(500).json({ error: "Payment review failed" });
+  } finally {
+    client.release();
+  }
+});
+
+app.get("/api/admin/clicks", auth, adminOnly, async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT e.*, p.title
+      FROM ag_click_events e
+      LEFT JOIN ag_pages p ON p.id=e.page_id
+      ORDER BY e.id DESC LIMIT 200
+    `);
+    res.json({ events: result.rows });
+  } catch (err) {
+    res.status(500).json({ error: "Could not load events" });
+  }
+});
+
+app.get("/p/:slug", async (req, res) => {
+  try {
+    const result = await pool.query(
+      "SELECT * FROM ag_pages WHERE slug=$1 AND published=true",
+      [req.params.slug]
+    );
+
+    if (!result.rowCount) return res.status(404).send("Page not found");
+
+    const p = result.rows[0];
+
+    await pool.query(
+      `INSERT INTO ag_click_events(page_id,event_type,visitor_id)
+       VALUES($1,'visit',$2)`,
+      [p.id, crypto.randomUUID()]
+    );
+
+    res.send(`<!doctype html>
+      <html>
+      <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>${escapeHTML(p.title)}</title>
+        <style>
+          body { margin:0; padding:30px 16px; background:${p.bg_color}; color:${p.text_color}; font-family:Arial; text-align:center; }
+          main { max-width:700px; margin:40px auto; }
+          img { width:${p.image_width}%; max-width:100%; border-radius:14px; }
+          a { display:inline-block; padding:14px 24px; background:${p.button_color}; color:white; text-decoration:none; border-radius:9px; }
+        </style>
+      </head>
+      <body><main>
+        <h1>${escapeHTML(p.headline || p.title)}</h1>
+        <p>${escapeHTML(p.description || "")}</p>
+        ${p.image_url ? `<img src="${escapeHTML(p.image_url)}" alt="">` : ""}
+        ${p.button_url ? `<p><a href="${escapeHTML(p.button_url)}" target="_blank" rel="noopener">${escapeHTML(p.button_text)}</a></p>` : ""}
+      </main></body></html>`);
+  } catch (err) {
+    console.error("Public page error:", err);
+    res.status(500).send("Page could not be loaded");
+  }
+});
+
+function escapeHTML(value) {
+  return String(value || "").replace(/[&<>"']/g, c => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;",
+    '"': "&quot;", "'": "&#39;"
+  }[c]));
+}
+
+app.use((req, res) => {
+  res.status(404).send("Page not found");
+});
+
+async function startServer() {
+  try {
+    await initDB();
+    app.listen(PORT, "0.0.0.0", () => {
+      console.log("ADS GROWTH AGENCY running on port " + PORT);
+    });
+  } catch (err) {
+    console.error("Server startup failed:", err);
+    process.exit(1);
+  }
+}
+
+startServer();
