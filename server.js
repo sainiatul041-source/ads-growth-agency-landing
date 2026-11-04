@@ -585,8 +585,7 @@ app.get("/api/admin/stats", auth, adminOnly, async (req, res) => {
       pool.query("SELECT COUNT(*)::int AS total FROM ag_payments WHERE status='pending'"),
       pool.query("SELECT COUNT(*)::int AS total FROM ag_pages")
     ]);
-    res.json({
-     clients: clients.rows[0].total,
+          clients: clients.rows[0].total,
       validClicks: events.rows[0].valid_clicks,
       visits: events.rows[0].visits,
       pendingPayments: pending.rows[0].total,
@@ -597,3 +596,222 @@ app.get("/api/admin/stats", auth, adminOnly, async (req, res) => {
     res.status(500).json({ error: "Could not load admin statistics." });
   }
 });
+
+// Admin: list payment requests
+app.get("/api/admin/payments", auth, adminOnly, async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT p.id, p.user_id, p.plan_id, p.amount, p.utr,
+             p.status, p.created_at, u.name, u.email
+      FROM ag_payments p
+      LEFT JOIN ag_users u ON u.id = p.user_id
+      ORDER BY p.id DESC
+    `);
+    res.json({ payments: result.rows });
+  } catch (err) {
+    console.error("Admin payments:", err.message);
+    res.status(500).json({ error: "Could not load payments." });
+  }
+});
+
+// Admin: approve or reject payment
+app.post("/api/admin/payments/:id/review", auth, adminOnly, async (req, res) => {
+  const client = await pool.connect();
+
+  try {
+    const status = String(req.body.status || "").toLowerCase();
+    if (!["approved", "rejected"].includes(status)) {
+      return res.status(400).json({ error: "Invalid payment status." });
+    }
+
+    await client.query("BEGIN");
+
+    const paymentResult = await client.query(
+      `SELECT * FROM ag_payments WHERE id=$1 FOR UPDATE`,
+      [req.params.id]
+    );
+
+    if (!paymentResult.rowCount) {
+      await client.query("ROLLBACK");
+      return res.status(404).json({ error: "Payment not found." });
+    }
+
+    const payment = paymentResult.rows[0];
+
+    if (payment.status !== "pending") {
+      await client.query("ROLLBACK");
+      return res.status(400).json({ error: "Payment already reviewed." });
+    }
+
+    await client.query(
+      `UPDATE ag_payments
+       SET status=$1, reviewed_at=NOW()
+       WHERE id=$2`,
+      [status, payment.id]
+    );
+
+    if (status === "approved") {
+      const plan = plans.find(p => p.id === payment.plan_id);
+
+      if (!plan) {
+        await client.query("ROLLBACK");
+        return res.status(400).json({ error: "Payment plan not found." });
+      }
+
+      await client.query(
+        `UPDATE ag_users
+         SET plan=$1, subscription_expires=NOW() + INTERVAL '30 days'
+         WHERE id=$2`,
+        [plan.id, payment.user_id]
+      );
+    }
+
+    await client.query("COMMIT");
+    res.json({ success: true, status });
+  } catch (err) {
+    await client.query("ROLLBACK");
+    console.error("Payment review:", err.message);
+    res.status(500).json({ error: "Could not review payment." });
+  } finally {
+    client.release();
+  }
+});
+
+// Admin: event report
+app.get("/api/admin/clicks", auth, adminOnly, async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT e.id, e.page_id, e.event_type, e.visitor_id,
+             e.suspicious, e.reason, e.created_at,
+             p.title, p.slug
+      FROM ag_click_events e
+      LEFT JOIN ag_pages p ON p.id=e.page_id
+      ORDER BY e.id DESC
+      LIMIT 500
+    `);
+    res.json({ events: result.rows });
+  } catch (err) {
+    console.error("Admin events:", err.message);
+    res.status(500).json({ error: "Could not load events." });
+  }
+});
+
+// Public landing page
+app.get("/p/:slug", async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT * FROM ag_pages
+       WHERE slug=$1 AND published=TRUE
+       LIMIT 1`,
+      [req.params.slug]
+    );
+
+    if (!result.rowCount) {
+      return res.status(404).send("Landing page not found.");
+    }
+
+    const page = result.rows[0];
+    const visitor = visitorHash(req);
+
+    await pool.query(
+      `INSERT INTO ag_click_events(page_id,event_type,visitor_id)
+       VALUES($1,'visit',$2)`,
+      [page.id, visitor]
+    );
+
+    const pixel = String(page.pixel_id || "").replace(/[^\d]/g, "");
+    const buttonUrl = safeUrl(page.button_url);
+    const imageUrl = safeUrl(page.image_url);
+
+    res.send(`<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>${escapeHTML(page.title)}</title>
+${pixel ? `
+<script>
+!function(f,b,e,v,n,t,s){
+if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;
+s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)
+}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');
+fbq('init','${pixel}');fbq('track','PageView');
+</script>` : ""}
+<style>
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;display:flex;align-items:center;
+justify-content:center;padding:24px;background:${validColor(page.bg_color, "#0b1224")};
+color:${validColor(page.text_color, "#ffffff")};font-family:Arial,sans-serif}
+main{width:100%;max-width:720px;text-align:center}
+h1{font-size:clamp(28px,6vw,46px)}
+p{font-size:18px;line-height:1.6}
+img{width:${Math.min(100,Math.max(20,Number(page.image_width)||100))}%;
+max-height:480px;object-fit:cover;border-radius:16px}
+a{display:inline-block;margin-top:20px;padding:15px 28px;border-radius:10px;
+background:${validColor(page.button_color, "#16a34a")};
+color:#fff;text-decoration:none;font-weight:bold}
+</style>
+</head>
+<body>
+<main>
+<h1>${escapeHTML(page.headline || page.title)}</h1>
+${imageUrl ? `<img src="${escapeHTML(imageUrl)}" alt="">` : ""}
+<p>${escapeHTML(page.description || "")}</p>
+${buttonUrl ? `<a href="${escapeHTML(buttonUrl)}" target="_blank"
+rel="noopener noreferrer">${escapeHTML(page.button_text || "Learn More")}</a>` : ""}
+</main>
+</body>
+</html>`);
+  } catch (err) {
+    console.error("Public page:", err.message);
+    res.status(500).send("Could not load this landing page.");
+  }
+});
+
+// Record a real CTA click. The public page above records visits only.
+app.post("/api/events/click/:slug", async (req, res) => {
+  try {
+    const result = await pool.query(
+      "SELECT id FROM ag_pages WHERE slug=$1 AND published=TRUE",
+      [req.params.slug]
+    );
+
+    if (!result.rowCount) {
+      return res.status(404).json({ error: "Page not found." });
+    }
+
+    await pool.query(
+      `INSERT INTO ag_click_events(page_id,event_type,visitor_id)
+       VALUES($1,'click',$2)`,
+      [result.rows[0].id, visitorHash(req)]
+    );
+
+    res.json({ success: true });
+  } catch (err) {
+    console.error("Click event:", err.message);
+    res.status(500).json({ error: "Could not record click." });
+  }
+});
+
+// Home page
+app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "index.html"));
+});
+
+// Start server after database initialization
+async function startServer() {
+  try {
+    await initDB();
+    app.listen(PORT, "0.0.0.0", () => {
+      console.log(`ADS GROWTH AGENCY running on port ${PORT}`);
+    });
+  } catch (err) {
+    console.error("Startup failed:", err);
+    process.exit(1);
+  }
+}
+
+startServer();
