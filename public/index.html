@@ -2,162 +2,404 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="theme-color" content="#080d1b">
+<meta name="viewport" content="width=device-width,initial-scale=1">
 <title>ADS GROWTH AGENCY PRO</title>
 <style>
 *{box-sizing:border-box}
-body{margin:0;background:radial-gradient(ellipse at top,#17334b,#090f20 48%,#070b17);color:#fff;font-family:Arial,sans-serif;min-height:100vh}
-header{padding:18px 5%;display:flex;justify-content:space-between;align-items:center;background:#07101d;border-bottom:2px solid #a64ddd}
-.brand{font-size:clamp(18px,4vw,28px);font-weight:900}
-.brand span{color:#22d9b5}
-main{max-width:950px;margin:35px auto;padding:0 16px 40px}
-.panel{padding:28px;background:linear-gradient(145deg,#121d3a,#0c1329);border:1px solid #8050ba;border-radius:24px;box-shadow:0 20px 70px #0008;margin-bottom:20px}
-h1{font-size:clamp(30px,7vw,46px)}
-.gradient{background:linear-gradient(90deg,#fff,#8debd8,#64b9ff);-webkit-background-clip:text;color:transparent}
-.subtitle,.notice{color:#a8b6d8;line-height:1.6}
-.field{margin:17px 0}
-label{display:block;margin-bottom:9px;color:#d5e1ff;font-weight:bold}
-input,textarea,select{width:100%;padding:14px;border:1px solid #303c5e;border-radius:12px;background:#080e1e;color:white;font-size:16px}
-textarea{min-height:90px}
-button{cursor:pointer}
-.primary,.secondary,.tab{padding:14px;border-radius:12px;font-weight:bold}
-.primary{width:100%;border:0;background:linear-gradient(100deg,#a9c8ff,#21ddb6,#18a9e9);color:#08172a;font-size:17px;margin-top:10px}
-.secondary,.tab{border:1px solid #39466a;background:#202b49;color:white}
-.tabs,.actions{display:flex;gap:10px;flex-wrap:wrap;margin:18px 0}
-.tab{flex:1}
-.tab.active{border-color:#2bd8bd;background:#254e66}
-.card{background:#111e39;border:1px solid #35466b;padding:18px;border-radius:15px;margin:14px 0}
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px}
-.price{font-size:28px;color:#76ead2;font-weight:bold}
+body{margin:0;background:#071126;color:#f5f7ff;font-family:Arial,sans-serif}
+header{padding:20px 5%;background:#101e3c;border-bottom:1px solid #263b63;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.logo{font-size:21px;font-weight:bold;color:#5ce1d0}
+main{max-width:1050px;margin:30px auto;padding:15px}
+.card{background:#111f3e;border:1px solid #2c426b;border-radius:18px;padding:24px;margin-bottom:20px}
+h1,h2,h3{margin-top:0}
+input,textarea,select{width:100%;padding:14px;margin:7px 0 15px;border:1px solid #52668d;border-radius:10px;background:#eaf0ff;color:#111;font-size:16px}
+textarea{min-height:100px}
+button,.btn{border:0;border-radius:10px;padding:13px 19px;background:linear-gradient(90deg,#5ce1d0,#19a9e5);color:#071126;font-weight:bold;font-size:15px;cursor:pointer;margin:4px}
+button.secondary{background:#263b63;color:white}
+button.danger{background:#a83250;color:white}
 .hidden{display:none!important}
-.message{padding:13px;border-radius:12px;margin:12px 0}
-.error{background:#3a1d32;color:#ffc1d4}
-.success{background:#123b36;color:#a8f4d7}
-.actions button{flex:1}
-a{color:#73c9ff}
-.qr{display:block;width:min(100%,300px);margin:20px auto;background:white;padding:10px;border-radius:15px}
-.center{text-align:center}
-.status{font-weight:bold;color:#7debd0}
-@media(max-width:550px){main{margin:20px auto}.panel{padding:20px 15px}}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:15px}
+.price{font-size:28px;color:#5ce1d0;font-weight:bold}
+.muted{color:#b5c4e2;line-height:1.6}
+.message{padding:13px;border-radius:10px;background:#263b63;margin:12px 0;white-space:pre-wrap}
+.error{background:#51263b}
+.success{background:#17483e}
+a{color:#5ce1d0}
+label{display:block;font-weight:bold;margin-top:8px}
+img.qr{width:220px;max-width:100%;background:white;padding:8px;border-radius:12px;display:block;margin:15px auto}
+.pageitem{padding:15px;background:#192c50;border-radius:12px;margin:12px 0}
+small{color:#b5c4e2}
 </style>
 </head>
 <body>
 <header>
- <div class="brand">ADS <span>GROWTH AGENCY</span> 📈</div>
- <button class="secondary" onclick="showHome()">Home</button>
+  <div class="logo">ADS GROWTH AGENCY PRO</div>
+  <button class="secondary" onclick="logout()">Logout</button>
 </header>
 
 <main>
-<section id="authPanel" class="panel">
- <h1 class="gradient" id="authHeading">Create your account</h1>
- <p class="subtitle">Build and manage professional landing pages.</p>
- <div id="message"></div>
- <div class="tabs">
-  <button id="loginTab" class="tab" onclick="setMode('login')">Login</button>
-  <button id="registerTab" class="tab active" onclick="setMode('register')">Register</button>
- </div>
- <form id="authForm">
-  <div class="field" id="nameField">
-   <label>Full Name</label>
-   <input id="name" placeholder="Your name">
-  </div>
-  <div class="field">
-   <label>Email</label>
-   <input id="email" type="email" required>
-  </div>
-  <div class="field">
-   <label>Password</label>
-   <input id="password" type="password" minlength="8" required>
-  </div>
-  <label id="termsLabel">
-   <input id="terms" type="checkbox" checked style="width:auto">
-   I agree to the Terms of Service.
-  </label>
-  <button class="primary" id="authSubmit">Create Account</button>
- </form>
-</section>
+  <section id="authBox" class="card">
+    <h1>Welcome to ADS GROWTH</h1>
+    <p class="muted">Create and publish professional landing pages.</p>
+    <div id="authMessage"></div>
+    <div class="grid">
+      <button id="loginTab" onclick="setMode('login')">Login</button>
+      <button class="secondary" id="registerTab" onclick="setMode('register')">Create account</button>
+    </div>
+    <div id="nameField" class="hidden">
+      <label>Your name</label><input id="name" placeholder="Full name">
+    </div>
+    <label>Email address</label>
+    <input id="email" type="email" placeholder="Email address">
+    <label>Password</label>
+    <input id="password" type="password" placeholder="Password (8+ characters)">
+    <button style="width:100%;margin-top:15px" onclick="submitAuth()" id="authSubmit">Login →</button>
+  </section>
 
-<section id="dashboard" class="panel hidden">
- <h1 class="gradient">Your Workspace</h1>
- <div id="userInfo" class="card"></div>
- <div id="dashboardMessage"></div>
+  <section id="dashboard" class="hidden">
+    <div class="card">
+      <h1 id="welcome">Dashboard</h1>
+      <p class="muted">Manage your landing pages and subscription.</p>
+      <div id="accountInfo"></div>
+    </div>
 
- <div class="grid">
-  <div class="card">
-   <h3>My Subscription</h3>
-   <div id="subscriptionInfo"></div>
-  </div>
-  <div class="card">
-   <h3>My Landing Pages</h3>
-   <div id="pagesList">Loading...</div>
-  </div>
- </div>
+    <div id="adminPanel" class="hidden">
+      <div class="card">
+        <h2>Admin dashboard</h2>
+        <div id="adminStats" class="grid"></div>
+      </div>
+      <div class="card">
+        <h2>Payment requests</h2>
+        <div id="adminPayments"></div>
+      </div>
+      <div class="card">
+        <h2>Recent tracking events</h2>
+        <button onclick="loadEvents()">Refresh events</button>
+        <div id="adminEvents"></div>
+      </div>
+    </div>
 
- <div class="card">
-  <h2>Choose Your Plan</h2>
-  <div id="plansList" class="grid"></div>
- </div>
+    <div id="customerPanel">
+      <div class="card">
+        <h2>Choose a plan</h2>
+        <div id="plans" class="grid"></div>
+      </div>
 
- <div class="card">
-  <h2>Pay Using PhonePe QR</h2>
-  <p class="notice">Choose your plan, scan the QR code using your UPI app and pay the exact plan amount.</p>
-  <div class="center">
-   <img class="qr" src="/scanner.png" alt="PhonePe Payment QR Code">
-   <p class="status">UPI ID: sainiatul041@okhdfcbank</p>
-   <p class="notice">Payment receiver: Atul Saini</p>
-  </div>
-  <div class="field">
-   <label>Select Plan</label>
-   <select id="paymentPlan"></select>
-  </div>
-  <div class="field">
-   <label>Payment UTR / Transaction ID</label>
-   <input id="utr" placeholder="Enter genuine payment UTR">
-  </div>
-  <button class="primary" onclick="submitPayment()">Submit Payment Request</button>
-  <p class="notice">Your plan activates only after the payment is verified by the admin.</p>
-  <div id="paymentHistory"></div>
- </div>
+      <div class="card">
+        <h2>UPI payment</h2>
+        <p class="muted">Scan the QR code below. Submit your UTR after payment. Access is activated only after manual verification.</p>
+        <img class="qr" src="/scanner.png" alt="UPI payment QR code"
+          onerror="this.style.display='none';document.getElementById('qrMissing').classList.remove('hidden')">
+        <p id="qrMissing" class="hidden error">QR image not found. Upload your QR image as public/scanner.png in GitHub.</p>
+        <p>UPI ID: <b id="upiId">Loading...</b></p>
+        <button class="secondary" onclick="copyUPI()">Copy UPI ID</button>
+        <label>Choose plan</label>
+        <select id="paymentPlan">
+          <option value="starter">Starter - ₹999</option>
+          <option value="growth">Growth - ₹1499</option>
+          <option value="pro">Pro - ₹1999</option>
+        </select>
+        <label>UPI transaction UTR / reference number</label>
+        <input id="utr" placeholder="Enter transaction reference">
+        <button onclick="submitPayment()">Submit payment reference</button>
+        <div id="paymentMessage"></div>
+      </div>
 
- <div class="card">
-  <h2>Create / Edit Landing Page</h2>
-  <input type="hidden" id="editPageId">
-  <div class="field"><label>Page Title</label><input id="pageTitle" placeholder="My Landing Page"></div>
-  <div class="field"><label>Headline</label><input id="headline" placeholder="Your headline"></div>
-  <div class="field"><label>Description</label><textarea id="description"></textarea></div>
-  <div class="field"><label>Image URL</label><input id="imageUrl" placeholder="https://example.com/image.jpg"></div>
-  <div class="field">
-   <label>Button Text</label>
-   <select id="buttonText">
-    <option>Learn More</option>
-    <option>Subscribe</option>
-    <option>Contact</option>
-    <option>Buy Now</option>
-    <option>WhatsApp</option>
-   </select>
-  </div>
-  <div class="field"><label>Button URL</label><input id="buttonUrl" placeholder="https://example.com"></div>
-  <div class="field"><label>Meta Pixel ID</label><input id="pixelId" placeholder="Optional"></div>
-  <div class="field"><label>Background Color</label><input id="bgColor" type="color" value="#0b1224"></div>
-  <div class="field"><label>Text Color</label><input id="textColor" type="color" value="#ffffff"></div>
-  <div class="field"><label>Button Color</label><input id="buttonColor" type="color" value="#16a34a"></div>
-  <div class="field"><label>Image Width (%)</label><input id="imageWidth" type="number" min="20" max="100" value="100"></div>
-  <button class="primary" onclick="savePage()">Save Landing Page</button>
-  <button class="secondary" onclick="clearPageForm()">Clear Form</button>
- </div>
+      <div class="card">
+        <h2>Create landing page</h2>
+        <p class="muted">Fill in your page details and save it as a draft.</p>
+        <input type="hidden" id="editId">
+        <label>Page title</label><input id="title" placeholder="My business">
+        <label>Headline</label><input id="headline" placeholder="Your main headline">
+        <label>Description</label><textarea id="description" placeholder="Describe your offer"></textarea>
+        <label>Image URL (optional)</label><input id="imageUrl" placeholder="https://example.com/image.jpg">
+        <label>Button text</label>
+        <select id="buttonText">
+          <option>Learn More</option><option>Subscribe</option>
+          <option>Contact</option><option>Buy Now</option><option>WhatsApp</option>
+        </select>
+        <label>Button destination URL</label><input id="buttonUrl" placeholder="https://example.com">
+        <label>Meta Pixel ID (optional)</label><input id="pixelId" placeholder="数字 only">
+        <div class="grid">
+          <div><label>Background color</label><input id="bgColor" type="color" value="#0b1530"></div>
+          <div><label>Text color</label><input id="textColor" type="color" value="#ffffff"></div>
+          <div><label>Button color</label><input id="buttonColor" type="color" value="#2563eb"></div>
+        </div>
+        <button onclick="savePage()">Save landing page</button>
+        <button class="secondary" onclick="clearForm()">Clear</button>
+        <div id="pageMessage"></div>
+      </div>
 
- <div id="adminArea" class="card hidden">
-  <h2>Admin Dashboard</h2>
-  <div id="adminStats" class="grid"></div>
-  <h3>Payment Requests</h3>
-  <div id="adminPayments"></div>
-  <h3>Customers</h3>
-  <div id="adminUsers"></div>
-  <h3>All Landing Pages</h3>
-  <div id="adminPages"></div>
- </div>
+      <div class="card">
+        <h2>My landing pages</h2>
+        <button class="secondary" onclick="loadPages()">Refresh pages</button>
+        <div id="myPages"></div>
+      </div>
 
- <button class="secondary" onclick="logout()">Log Out</button>
-</section>
-                      </main>
+      <div class="card">
+        <h2>My payment history</h2>
+        <button class="secondary" onclick="loadMyPayments()">Refresh payments</button>
+        <div id="myPayments"></div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<script>
+let mode = "login";
+let token = localStorage.getItem("ag_token") || "";
+let currentUser = null;
+let planData = [];
+
+function el(id){return document.getElementById(id)}
+function message(id,text,error=false){
+  el(id).innerHTML = `<div class="message ${error?'error':'success'}">${escapeText(text)}</div>`;
+}
+function escapeText(s){
+  return String(s??"").replace(/[&<>"']/g,c=>({
+    "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+  }[c]));
+}
+async function api(url,options={}){
+  options.headers = options.headers || {};
+  if(token) options.headers.Authorization = "Bearer "+token;
+  if(options.body) options.headers["Content-Type"]="application/json";
+  const response = await fetch(url,options);
+  let data={};
+  try{data=await response.json()}catch{}
+  if(!response.ok) throw new Error(data.error || "Request failed");
+  return data;
+}
+function setMode(m){
+  mode=m;
+  el("nameField").classList.toggle("hidden",m!=="register");
+  el("authSubmit").textContent=m==="login"?"Login →":"Create account →";
+  el("loginTab").classList.toggle("secondary",m!=="login");
+  el("registerTab").classList.toggle("secondary",m!=="register");
+  el("authMessage").innerHTML="";
+}
+async function submitAuth(){
+  const body={
+    email:el("email").value.trim(),
+    password:el("password").value
+  };
+  if(mode==="register") body.name=el("name").value.trim();
+  try{
+    const data=await api(mode==="login"?"/api/login":"/api/register",{
+      method:"POST",body:JSON.stringify(body)
+    });
+    token=data.token;
+    localStorage.setItem("ag_token",token);
+    currentUser=data.user;
+    await openDashboard();
+  }catch(e){message("authMessage",e.message,true)}
+}
+async function openDashboard(){
+  const data=await api("/api/me");
+  currentUser=data.user;
+  el("authBox").classList.add("hidden");
+  el("dashboard").classList.remove("hidden");
+  el("welcome").textContent="Welcome, "+currentUser.name;
+  el("accountInfo").innerHTML=
+    `<p>Email: ${escapeText(currentUser.email)}</p>
+     <p>Role: ${escapeText(currentUser.role)}</p>
+     <p>Plan: ${escapeText(currentUser.plan||"No active plan")}</p>`;
+  const admin=currentUser.role==="admin";
+  el("adminPanel").classList.toggle("hidden",!admin);
+  el("customerPanel").classList.toggle("hidden",admin);
+  if(admin) await loadAdmin();
+  else{
+    await loadPlans();
+    await loadPaymentInfo();
+    await loadPages();
+    await loadMyPayments();
+  }
+}
+async function loadPlans(){
+  try{
+    planData=await api("/api/plans");
+    el("plans").innerHTML=planData.map(p=>`
+      <div class="pageitem">
+        <h3>${escapeText(p.name)}</h3>
+        <div class="price">₹${p.price}</div>
+        <p>${p.pages} page(s) • ${p.days} days</p>
+        <button onclick="choosePlan('${p.id}')">Select plan</button>
+      </div>`).join("");
+  }catch(e){console.error(e)}
+}
+function choosePlan(id){el("paymentPlan").value=id;el("paymentPlan").scrollIntoView({behavior:"smooth"})}
+async function loadPaymentInfo(){
+  try{
+    const d=await api("/api/payment-info");
+    el("upiId").textContent=d.upiId;
+  }catch(e){el("upiId").textContent="Not available"}
+}
+async function copyUPI(){
+  try{
+    await navigator.clipboard.writeText(el("upiId").textContent);
+    alert("UPI ID copied");
+  }catch{alert("UPI ID: "+el("upiId").textContent)}
+}
+async function submitPayment(){
+  try{
+    const d=await api("/api/payments",{
+      method:"POST",
+      body:JSON.stringify({
+        plan_id:el("paymentPlan").value,
+        utr:el("utr").value.trim()
+      })
+    });
+    message("paymentMessage",d.message);
+    el("utr").value="";
+    await loadMyPayments();
+  }catch(e){message("paymentMessage",e.message,true)}
+}
+function clearForm(){
+  ["editId","title","headline","description","imageUrl","buttonUrl","pixelId"].forEach(id=>el(id).value="");
+  el("buttonText").value="Learn More";
+  el("bgColor").value="#0b1530";
+  el("textColor").value="#ffffff";
+  el("buttonColor").value="#2563eb";
+}
+async function savePage(){
+  const id=el("editId").value;
+  const body={
+    title:el("title").value,
+    headline:el("headline").value,
+    description:el("description").value,
+    image_url:el("imageUrl").value,
+    button_text:el("buttonText").value,
+    button_url:el("buttonUrl").value,
+    pixel_id:el("pixelId").value,
+    bg_color:el("bgColor").value,
+    text_color:el("textColor").value,
+    button_color:el("buttonColor").value
+  };
+  try{
+    await api(id?"/api/pages/"+id:"/api/pages",{
+      method:id?"PUT":"POST",body:JSON.stringify(body)
+    });
+    message("pageMessage","Landing page saved successfully.");
+    clearForm();
+    await loadPages();
+  }catch(e){message("pageMessage",e.message,true)}
+}
+async function loadPages(){
+  try{
+    const d=await api("/api/pages");
+    el("myPages").innerHTML=d.pages.length?d.pages.map(p=>`
+      <div class="pageitem">
+        <h3>${escapeText(p.title)}</h3>
+        <p>${escapeText(p.headline)}</p>
+        <p>Status: ${p.published?"Published":"Draft"}</p>
+        <p>${p.published?`<a target="_blank" href="/p/${encodeURIComponent(p.slug)}">Open landing page</a>`:"Not public yet"}</p>
+        <button onclick="editPage(${p.id})">Edit</button>
+        <button onclick="togglePublish(${p.id})">${p.published?"Unpublish":"Publish"}</button>
+        <button class="danger" onclick="deletePage(${p.id})">Delete</button>
+      </div>`).join(""):"<p>No pages created yet.</p>";
+    window.pageCache=d.pages;
+  }catch(e){message("pageMessage",e.message,true)}
+}
+function editPage(id){
+  const p=(window.pageCache||[]).find(x=>Number(x.id)===Number(id));
+  if(!p)return;
+  el("editId").value=p.id;
+  el("title").value=p.title||"";
+  el("headline").value=p.headline||"";
+  el("description").value=p.description||"";
+  el("imageUrl").value=p.image_url||"";
+  el("buttonText").value=p.button_text||"Learn More";
+  el("buttonUrl").value=p.button_url||"";
+  el("pixelId").value=p.pixel_id||"";
+  el("bgColor").value=p.bg_color||"#0b1530";
+  el("textColor").value=p.text_color||"#ffffff";
+  el("buttonColor").value=p.button_color||"#2563eb";
+  el("title").scrollIntoView({behavior:"smooth"});
+}
+async function togglePublish(id){
+  try{await api("/api/pages/"+id+"/publish",{method:"POST"});await loadPages()}
+  catch(e){alert(e.message)}
+}
+async function deletePage(id){
+  if(!confirm("Delete this landing page?"))return;
+  try{await api("/api/pages/"+id,{method:"DELETE"});await loadPages()}
+  catch(e){alert(e.message)}
+}
+async function loadMyPayments(){
+  try{
+    const d=await api("/api/payments/mine");
+    el("myPayments").innerHTML=d.payments.length?d.payments.map(p=>`
+      <div class="pageitem">
+        <b>${escapeText(p.plan_id)}</b> — ₹${p.amount}
+        <p>UTR: ${escapeText(p.utr)}</p>
+        <p>Status: ${escapeText(p.status)}</p>
+        <small>${escapeText(p.created_at)}</small>
+      </div>`).join(""):"<p>No payment requests yet.</p>";
+  }catch(e){console.error(e)}
+}
+async function loadAdmin(){
+  try{
+    const d=await api("/api/admin/stats");
+    el("adminStats").innerHTML=`
+      <div class="pageitem"><h3>Customers</h3><div class="price">${d.clients.total}</div></div>
+      <div class="pageitem"><h3>Pages</h3><div class="price">${d.pages.total}</div></div>
+      <div class="pageitem"><h3>Published</h3><div class="price">${d.publishedPages.total}</div></div>
+      <div class="pageitem"><h3>Pending payments</h3><div class="price">${d.payments.pending}</div></div>
+      <div class="pageitem"><h3>Visits</h3><div class="price">${d.clicks.visits}</div></div>
+      <div class="pageitem"><h3>CTA clicks</h3><div class="price">${d.clicks.valid_clicks}</div></div>`;
+    await loadAdminPayments();
+    await loadEvents();
+  }catch(e){message("adminStats",e.message,true)}
+}
+async function loadAdminPayments(){
+  try{
+    const d=await api("/api/admin/payments");
+    el("adminPayments").innerHTML=d.payments.length?d.payments.map(p=>`
+      <div class="pageitem">
+        <b>${escapeText(p.name||p.email)}</b>
+        <p>${escapeText(p.email)} • ${escapeText(p.plan_id)} • ₹${p.amount}</p>
+        <p>UTR: ${escapeText(p.utr)}</p>
+        <p>Status: ${escapeText(p.status)}</p>
+        ${p.status==="pending"?`
+          <button onclick="reviewPayment(${p.id},'approved')">Approve</button>
+          <button class="danger" onclick="reviewPayment(${p.id},'rejected')">Reject</button>`:""}
+      </div>`).join(""):"<p>No payment requests.</p>";
+  }catch(e){el("adminPayments").textContent=e.message}
+}
+async function reviewPayment(id,status){
+  const note=prompt("Optional admin note:")||"";
+  if(status==="approved"&&!confirm("Have you verified this payment in your bank/UPI account? Approve only if received."))return;
+  try{
+    await api("/api/admin/payments/"+id+"/review",{
+      method:"POST",body:JSON.stringify({status,note})
+    });
+    await loadAdmin();
+  }catch(e){alert(e.message)}
+}
+async function loadEvents(){
+  try{
+    const d=await api("/api/admin/clicks");
+    el("adminEvents").innerHTML=d.events.length?d.events.map(e=>`
+      <div class="pageitem">
+        ${escapeText(e.event_type)} — ${escapeText(e.title)}
+        <p>${escapeText(e.email)} • ${escapeText(e.created_at)}</p>
+      </div>`).join(""):"<p>No tracking events yet.</p>";
+  }catch(e){el("adminEvents").textContent=e.message}
+}
+function logout(){
+  localStorage.removeItem("ag_token");
+  token="";currentUser=null;
+  el("dashboard").classList.add("hidden");
+  el("authBox").classList.remove("hidden");
+  setMode("login");
+}
+async function start(){
+  setMode("login");
+  if(!token)return;
+  try{await openDashboard()}
+  catch(e){localStorage.removeItem("ag_token");token=""}
+}
+start();
+</script>
+</body>
+     </html>
