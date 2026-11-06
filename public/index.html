@@ -32,7 +32,7 @@ label{font-size:14px;color:#d4e3f5}
 a{color:#61b6ff;overflow-wrap:anywhere}
 footer{text-align:center;padding:25px;color:#92a9c2}
 #message{padding:13px;border-radius:8px;margin:10px 0;background:#173b5c;color:#fff}
-.qr{width:230px;max-width:100%;background:white;padding:10px;border-radius:12px}
+.qr{width:250px;max-width:100%;background:white;padding:10px;border-radius:12px;display:block;margin:15px auto}
 .stat{background:#0b1d35;border:1px solid #294563;padding:14px;border-radius:10px}
 .stat strong{font-size:25px;color:#55b5ff}
 .small{font-size:13px}
@@ -45,7 +45,6 @@ hr{border:0;border-top:1px solid #294563;margin:20px 0}
 }
 </style>
 </head>
-
 <body>
 
 <header>
@@ -74,13 +73,10 @@ hr{border:0;border-top:1px solid #294563;margin:20px 0}
       <label>Your Name</label>
       <input id="name" placeholder="Enter your name">
     </div>
-
     <label>Email Address</label>
     <input id="email" type="email" required placeholder="Enter email">
-
     <label>Password</label>
     <input id="password" type="password" required minlength="6" placeholder="Enter password">
-
     <button id="authButton" type="submit">Create Account</button>
   </form>
   <p class="muted" id="authSwitch"></p>
@@ -92,7 +88,6 @@ hr{border:0;border-top:1px solid #294563;margin:20px 0}
     <h2>Choose Your Plan</h2>
     <p class="muted">Plans are valid for 30 days after payment approval.</p>
   </div>
-
   <div class="grid">
     <div class="card">
       <h2>Starter</h2>
@@ -101,7 +96,6 @@ hr{border:0;border-top:1px solid #294563;margin:20px 0}
       <p>30 Days Validity</p>
       <button onclick="choosePlan('starter')">Choose Starter</button>
     </div>
-
     <div class="card">
       <h2>Growth</h2>
       <div class="price">₹1499</div>
@@ -109,7 +103,6 @@ hr{border:0;border-top:1px solid #294563;margin:20px 0}
       <p>30 Days Validity</p>
       <button onclick="choosePlan('growth')">Choose Growth</button>
     </div>
-
     <div class="card">
       <h2>Pro</h2>
       <div class="price">₹1999</div>
@@ -120,21 +113,18 @@ hr{border:0;border-top:1px solid #294563;margin:20px 0}
   </div>
 </section>
 
-<!-- PAYMENT QR SCANNER -->
+<!-- PAYMENT -->
 <section id="payment" class="card hidden">
   <h2>Complete Your Payment</h2>
   <p id="paymentPlan" class="price"></p>
-
   <p class="muted">Scan this QR code using your UPI app. Check the recipient name and amount before paying.</p>
 
   <div style="text-align:center">
-    <img
-      src="/payment-qr.jpg"
-      alt="UPI Payment QR Code"
-      class="qr"
-      onerror="this.style.display='none';document.getElementById('qrMissing').classList.remove('hidden')"
-    >
-    <p id="qrMissing" class="hidden">Payment QR image is not uploaded yet. Please use the UPI ID below.</p>
+    <img id="paymentQR" class="qr" alt="UPI Payment QR Code">
+    <p id="qrMissing" class="hidden">
+      QR code could not be loaded. Please use the UPI ID below.
+    </p>
+    <p class="muted small">QR code is generated for the selected plan.</p>
   </div>
 
   <div class="card">
@@ -148,22 +138,22 @@ hr{border:0;border-top:1px solid #294563;margin:20px 0}
   <form onsubmit="submitPayment(event)">
     <label>Payment UTR / Transaction ID</label>
     <input id="utr" required placeholder="Enter transaction reference">
-
     <button type="submit">Submit Payment for Verification</button>
   </form>
 
-  <p class="muted small">Your plan activates only after the admin verifies the payment. Submitting a UTR does not automatically confirm payment.</p>
+  <p class="muted small">
+    Your plan activates only after the admin verifies the actual payment.
+    Submitting a UTR does not automatically confirm payment.
+  </p>
   <button class="secondary" onclick="showSection('plans')">Back to Plans</button>
 </section>
 
 <!-- CUSTOMER DASHBOARD -->
 <section id="dashboard" class="hidden">
-
   <div class="card">
     <h2>My Dashboard</h2>
     <p id="welcome"></p>
     <p id="subscription" class="muted"></p>
-
     <div class="actions">
       <button onclick="showSection('plans')">View Plans</button>
       <button class="secondary" onclick="loadDashboard()">Refresh</button>
@@ -171,50 +161,38 @@ hr{border:0;border-top:1px solid #294563;margin:20px 0}
     </div>
   </div>
 
-  <!-- CREATE LANDING PAGE -->
   <div id="createBox" class="card hidden">
     <h2>Create Landing Page</h2>
     <p class="muted">Fill in the details to create your own landing page.</p>
-
-    <form onsubmit="createPage(event)">
+    <form id="customerCreateForm" onsubmit="createPage(event)">
       <label>Page Title</label>
       <input id="pageTitle" required placeholder="My Business">
-
       <label>Headline</label>
       <input id="headline" required placeholder="Your main headline">
-
       <label>Description</label>
       <textarea id="description" placeholder="Describe your product or service"></textarea>
-
       <label>Image URL</label>
       <input id="imageUrl" type="url" placeholder="https://example.com/image.jpg">
-
       <label>Button Text</label>
       <select id="buttonText">
         <option>Learn More</option>
         <option>Subscribe</option>
         <option>Contact</option>
       </select>
-
       <label>Button URL</label>
       <input id="buttonUrl" required type="url" placeholder="https://example.com">
-
       <label>WhatsApp Number (optional)</label>
       <input id="whatsapp" placeholder="919876543210">
-
       <label>Meta Pixel ID (optional)</label>
       <input id="pixelId" placeholder="Your Meta Pixel ID">
-
       <button type="submit">Create Landing Page</button>
     </form>
   </div>
 
-  <!-- CUSTOMER PAGE LIST -->
   <div class="card">
     <h2>My Landing Pages</h2>
     <div id="myPages">Loading...</div>
   </div>
-
 </section>
 
 <!-- ADMIN DASHBOARD -->
@@ -222,24 +200,12 @@ hr{border:0;border-top:1px solid #294563;margin:20px 0}
   <div class="card">
     <h2>Admin Dashboard</h2>
     <p class="muted">Manage your users, landing pages and payment requests.</p>
-
     <div class="grid">
-      <div class="stat">
-        <p class="muted">Users</p>
-        <strong id="statUsers">0</strong>
-      </div>
-      <div class="stat">
-        <p class="muted">Landing Pages</p>
-        <strong id="statPages">0</strong>
-      </div>
-      <div class="stat">
-        <p class="muted">Published Pages</p>
-        <strong id="statPublished">0</strong>
-      </div>
+      <div class="stat"><p class="muted">Users</p><strong id="statUsers">0</strong></div>
+      <div class="stat"><p class="muted">Landing Pages</p><strong id="statPages">0</strong></div>
+      <div class="stat"><p class="muted">Published Pages</p><strong id="statPublished">0</strong></div>
     </div>
-
     <hr>
-
     <div class="actions">
       <button onclick="showCreateForm()">+ Create Landing Page</button>
       <button class="secondary" onclick="loadAdmin()">Refresh Data</button>
@@ -247,45 +213,34 @@ hr{border:0;border-top:1px solid #294563;margin:20px 0}
     </div>
   </div>
 
-  <!-- ADMIN CREATE PAGE -->
   <div id="adminCreateBox" class="card">
     <h2>Create Landing Page (Admin)</h2>
     <p class="muted">Admin can create pages without purchasing a plan.</p>
-
-    <form onsubmit="createPage(event)">
+    <form id="adminCreateForm" onsubmit="createPage(event)">
       <label>Page Title</label>
       <input id="adminPageTitle" required placeholder="My Business">
-
       <label>Headline</label>
       <input id="adminHeadline" required placeholder="Your main headline">
-
       <label>Description</label>
       <textarea id="adminDescription" placeholder="Describe your offer"></textarea>
-
       <label>Image URL</label>
       <input id="adminImageUrl" type="url" placeholder="https://example.com/image.jpg">
-
       <label>Button Text</label>
       <select id="adminButtonText">
         <option>Learn More</option>
         <option>Subscribe</option>
         <option>Contact</option>
       </select>
-
       <label>Button URL</label>
       <input id="adminButtonUrl" required type="url" placeholder="https://example.com">
-
       <label>WhatsApp Number (optional)</label>
       <input id="adminWhatsapp" placeholder="919876543210">
-
       <label>Meta Pixel ID (optional)</label>
       <input id="adminPixelId" placeholder="Your Meta Pixel ID">
-
       <button type="submit">Create Admin Landing Page</button>
     </form>
   </div>
 
-  <!-- ADMIN PAYMENT REQUESTS -->
   <div class="card">
     <h2>Payment Requests</h2>
     <div id="adminData">Loading...</div>
@@ -302,6 +257,12 @@ let currentUser=null;
 let selectedPlan='';
 
 const $=id=>document.getElementById(id);
+
+const planAmounts={
+  starter:999,
+  growth:1499,
+  pro:1999
+};
 
 function msg(text){
   $('message').textContent=text;
@@ -328,7 +289,6 @@ function startNow(){
 
 function showAuth(mode){
   showSection('auth');
-
   $('authTitle').textContent=mode==='login'?'Login':'Create Account';
   $('authButton').textContent=mode==='login'?'Login':'Create Account';
   $('nameField').classList.toggle('hidden',mode==='login');
@@ -352,13 +312,11 @@ async function api(url,options={}){
   const data=await response.json().catch(()=>({error:'Server response error'}));
 
   if(!response.ok) throw new Error(data.error||'Request failed');
-
   return data;
 }
 
 async function authenticate(e){
   e.preventDefault();
-
   const mode=$('auth').dataset.mode;
 
   try{
@@ -373,37 +331,57 @@ async function authenticate(e){
 
     token=data.token;
     localStorage.setItem('ag_token',token);
-
     await loadDashboard();
     msg('Account successfully logged in.');
-
   }catch(err){
     msg(err.message);
   }
+}
+
+/* QR GENERATION */
+function generatePaymentQR(amount){
+  const upiData=
+    'upi://pay?pa=9793426123-2@axl'+
+    '&pn=RAKENDRA%20KUMAR'+
+    '&am='+amount+
+    '&cu=INR';
+
+  const qrURL=
+    'https://api.qrserver.com/v1/create-qr-code/?size=300x300&margin=10&data='+
+    encodeURIComponent(upiData);
+
+  $('qrMissing').classList.add('hidden');
+  $('paymentQR').style.display='block';
+  $('paymentQR').onerror=function(){
+    this.style.display='none';
+    $('qrMissing').classList.remove('hidden');
+  };
+  $('paymentQR').src=qrURL;
 }
 
 async function loadDashboard(){
   try{
     const data=await api('/api/me');
     currentUser=data.user||data;
-
     const admin=currentUser.role==='admin';
 
-    $('welcome').textContent='Welcome, '+(currentUser.name||currentUser.email||'User');
+    $('welcome').textContent=
+      'Welcome, '+(currentUser.name||currentUser.email||'User');
 
-    $('subscription').textContent='Plan: '+(currentUser.plan||'No active plan')+
+    $('subscription').textContent=
+      'Plan: '+(currentUser.plan||'No active plan')+
       ' | Expires: '+(currentUser.subscription_expires||'Not active');
 
-    // Admin create form is always visible for admin.
-    $('createBox').classList.toggle('hidden',!admin&&!currentUser.subscription_expires);
+    $('createBox').classList.toggle(
+      'hidden',
+      !admin&&!currentUser.subscription_expires
+    );
 
-    // Keep dashboard visible.
     hideAll();
     $('dashboard').classList.remove('hidden');
 
     await loadPages();
 
-    // Admin panel is shown together with dashboard.
     if(admin){
       $('admin').classList.remove('hidden');
       $('adminCreateBox').classList.remove('hidden');
@@ -429,15 +407,18 @@ async function loadDashboard(){
 async function choosePlan(plan){
   try{
     selectedPlan=plan;
-
     const plans=await api('/api/plans');
     const p=plans[plan];
 
     if(!p) throw new Error('Plan not found');
 
-    $('paymentPlan').textContent=p.name+' — ₹'+p.price;
-    $('paymentAmount').textContent='Amount to pay: ₹'+p.price;
+    const amount=planAmounts[plan];
+    if(!amount) throw new Error('Invalid plan amount');
 
+    $('paymentPlan').textContent=p.name+' — ₹'+amount;
+    $('paymentAmount').textContent='Amount to pay: ₹'+amount;
+
+    generatePaymentQR(amount);
     showSection('payment');
 
   }catch(err){
@@ -446,13 +427,7 @@ async function choosePlan(plan){
 }
 
 function openUPI(){
-  const amounts={
-    starter:999,
-    growth:1499,
-    pro:1999
-  };
-
-  const amount=amounts[selectedPlan];
+  const amount=planAmounts[selectedPlan];
 
   if(!amount){
     msg('Please select a plan first.');
@@ -509,7 +484,6 @@ async function createPage(e){
   e.preventDefault();
 
   const isAdminForm=e.target.id==='adminCreateForm';
-
   const prefix=isAdminForm?'admin':'';
 
   const getValue=id=>$(prefix+id).value;
@@ -533,13 +507,11 @@ async function createPage(e){
 
     msg('Landing page created successfully.');
     e.target.reset();
-
     await loadPages();
 
     if(currentUser&&currentUser.role==='admin'){
       await loadAdmin();
     }
-
   }catch(err){
     msg(err.message);
   }
@@ -549,7 +521,6 @@ async function loadPages(){
   try{
     const data=await api('/api/pages');
     const pages=data.pages||[];
-
     $('myPages').innerHTML='';
 
     if(!pages.length){
@@ -588,7 +559,6 @@ async function loadPages(){
       div.append(title,status,link,document.createElement('br'),copy);
       $('myPages').appendChild(div);
     });
-
   }catch(err){
     $('myPages').textContent=err.message;
   }
@@ -597,7 +567,6 @@ async function loadPages(){
 async function loadAdmin(){
   try{
     const data=await api('/api/admin/overview');
-
     const users=data.users||[];
     const pages=data.pages||[];
     const payments=data.payments||[];
@@ -605,7 +574,6 @@ async function loadAdmin(){
     $('statUsers').textContent=users.length;
     $('statPages').textContent=pages.length;
     $('statPublished').textContent=data.publishedPages||0;
-
     $('adminData').innerHTML='';
 
     if(!payments.length){
@@ -639,7 +607,6 @@ async function loadAdmin(){
 
       $('adminData').appendChild(div);
     });
-
   }catch(err){
     $('adminData').textContent=err.message;
   }
@@ -653,7 +620,6 @@ async function reviewPayment(id,action){
 
     msg('Payment status updated.');
     await loadAdmin();
-
   }catch(err){
     msg(err.message);
   }
@@ -679,7 +645,6 @@ if(token){
   showAuth('register');
 }
 </script>
-
 </body>
-  </html>
-  
+     </html>
+ 
