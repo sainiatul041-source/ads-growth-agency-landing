@@ -2,404 +2,355 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>ADS GROWTH AGENCY PRO</title>
 <style>
 *{box-sizing:border-box}
-body{margin:0;background:#071126;color:#f5f7ff;font-family:Arial,sans-serif}
-header{padding:20px 5%;background:#101e3c;border-bottom:1px solid #263b63;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
-.logo{font-size:21px;font-weight:bold;color:#5ce1d0}
-main{max-width:1050px;margin:30px auto;padding:15px}
-.card{background:#111f3e;border:1px solid #2c426b;border-radius:18px;padding:24px;margin-bottom:20px}
-h1,h2,h3{margin-top:0}
-input,textarea,select{width:100%;padding:14px;margin:7px 0 15px;border:1px solid #52668d;border-radius:10px;background:#eaf0ff;color:#111;font-size:16px}
-textarea{min-height:100px}
-button,.btn{border:0;border-radius:10px;padding:13px 19px;background:linear-gradient(90deg,#5ce1d0,#19a9e5);color:#071126;font-weight:bold;font-size:15px;cursor:pointer;margin:4px}
-button.secondary{background:#263b63;color:white}
-button.danger{background:#a83250;color:white}
-.hidden{display:none!important}
+body{margin:0;font-family:Arial,sans-serif;background:#071426;color:#fff}
+header{padding:20px 6%;display:flex;justify-content:space-between;align-items:center;background:#0b1d35;border-bottom:1px solid #203957}
+.logo{font-size:23px;font-weight:800;color:#48a9ff}
+button{border:0;border-radius:9px;padding:12px 18px;background:#1687ed;color:white;font-weight:bold;cursor:pointer}
+button:hover{background:#0868c2}
+input,textarea,select{width:100%;padding:13px;margin:8px 0 15px;border:1px solid #294563;border-radius:8px;background:#10243d;color:white}
+textarea{min-height:90px}
+.container{max-width:1050px;margin:auto;padding:25px 16px}
+.hero{text-align:center;padding:55px 10px}
+.hero h1{font-size:clamp(30px,6vw,52px);margin:10px 0}
+.hero h1 span{color:#45a5ff}
+.hero p{color:#b8c9dc;line-height:1.7}
+.card{background:#10243d;border:1px solid #294563;border-radius:14px;padding:22px;margin:16px 0}
 .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:15px}
-.price{font-size:28px;color:#5ce1d0;font-weight:bold}
-.muted{color:#b5c4e2;line-height:1.6}
-.message{padding:13px;border-radius:10px;background:#263b63;margin:12px 0;white-space:pre-wrap}
-.error{background:#51263b}
-.success{background:#17483e}
-a{color:#5ce1d0}
-label{display:block;font-weight:bold;margin-top:8px}
-img.qr{width:220px;max-width:100%;background:white;padding:8px;border-radius:12px;display:block;margin:15px auto}
-.pageitem{padding:15px;background:#192c50;border-radius:12px;margin:12px 0}
-small{color:#b5c4e2}
+.price{font-size:32px;font-weight:bold;color:#55b5ff}
+.muted{color:#a9bdd3}
+.hidden{display:none!important}
+h2{margin-top:0}
+label{font-size:14px;color:#d4e3f5}
+.actions{display:flex;gap:8px;flex-wrap:wrap}
+.pageitem{border-bottom:1px solid #294563;padding:14px 0}
+a{color:#61b6ff}
+footer{text-align:center;padding:25px;color:#92a9c2}
+#message{padding:12px;border-radius:8px;margin:10px 0}
 </style>
 </head>
 <body>
 <header>
-  <div class="logo">ADS GROWTH AGENCY PRO</div>
-  <button class="secondary" onclick="logout()">Logout</button>
+  <div class="logo">ADS GROWTH PRO</div>
+  <div class="actions">
+    <button onclick="showAuth('login')">Login</button>
+    <button onclick="showAuth('register')">Register</button>
+  </div>
 </header>
 
-<main>
-  <section id="authBox" class="card">
-    <h1>Welcome to ADS GROWTH</h1>
-    <p class="muted">Create and publish professional landing pages.</p>
-    <div id="authMessage"></div>
-    <div class="grid">
-      <button id="loginTab" onclick="setMode('login')">Login</button>
-      <button class="secondary" id="registerTab" onclick="setMode('register')">Create account</button>
+<main class="container">
+<section class="hero">
+  <h1>Build Your <span>Landing Pages</span></h1>
+  <p>Create professional landing pages for your business. Publish your page and share its link with customers.</p>
+  <button onclick="showAuth('register')">Get Started Now</button>
+</section>
+
+<div id="message" class="hidden"></div>
+
+<section id="auth" class="card hidden">
+  <h2 id="authTitle">Create Account</h2>
+  <form onsubmit="authenticate(event)">
+    <div id="nameField">
+      <label>Your Name</label>
+      <input id="name" placeholder="Enter your name">
     </div>
-    <div id="nameField" class="hidden">
-      <label>Your name</label><input id="name" placeholder="Full name">
-    </div>
-    <label>Email address</label>
-    <input id="email" type="email" placeholder="Email address">
+    <label>Email Address</label>
+    <input id="email" type="email" required placeholder="Enter email">
     <label>Password</label>
-    <input id="password" type="password" placeholder="Password (8+ characters)">
-    <button style="width:100%;margin-top:15px" onclick="submitAuth()" id="authSubmit">Login →</button>
-  </section>
+    <input id="password" type="password" required minlength="6" placeholder="Enter password">
+    <button id="authButton" type="submit">Create Account</button>
+  </form>
+  <p class="muted" id="authSwitch">Already have an account? <a href="#" onclick="showAuth('login');return false">Login</a></p>
+</section>
 
-  <section id="dashboard" class="hidden">
+<section id="plans" class="hidden">
+  <h2>Choose Your Plan</h2>
+  <p class="muted">Plans are valid for 30 days after payment approval.</p>
+  <div class="grid">
     <div class="card">
-      <h1 id="welcome">Dashboard</h1>
-      <p class="muted">Manage your landing pages and subscription.</p>
-      <div id="accountInfo"></div>
+      <h2>Starter</h2>
+      <div class="price">₹999</div>
+      <p>1 Landing Page</p><p>30 Days</p>
+      <button onclick="choosePlan('starter')">Choose Starter</button>
     </div>
-
-    <div id="adminPanel" class="hidden">
-      <div class="card">
-        <h2>Admin dashboard</h2>
-        <div id="adminStats" class="grid"></div>
-      </div>
-      <div class="card">
-        <h2>Payment requests</h2>
-        <div id="adminPayments"></div>
-      </div>
-      <div class="card">
-        <h2>Recent tracking events</h2>
-        <button onclick="loadEvents()">Refresh events</button>
-        <div id="adminEvents"></div>
-      </div>
+    <div class="card">
+      <h2>Growth</h2>
+      <div class="price">₹1499</div>
+      <p>1 Landing Page</p><p>30 Days</p>
+      <button onclick="choosePlan('growth')">Choose Growth</button>
     </div>
-
-    <div id="customerPanel">
-      <div class="card">
-        <h2>Choose a plan</h2>
-        <div id="plans" class="grid"></div>
-      </div>
-
-      <div class="card">
-        <h2>UPI payment</h2>
-        <p class="muted">Scan the QR code below. Submit your UTR after payment. Access is activated only after manual verification.</p>
-        <img class="qr" src="/scanner.png" alt="UPI payment QR code"
-          onerror="this.style.display='none';document.getElementById('qrMissing').classList.remove('hidden')">
-        <p id="qrMissing" class="hidden error">QR image not found. Upload your QR image as public/scanner.png in GitHub.</p>
-        <p>UPI ID: <b id="upiId">Loading...</b></p>
-        <button class="secondary" onclick="copyUPI()">Copy UPI ID</button>
-        <label>Choose plan</label>
-        <select id="paymentPlan">
-          <option value="starter">Starter - ₹999</option>
-          <option value="growth">Growth - ₹1499</option>
-          <option value="pro">Pro - ₹1999</option>
-        </select>
-        <label>UPI transaction UTR / reference number</label>
-        <input id="utr" placeholder="Enter transaction reference">
-        <button onclick="submitPayment()">Submit payment reference</button>
-        <div id="paymentMessage"></div>
-      </div>
-
-      <div class="card">
-        <h2>Create landing page</h2>
-        <p class="muted">Fill in your page details and save it as a draft.</p>
-        <input type="hidden" id="editId">
-        <label>Page title</label><input id="title" placeholder="My business">
-        <label>Headline</label><input id="headline" placeholder="Your main headline">
-        <label>Description</label><textarea id="description" placeholder="Describe your offer"></textarea>
-        <label>Image URL (optional)</label><input id="imageUrl" placeholder="https://example.com/image.jpg">
-        <label>Button text</label>
-        <select id="buttonText">
-          <option>Learn More</option><option>Subscribe</option>
-          <option>Contact</option><option>Buy Now</option><option>WhatsApp</option>
-        </select>
-        <label>Button destination URL</label><input id="buttonUrl" placeholder="https://example.com">
-        <label>Meta Pixel ID (optional)</label><input id="pixelId" placeholder="数字 only">
-        <div class="grid">
-          <div><label>Background color</label><input id="bgColor" type="color" value="#0b1530"></div>
-          <div><label>Text color</label><input id="textColor" type="color" value="#ffffff"></div>
-          <div><label>Button color</label><input id="buttonColor" type="color" value="#2563eb"></div>
-        </div>
-        <button onclick="savePage()">Save landing page</button>
-        <button class="secondary" onclick="clearForm()">Clear</button>
-        <div id="pageMessage"></div>
-      </div>
-
-      <div class="card">
-        <h2>My landing pages</h2>
-        <button class="secondary" onclick="loadPages()">Refresh pages</button>
-        <div id="myPages"></div>
-      </div>
-
-      <div class="card">
-        <h2>My payment history</h2>
-        <button class="secondary" onclick="loadMyPayments()">Refresh payments</button>
-        <div id="myPayments"></div>
-      </div>
+    <div class="card">
+      <h2>Pro</h2>
+      <div class="price">₹1999</div>
+      <p>2 Landing Pages</p><p>30 Days</p>
+      <button onclick="choosePlan('pro')">Choose Pro</button>
     </div>
-  </section>
+  </div>
+</section>
+
+<section id="payment" class="card hidden">
+  <h2>Complete Your Payment</h2>
+  <p id="paymentPlan"></p>
+  <p class="muted">Pay using the displayed UPI details. Confirm the recipient name in your UPI app before sending.</p>
+  <div style="text-align:center">
+    <img src="/payment-qr.jpg" alt="UPI payment QR" style="width:220px;max-width:100%;background:white;padding:8px;border-radius:10px">
+  </div>
+  <p><b>UPI ID:</b> 9793426123-2@axl</p>
+  <p><b>Payee:</b> RAKENDRA KUMAR</p>
+  <button onclick="openUPI()">Open UPI App</button>
+  <form onsubmit="submitPayment(event)">
+    <label>Payment UTR / Transaction ID</label>
+    <input id="utr" required placeholder="Enter transaction reference">
+    <button type="submit">Submit Payment for Verification</button>
+  </form>
+  <p class="muted">Your plan activates only after admin verifies the payment.</p>
+</section>
+
+<section id="dashboard" class="hidden">
+  <div class="card">
+    <h2>My Dashboard</h2>
+    <p id="welcome"></p>
+    <p id="subscription" class="muted"></p>
+    <div class="actions">
+      <button onclick="showSection('plans')">View Plans</button>
+      <button onclick="logout()">Logout</button>
+    </div>
+  </div>
+
+  <div id="createBox" class="card hidden">
+    <h2>Create Landing Page</h2>
+    <form onsubmit="createPage(event)">
+      <label>Page Title</label>
+      <input id="pageTitle" required placeholder="My Business">
+      <label>Headline</label>
+      <input id="headline" required placeholder="Your main headline">
+      <label>Description</label>
+      <textarea id="description" placeholder="Describe your offer"></textarea>
+      <label>Image URL</label>
+      <input id="imageUrl" placeholder="https://example.com/image.jpg">
+      <label>Button Text</label>
+      <select id="buttonText">
+        <option>Learn More</option>
+        <option>Subscribe</option>
+        <option>Contact</option>
+      </select>
+      <label>Button URL</label>
+      <input id="buttonUrl" required placeholder="https://example.com">
+      <label>WhatsApp Number (optional)</label>
+      <input id="whatsapp" placeholder="919876543210">
+      <label>Meta Pixel ID (optional)</label>
+      <input id="pixelId" placeholder="Your Meta Pixel ID">
+      <button type="submit">Create Landing Page</button>
+    </form>
+  </div>
+
+  <div class="card">
+    <h2>My Landing Pages</h2>
+    <div id="myPages">Loading...</div>
+  </div>
+</section>
+
+<section id="admin" class="hidden">
+  <div class="card">
+    <h2>Admin Dashboard</h2>
+    <button onclick="loadAdmin()">Refresh Data</button>
+    <div id="adminData">Loading...</div>
+  </div>
+</section>
 </main>
 
-<script>
-let mode = "login";
-let token = localStorage.getItem("ag_token") || "";
-let currentUser = null;
-let planData = [];
+<footer>© 2026 ADS GROWTH AGENCY PRO</footer>
 
-function el(id){return document.getElementById(id)}
-function message(id,text,error=false){
-  el(id).innerHTML = `<div class="message ${error?'error':'success'}">${escapeText(text)}</div>`;
+<script>
+let token=localStorage.getItem('ag_token')||'';
+let currentUser=null;
+let selectedPlan='';
+
+const $=id=>document.getElementById(id);
+function msg(text){
+  $('message').textContent=text;
+  $('message').classList.remove('hidden');
+  window.scrollTo({top:0,behavior:'smooth'});
 }
-function escapeText(s){
-  return String(s??"").replace(/[&<>"']/g,c=>({
-    "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
-  }[c]));
+function hideAll(){
+  ['auth','plans','payment','dashboard','admin'].forEach(id=>$(id).classList.add('hidden'));
+}
+function showSection(id){
+  hideAll();
+  $(id).classList.remove('hidden');
+}
+function showAuth(mode){
+  showSection('auth');
+  $('authTitle').textContent=mode==='login'?'Login':'Create Account';
+  $('authButton').textContent=mode==='login'?'Login':'Create Account';
+  $('nameField').classList.toggle('hidden',mode==='login');
+  $('authSwitch').innerHTML=mode==='login'
+    ? 'New user? <a href="#" onclick="showAuth(\'register\');return false">Create account</a>'
+    : 'Already registered? <a href="#" onclick="showAuth(\'login\');return false">Login</a>';
+  $('auth').dataset.mode=mode;
 }
 async function api(url,options={}){
-  options.headers = options.headers || {};
-  if(token) options.headers.Authorization = "Bearer "+token;
-  if(options.body) options.headers["Content-Type"]="application/json";
-  const response = await fetch(url,options);
-  let data={};
-  try{data=await response.json()}catch{}
-  if(!response.ok) throw new Error(data.error || "Request failed");
+  const headers={'Content-Type':'application/json',...(options.headers||{})};
+  if(token) headers.Authorization='Bearer '+token;
+  const response=await fetch(url,{...options,headers});
+  const data=await response.json().catch(()=>({error:'Server response error'}));
+  if(!response.ok) throw new Error(data.error||'Request failed');
   return data;
 }
-function setMode(m){
-  mode=m;
-  el("nameField").classList.toggle("hidden",m!=="register");
-  el("authSubmit").textContent=m==="login"?"Login →":"Create account →";
-  el("loginTab").classList.toggle("secondary",m!=="login");
-  el("registerTab").classList.toggle("secondary",m!=="register");
-  el("authMessage").innerHTML="";
-}
-async function submitAuth(){
-  const body={
-    email:el("email").value.trim(),
-    password:el("password").value
-  };
-  if(mode==="register") body.name=el("name").value.trim();
+async function authenticate(e){
+  e.preventDefault();
+  const mode=$('auth').dataset.mode;
   try{
-    const data=await api(mode==="login"?"/api/login":"/api/register",{
-      method:"POST",body:JSON.stringify(body)
-    });
-    token=data.token;
-    localStorage.setItem("ag_token",token);
-    currentUser=data.user;
-    await openDashboard();
-  }catch(e){message("authMessage",e.message,true)}
-}
-async function openDashboard(){
-  const data=await api("/api/me");
-  currentUser=data.user;
-  el("authBox").classList.add("hidden");
-  el("dashboard").classList.remove("hidden");
-  el("welcome").textContent="Welcome, "+currentUser.name;
-  el("accountInfo").innerHTML=
-    `<p>Email: ${escapeText(currentUser.email)}</p>
-     <p>Role: ${escapeText(currentUser.role)}</p>
-     <p>Plan: ${escapeText(currentUser.plan||"No active plan")}</p>`;
-  const admin=currentUser.role==="admin";
-  el("adminPanel").classList.toggle("hidden",!admin);
-  el("customerPanel").classList.toggle("hidden",admin);
-  if(admin) await loadAdmin();
-  else{
-    await loadPlans();
-    await loadPaymentInfo();
-    await loadPages();
-    await loadMyPayments();
-  }
-}
-async function loadPlans(){
-  try{
-    planData=await api("/api/plans");
-    el("plans").innerHTML=planData.map(p=>`
-      <div class="pageitem">
-        <h3>${escapeText(p.name)}</h3>
-        <div class="price">₹${p.price}</div>
-        <p>${p.pages} page(s) • ${p.days} days</p>
-        <button onclick="choosePlan('${p.id}')">Select plan</button>
-      </div>`).join("");
-  }catch(e){console.error(e)}
-}
-function choosePlan(id){el("paymentPlan").value=id;el("paymentPlan").scrollIntoView({behavior:"smooth"})}
-async function loadPaymentInfo(){
-  try{
-    const d=await api("/api/payment-info");
-    el("upiId").textContent=d.upiId;
-  }catch(e){el("upiId").textContent="Not available"}
-}
-async function copyUPI(){
-  try{
-    await navigator.clipboard.writeText(el("upiId").textContent);
-    alert("UPI ID copied");
-  }catch{alert("UPI ID: "+el("upiId").textContent)}
-}
-async function submitPayment(){
-  try{
-    const d=await api("/api/payments",{
-      method:"POST",
+    const data=await api('/api/'+(mode==='login'?'login':'register'),{
+      method:'POST',
       body:JSON.stringify({
-        plan_id:el("paymentPlan").value,
-        utr:el("utr").value.trim()
+        name:$('name').value,
+        email:$('email').value,
+        password:$('password').value
       })
     });
-    message("paymentMessage",d.message);
-    el("utr").value="";
-    await loadMyPayments();
-  }catch(e){message("paymentMessage",e.message,true)}
+    token=data.token;
+    localStorage.setItem('ag_token',token);
+    await loadDashboard();
+    msg('Account successfully logged in.');
+  }catch(err){msg(err.message)}
 }
-function clearForm(){
-  ["editId","title","headline","description","imageUrl","buttonUrl","pixelId"].forEach(id=>el(id).value="");
-  el("buttonText").value="Learn More";
-  el("bgColor").value="#0b1530";
-  el("textColor").value="#ffffff";
-  el("buttonColor").value="#2563eb";
-}
-async function savePage(){
-  const id=el("editId").value;
-  const body={
-    title:el("title").value,
-    headline:el("headline").value,
-    description:el("description").value,
-    image_url:el("imageUrl").value,
-    button_text:el("buttonText").value,
-    button_url:el("buttonUrl").value,
-    pixel_id:el("pixelId").value,
-    bg_color:el("bgColor").value,
-    text_color:el("textColor").value,
-    button_color:el("buttonColor").value
-  };
+async function loadDashboard(){
   try{
-    await api(id?"/api/pages/"+id:"/api/pages",{
-      method:id?"PUT":"POST",body:JSON.stringify(body)
-    });
-    message("pageMessage","Landing page saved successfully.");
-    clearForm();
+    const data=await api('/api/me');
+    currentUser=data.user||data;
+    $('welcome').textContent='Welcome, '+(currentUser.name||currentUser.email);
+    $('subscription').textContent='Plan: '+(currentUser.plan||'No active plan')+
+      ' | Expires: '+(currentUser.subscription_expires||'Not active');
+    const admin=currentUser.role==='admin';
+    $('createBox').classList.toggle('hidden',!admin&&!currentUser.subscription_expires);
+    showSection('dashboard');
     await loadPages();
-  }catch(e){message("pageMessage",e.message,true)}
+    if(admin){showSection('admin');await loadAdmin();}
+    else if(!currentUser.subscription_expires) showSection('plans');
+  }catch(err){
+    token='';
+    localStorage.removeItem('ag_token');
+    showAuth('login');
+    msg(err.message);
+  }
+}
+async function choosePlan(plan){
+  selectedPlan=plan;
+  const plans=await api('/api/plans');
+  const p=plans[plan];
+  $('paymentPlan').textContent=p.name+' — ₹'+p.price;
+  showSection('payment');
+}
+function openUPI(){
+  const amount=selectedPlan==='starter'?999:selectedPlan==='growth'?1499:1999;
+  const url='upi://pay?pa=9793426123-2@axl&pn=RAKENDRA%20KUMAR&am='+amount+'&cu=INR';
+  window.location.href=url;
+}
+async function submitPayment(e){
+  e.preventDefault();
+  try{
+    await api('/api/payments',{
+      method:'POST',
+      body:JSON.stringify({plan:selectedPlan,utr:$('utr').value.trim()})
+    });
+    msg('Payment submitted. Admin verification is pending.');
+    showSection('dashboard');
+  }catch(err){msg(err.message)}
+}
+async function createPage(e){
+  e.preventDefault();
+  try{
+    await api('/api/pages',{
+      method:'POST',
+      body:JSON.stringify({
+        title:$('pageTitle').value,
+        headline:$('headline').value,
+        description:$('description').value,
+        image_url:$('imageUrl').value,
+        button_text:$('buttonText').value,
+        button_url:$('buttonUrl').value,
+        whatsapp:$('whatsapp').value,
+        pixel_id:$('pixelId').value
+      })
+    });
+    msg('Landing page created successfully.');
+    e.target.reset();
+    await loadPages();
+  }catch(err){msg(err.message)}
 }
 async function loadPages(){
   try{
-    const d=await api("/api/pages");
-    el("myPages").innerHTML=d.pages.length?d.pages.map(p=>`
-      <div class="pageitem">
-        <h3>${escapeText(p.title)}</h3>
-        <p>${escapeText(p.headline)}</p>
-        <p>Status: ${p.published?"Published":"Draft"}</p>
-        <p>${p.published?`<a target="_blank" href="/p/${encodeURIComponent(p.slug)}">Open landing page</a>`:"Not public yet"}</p>
-        <button onclick="editPage(${p.id})">Edit</button>
-        <button onclick="togglePublish(${p.id})">${p.published?"Unpublish":"Publish"}</button>
-        <button class="danger" onclick="deletePage(${p.id})">Delete</button>
-      </div>`).join(""):"<p>No pages created yet.</p>";
-    window.pageCache=d.pages;
-  }catch(e){message("pageMessage",e.message,true)}
-}
-function editPage(id){
-  const p=(window.pageCache||[]).find(x=>Number(x.id)===Number(id));
-  if(!p)return;
-  el("editId").value=p.id;
-  el("title").value=p.title||"";
-  el("headline").value=p.headline||"";
-  el("description").value=p.description||"";
-  el("imageUrl").value=p.image_url||"";
-  el("buttonText").value=p.button_text||"Learn More";
-  el("buttonUrl").value=p.button_url||"";
-  el("pixelId").value=p.pixel_id||"";
-  el("bgColor").value=p.bg_color||"#0b1530";
-  el("textColor").value=p.text_color||"#ffffff";
-  el("buttonColor").value=p.button_color||"#2563eb";
-  el("title").scrollIntoView({behavior:"smooth"});
-}
-async function togglePublish(id){
-  try{await api("/api/pages/"+id+"/publish",{method:"POST"});await loadPages()}
-  catch(e){alert(e.message)}
-}
-async function deletePage(id){
-  if(!confirm("Delete this landing page?"))return;
-  try{await api("/api/pages/"+id,{method:"DELETE"});await loadPages()}
-  catch(e){alert(e.message)}
-}
-async function loadMyPayments(){
-  try{
-    const d=await api("/api/payments/mine");
-    el("myPayments").innerHTML=d.payments.length?d.payments.map(p=>`
-      <div class="pageitem">
-        <b>${escapeText(p.plan_id)}</b> — ₹${p.amount}
-        <p>UTR: ${escapeText(p.utr)}</p>
-        <p>Status: ${escapeText(p.status)}</p>
-        <small>${escapeText(p.created_at)}</small>
-      </div>`).join(""):"<p>No payment requests yet.</p>";
-  }catch(e){console.error(e)}
+    const data=await api('/api/pages');
+    const pages=data.pages||[];
+    $('myPages').innerHTML=pages.length?'':'<p class="muted">No pages created yet.</p>';
+    pages.forEach(p=>{
+      const div=document.createElement('div');
+      div.className='pageitem';
+      const title=document.createElement('b');
+      title.textContent=p.title||p.headline||'Landing Page';
+      const status=document.createElement('p');
+      status.className='muted';
+      status.textContent=p.published?'Published':'Unpublished';
+      const link=document.createElement('a');
+      link.href='/p/'+encodeURIComponent(p.slug);
+      link.target='_blank';
+      link.textContent='Open public page';
+      div.append(title,status,link);
+      $('myPages').appendChild(div);
+    });
+  }catch(err){$('myPages').textContent=err.message}
 }
 async function loadAdmin(){
   try{
-    const d=await api("/api/admin/stats");
-    el("adminStats").innerHTML=`
-      <div class="pageitem"><h3>Customers</h3><div class="price">${d.clients.total}</div></div>
-      <div class="pageitem"><h3>Pages</h3><div class="price">${d.pages.total}</div></div>
-      <div class="pageitem"><h3>Published</h3><div class="price">${d.publishedPages.total}</div></div>
-      <div class="pageitem"><h3>Pending payments</h3><div class="price">${d.payments.pending}</div></div>
-      <div class="pageitem"><h3>Visits</h3><div class="price">${d.clicks.visits}</div></div>
-      <div class="pageitem"><h3>CTA clicks</h3><div class="price">${d.clicks.valid_clicks}</div></div>`;
-    await loadAdminPayments();
-    await loadEvents();
-  }catch(e){message("adminStats",e.message,true)}
-}
-async function loadAdminPayments(){
-  try{
-    const d=await api("/api/admin/payments");
-    el("adminPayments").innerHTML=d.payments.length?d.payments.map(p=>`
-      <div class="pageitem">
-        <b>${escapeText(p.name||p.email)}</b>
-        <p>${escapeText(p.email)} • ${escapeText(p.plan_id)} • ₹${p.amount}</p>
-        <p>UTR: ${escapeText(p.utr)}</p>
-        <p>Status: ${escapeText(p.status)}</p>
-        ${p.status==="pending"?`
-          <button onclick="reviewPayment(${p.id},'approved')">Approve</button>
-          <button class="danger" onclick="reviewPayment(${p.id},'rejected')">Reject</button>`:""}
-      </div>`).join(""):"<p>No payment requests.</p>";
-  }catch(e){el("adminPayments").textContent=e.message}
-}
-async function reviewPayment(id,status){
-  const note=prompt("Optional admin note:")||"";
-  if(status==="approved"&&!confirm("Have you verified this payment in your bank/UPI account? Approve only if received."))return;
-  try{
-    await api("/api/admin/payments/"+id+"/review",{
-      method:"POST",body:JSON.stringify({status,note})
+    const data=await api('/api/admin/overview');
+    const users=data.users||[];
+    const pages=data.pages||[];
+    const payments=data.payments||[];
+    $('adminData').innerHTML=
+      '<p>Users: '+users.length+'</p>'+
+      '<p>Pages: '+pages.length+'</p>'+
+      '<p>Published Pages: '+(data.publishedPages||0)+'</p>'+
+      '<h3>Payment Requests</h3>';
+    payments.forEach(p=>{
+      const div=document.createElement('div');
+      div.className='pageitem';
+      const info=document.createElement('p');
+      info.textContent=(p.email||'User')+' | '+p.plan+' | ₹'+p.amount+' | UTR: '+p.utr+' | '+p.status;
+      div.appendChild(info);
+      if(p.status==='pending'){
+        const approve=document.createElement('button');
+        approve.textContent='Approve';
+        approve.onclick=()=>reviewPayment(p.id,'approve');
+        const reject=document.createElement('button');
+        reject.textContent='Reject';
+        reject.onclick=()=>reviewPayment(p.id,'reject');
+        div.append(approve,reject);
+      }
+      $('adminData').appendChild(div);
     });
-    await loadAdmin();
-  }catch(e){alert(e.message)}
+  }catch(err){$('adminData').textContent=err.message}
 }
-async function loadEvents(){
+async function reviewPayment(id,action){
   try{
-    const d=await api("/api/admin/clicks");
-    el("adminEvents").innerHTML=d.events.length?d.events.map(e=>`
-      <div class="pageitem">
-        ${escapeText(e.event_type)} — ${escapeText(e.title)}
-        <p>${escapeText(e.email)} • ${escapeText(e.created_at)}</p>
-      </div>`).join(""):"<p>No tracking events yet.</p>";
-  }catch(e){el("adminEvents").textContent=e.message}
+    await api('/api/admin/payments/'+id+'/'+action,{method:'POST'});
+    msg('Payment status updated.');
+    await loadAdmin();
+  }catch(err){msg(err.message)}
 }
 function logout(){
-  localStorage.removeItem("ag_token");
-  token="";currentUser=null;
-  el("dashboard").classList.add("hidden");
-  el("authBox").classList.remove("hidden");
-  setMode("login");
+  localStorage.removeItem('ag_token');
+  token='';
+  currentUser=null;
+  hideAll();
+  showAuth('login');
 }
-async function start(){
-  setMode("login");
-  if(!token)return;
-  try{await openDashboard()}
-  catch(e){localStorage.removeItem("ag_token");token=""}
-}
-start();
+if(token) loadDashboard();
+else showAuth('register');
 </script>
 </body>
-     </html>
+  </html>
+  
